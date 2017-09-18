@@ -50,20 +50,43 @@ using namespace std;
 #define TOKEN_STRLEN 16
 
 char ETokenName[][TOKEN_STRLEN] = {
-  "tDigit",                         ///< a digit
-  "tLetter",                        ///< a letter
-  "tPlusMinus",                     ///< '+' or '-'
-  "tMulDiv",                        ///< '*' or '/'
-  "tRelOp",                         ///< relational operator
-  "tAssign",                        ///< assignment operator
-  "tSemicolon",                     ///< a semicolon
-  "tDot",                           ///< a dot
-  "tLBrak",                         ///< a left bracket
-  "tRBrak",                         ///< a right bracket
+    "tAssignment",
+    "tBaseType",
+    "tBegin",
+    "tBoolean",
+    "tChar",
+    "tEnd",
+    "tExpression",
+    "tFactOp",
+    "tFactor",
+    "tFormalParam",
+    "tFunctionDecl",
+    "tIdent",
+    "tIfStatement",
+    "tModule",
+    "tNumber",
+    "tProcedureDecl",
+    "tQualident",
+    "tRelOp",                         ///< relational operator
+    "tReturnStatement",
+    "tSimpleExpr",
+    "tStatSequence",
+    "tStatement",
+    "tString",
+    "tSubroutineBody",
+    "tSubroutineCall",
+    "tSubroutineDecl",
+    "tTerm",
+    "tTermOp",
+    "tType",
+    "tVarDecl",
+    "tVarDeclSequence",
+    "tVarDeclaration",
+    "tWhileStatement",
 
-  "tEOF",                           ///< end of file
-  "tIOError",                       ///< I/O error
-  "tUndefined",                     ///< undefined
+    "tEOF",                           ///< end of file
+    "tIOError",                       ///< I/O error
+    "tUndefined",                     ///< undefined
 };
 
 
@@ -72,28 +95,65 @@ char ETokenName[][TOKEN_STRLEN] = {
 //
 
 char ETokenStr[][TOKEN_STRLEN] = {
-  "tDigit (%s)",                    ///< a digit
-  "tLetter (%s)",                   ///< a letter
-  "tPlusMinus (%s)",                ///< '+' or '-'
-  "tMulDiv (%s)",                   ///< '*' or '/'
-  "tRelOp (%s)",                    ///< relational operator
-  "tAssign",                        ///< assignment operator
-  "tSemicolon",                     ///< a semicolon
-  "tDot",                           ///< a dot
-  "tLBrak",                         ///< a left bracket
-  "tRBrak",                         ///< a right bracket
+    "tAssignment",
+    "tBaseType (%s)",
+    "tBoolean (%s)",
+    "tChar (%s)",
+    "tExpression",
+    "tFactOp (%s)",
+    "tFactor (%s)",
+    "tFormalParam",
+    "tFunctionDecl",
+    "tIdent (%s)",
+    "tIfStatement",
+    "tModule",
+    "tNumber (%s)",
+    "tProcedureDecl",
+    "tQualident (%s)",
+    "tRelOp (%s)",                    ///< relational operator
+    "tReturnStatement",
+    "tSimpleExpr",
+    "tStatSequence",
+    "tStatement",
+    "tString (%s)",
+    "tSubroutineBody",
+    "tSubroutineCall",
+    "tSubroutineDecl",
+    "tTerm",
+    "tTermOp (%s)",
+    "tType (%s)",
+    "tVarDecl",
+    "tVarDeclSequence",
+    "tVarDeclaration",
+    "tWhileStatement",
 
-  "tEOF",                           ///< end of file
-  "tIOError",                       ///< I/O error
-  "tUndefined (%s)",                ///< undefined
+    "tEOF",                           ///< end of file
+    "tIOError",                       ///< I/O error
+    "tUndefined (%s)",                ///< undefined
 };
 
 
 //------------------------------------------------------------------------------
 // reserved keywords
 //
-pair<const char*, EToken> Keywords[] =
-{
+pair<const char*, EToken> Keywords[] = {
+    {"module", tModule },
+    {"begin", tSubroutineBody },
+    {"end" , tSubroutineBody },
+    {"true", tBoolean },
+    {"false", tBoolean },
+    {"if", tIfStatement},
+    {"then", tIfStatement},
+    {"else", tIfStatement},
+    {"while", tWhileStatement},
+    {"do", tWhileStatement},
+    {"return", tReturnStatement},
+    {"var", tVarDeclaration},
+    {"procedure", tProcedureDecl},
+    {"function", tFunctionDecl},
+    {"boolean", tBaseType},
+    {"integer", tBaseType},
+    {"char", tBaseType},
 };
 
 
@@ -101,87 +161,77 @@ pair<const char*, EToken> Keywords[] =
 //------------------------------------------------------------------------------
 // CToken
 //
-CToken::CToken()
-{
-  _type = tUndefined;
-  _value = "";
-  _line = _char = 0;
+CToken::CToken() {
+    _type = tUndefined;
+    _value = "";
+    _line = _char = 0;
 }
 
-CToken::CToken(int line, int charpos, EToken type, const string value)
-{
-  _type = type;
-  _value = escape(value);
-  _line = line;
-  _char = charpos;
+CToken::CToken(int line, int charpos, EToken type, const string value) {
+    _type = type;
+    _value = escape(value);
+    _line = line;
+    _char = charpos;
 }
 
-CToken::CToken(const CToken &token)
-{
-  _type = token.GetType();
-  _value = token.GetValue();
-  _line = token.GetLineNumber();
-  _char = token.GetCharPosition();
+CToken::CToken(const CToken &token) {
+    _type = token.GetType();
+    _value = token.GetValue();
+    _line = token.GetLineNumber();
+    _char = token.GetCharPosition();
 }
 
-CToken::CToken(const CToken *token)
-{
-  _type = token->GetType();
-  _value = token->GetValue();
-  _line = token->GetLineNumber();
-  _char = token->GetCharPosition();
+CToken::CToken(const CToken *token) {
+    _type = token->GetType();
+    _value = token->GetValue();
+    _line = token->GetLineNumber();
+    _char = token->GetCharPosition();
 }
 
-const string CToken::Name(EToken type)
-{
-  return string(ETokenName[type]);
+const string CToken::Name(EToken type) {
+    return string(ETokenName[type]);
 }
 
-const string CToken::GetName(void) const
-{
-  return string(ETokenName[GetType()]);
+const string CToken::GetName(void) const {
+    return string(ETokenName[GetType()]);
 }
 
-ostream& CToken::print(ostream &out) const
-{
-  int str_len = _value.length();
-  str_len = TOKEN_STRLEN + (str_len < 64 ? str_len : 64);
-  char *str = (char*)malloc(str_len);
-  snprintf(str, str_len, ETokenStr[GetType()], _value.c_str());
-  out << dec << _line << ":" << _char << ": " << str;
-  free(str);
-  return out;
+ostream& CToken::print(ostream &out) const {
+    int str_len = _value.length();
+    str_len = TOKEN_STRLEN + (str_len < 64 ? str_len : 64);
+    char *str = (char*)malloc(str_len);
+    snprintf(str, str_len, ETokenStr[GetType()], _value.c_str());
+    out << dec << _line << ":" << _char << ": " << str;
+    free(str);
+    return out;
 }
 
-string CToken::escape(const string text)
-{
-  const char *t = text.c_str();
-  string s;
+string CToken::escape(const string text) {
+    const char *t = text.c_str();
+    string s;
 
-  while (*t != '\0') {
-    switch (*t) {
-      case '\n': s += "\\n";  break;
-      case '\t': s += "\\t";  break;
-      case '\0': s += "\\0";  break;
-      case '\'': s += "\\'";  break;
-      case '\"': s += "\\\""; break;
-      case '\\': s += "\\\\"; break;
-      default :  s += *t;
+    while (*t != '\0') {
+        switch (*t) {
+            case '\n': s += "\\n";  break;
+            case '\t': s += "\\t";  break;
+            case '\0': s += "\\0";  break;
+            case '\'': s += "\\'";  break;
+            case '\"': s += "\\\""; break;
+            case '\\': s += "\\\\"; break;
+            default :  s += *t;
+        }
+        t++;
     }
-    t++;
-  }
 
-  return s;
+    return s;
 }
 
-ostream& operator<<(ostream &out, const CToken &t)
-{
-  return t.print(out);
+ostream& operator<<(ostream &out, const CToken &t) {
+    return t.print(out);
 }
 
-ostream& operator<<(ostream &out, const CToken *t)
-{
-  return t->print(out);
+ostream& operator<<(ostream &out, const CToken *t) {
+    return t->print(out);
 }
 
 
@@ -190,172 +240,210 @@ ostream& operator<<(ostream &out, const CToken *t)
 //
 map<string, EToken> CScanner::keywords;
 
-CScanner::CScanner(istream *in)
-{
-  InitKeywords();
-  _in = in;
-  _delete_in = false;
-  _line = _char = 1;
-  _token = NULL;
-  _good = in->good();
-  NextToken();
+CScanner::CScanner(istream *in) {
+    InitKeywords();
+    _in = in;
+    _delete_in = false;
+    _line = _char = 1;
+    _token = NULL;
+    _good = in->good();
+    NextToken();
 }
 
-CScanner::CScanner(string in)
-{
-  InitKeywords();
-  _in = new istringstream(in);
-  _delete_in = true;
-  _line = _char = 1;
-  _token = NULL;
-  _good = true;
-  NextToken();
+CScanner::CScanner(string in) {
+    InitKeywords();
+    _in = new istringstream(in);
+    _delete_in = true;
+    _line = _char = 1;
+    _token = NULL;
+    _good = true;
+    NextToken();
 }
 
-CScanner::~CScanner()
-{
-  if (_token != NULL) delete _token;
-  if (_delete_in) delete _in;
+CScanner::~CScanner() {
+    if (_token != NULL) delete _token;
+    if (_delete_in) delete _in;
 }
 
-void CScanner::InitKeywords(void)
-{
-  if (keywords.size() == 0) {
-    int size = sizeof(Keywords) / sizeof(Keywords[0]);
-    for (int i=0; i<size; i++) {
-      keywords[Keywords[i].first] = Keywords[i].second;
+void CScanner::InitKeywords(void) {
+    if (keywords.size() == 0) {
+        int size = sizeof(Keywords) / sizeof(Keywords[0]);
+        for (int i=0; i<size; i++) {
+            keywords[Keywords[i].first] = Keywords[i].second;
+        }
     }
-  }
 }
 
-CToken CScanner::Get()
-{
-  CToken result(_token);
+CToken CScanner::Get() {
+    CToken result(_token);
 
-  EToken type = _token->GetType();
-  _good = !(type == tIOError);
+    EToken type = _token->GetType();
+    _good = !(type == tIOError);
 
-  NextToken();
-  return result;
+    NextToken();
+    return result;
 }
 
-CToken CScanner::Peek() const
-{
-  return CToken(_token);
+CToken CScanner::Peek() const {
+    return CToken(_token);
 }
 
-void CScanner::NextToken()
-{
-  if (_token != NULL) delete _token;
+void CScanner::NextToken() {
+    if (_token != NULL) delete _token;
 
-  _token = Scan();
+    _token = Scan();
 }
 
-void CScanner::RecordStreamPosition()
-{
-  _saved_line = _line;
-  _saved_char = _char;
+void CScanner::RecordStreamPosition() {
+    _saved_line = _line;
+    _saved_char = _char;
 }
 
-void CScanner::GetRecordedStreamPosition(int *lineno, int *charpos)
-{
-  *lineno = _saved_line;
-  *charpos = _saved_char;
+void CScanner::GetRecordedStreamPosition(int *lineno, int *charpos) {
+    *lineno = _saved_line;
+    *charpos = _saved_char;
 }
 
-CToken* CScanner::NewToken(EToken type, const string token)
-{
-  return new CToken(_saved_line, _saved_char, type, token);
+CToken* CScanner::NewToken(EToken type, const string token) {
+    return new CToken(_saved_line, _saved_char, type, token);
 }
 
-CToken* CScanner::Scan()
-{
-  EToken token;
-  string tokval;
-  char c;
+CToken* CScanner::Scan() {
+    EToken token;
+    string tokval;
+    char c;
 
-  while (_in->good() && IsWhite(_in->peek())) GetChar();
+    while (_in->good() && IsWhite(_in->peek())) GetChar();
 
-  RecordStreamPosition();
+    RecordStreamPosition();
 
-  if (_in->eof()) return NewToken(tEOF);
-  if (!_in->good()) return NewToken(tIOError);
+    if (_in->eof()) return NewToken(tEOF);
+    if (!_in->good()) return NewToken(tIOError);
 
-  c = GetChar();
-  tokval = c;
-  token = tUndefined;
+    c = GetChar();
+    tokval = c;
+    token = tUndefined;
 
-  switch (c) {
-    case ':':
-      if (_in->peek() == '=') {
-        tokval += GetChar();
-        token = tAssign;
-      }
-      break;
+    switch (c) {
+        case ':':
+            if (_in->peek() == '=') {
+                tokval += GetChar();
+                token = tAssignment;
+            }
+            break;
 
-    case '+':
-    case '-':
-      token = tPlusMinus;
-      break;
+        case '|':
+            if (_in->peek() == '|') {
+                tokval += GetChar();
+                token = tTermOp;
+            }
+            break;
 
-    case '*':
-    case '/':
-      token = tMulDiv;
-      break;
+        case '+':
+        case '-':
+            token = tTermOp;
+            break;
 
-    case '=':
-    case '#':
-      token = tRelOp;
-      break;
+        case '&':
+            if (_in->peek() == '&') {
+                tokval += GetChar();
+                token = tFactOp;
+            }
+            break;
 
-    case ';':
-      token = tSemicolon;
-      break;
+        case '/':
+            if (_in->peek() == '/') {
 
-    case '.':
-      token = tDot;
-      break;
+                break
+            }
 
-    case '(':
-      token = tLBrak;
-      break;
+            token = tFactOp;
+            break;
 
-    case ')':
-      token = tRBrak;
-      break;
+        case '*':
+            token = tFactOp;
+            break;
 
-    default:
-      if (('0' <= c) && (c <= '9')) {
-        token = tDigit;
-      } else
-      if (('a' <= c) && (c <= 'z')) {
-        token = tLetter;
-      } else {
-        tokval = "invalid character '";
-        tokval += c;
-        tokval += "'";
-      }
-      break;
-  }
+        case '<':
+            if (_in->peek() == '=') {
+                tokval += GetChar();
+                token = tRelOp;
+                break;
+            }
+            token = tRelOp;
+            break;
 
-  return NewToken(token, tokval);
+        case '>':
+            if (_in->peek() == '=') {
+                tokval += GetChar();
+                token = tRelOp;
+                break;
+            }
+
+            token = tRelOp;
+            break;
+
+        case '=':
+        case '#':
+            token = tRelOp;
+            break;
+
+        default:
+            if (('0' <= c) && (c <= '9')) {
+                token = tNumber;
+
+                do {
+                    tokval += c;
+                    c = _in->peek();
+                } while (('0' <= c) && (c <= '9'));
+
+            } else
+                if (('a' <= c) && (c <= 'z')) {
+                    token = tString;
+                } else {
+                    tokval = "invalid character '";
+                    tokval += c;
+                    tokval += "'";
+                }
+            break;
+    }
+
+    return NewToken(token, tokval);
 }
 
-char CScanner::GetChar()
-{
-  char c = _in->get();
-  if (c == '\n') { _line++; _char = 1; } else _char++;
-  return c;
+char CScanner::GetChar() {
+    char c = _in->get();
+    if (c == '\n') { _line++; _char = 1; } else _char++;
+    return c;
 }
 
-string CScanner::GetChar(int n)
-{
-  string str;
-  for (int i=0; i<n; i++) str += GetChar();
-  return str;
+string CScanner::GetChar(int n) {
+    string str;
+    for (int i=0; i<n; i++) str += GetChar();
+    return str;
 }
 
-bool CScanner::IsWhite(char c) const
-{
-  return ((c == ' ') || (c == '\n'));
+string CScanner::StrCmp(string input) {
+    string str;
+
+    for (int i=0; i < input.size(); i++) {
+        str += _in->peek();
+    }
+    if (input.compare(str) == 0) {
+        return GetChar(input.size());
+    }
+
+    return NULL;
+}
+
+bool CScanner::IsComment(char c) const {
+    if (c == '/' && _in->peek() == '/') {
+        return true;
+    }
+
+    return false;
+}
+
+bool CScanner::IsWhite(char c) const {
+    return ((c == ' ') || (c == '\n') || (c == '\t'));
 }

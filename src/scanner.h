@@ -49,16 +49,37 @@ using namespace std;
 /// each member of this enumeration represents a token in SnuPL/0
 ///
 enum EToken {
-  tDigit=0,                         ///< a digit
-  tLetter,                          ///< a letter
-  tPlusMinus,                       ///< '+' or '-'
-  tMulDiv,                          ///< '*' or '/'
+  tAssignment = 0,
+  tBaseType,
+  tBoolean,
+  tChar,
+  tExpression,
+  tFactOp,
+  tFactor,
+  tFormalParam,
+  tFunctionDecl,
+  tIdent,
+  tIfStatement,
+  tModule,
+  tNumber,
+  tProcedureDecl,
+  tQualident,
   tRelOp,                           ///< relational operator
-  tAssign,                          ///< assignment operator
-  tSemicolon,                       ///< a semicolon
-  tDot,                             ///< a dot
-  tLBrak,                           ///< a left bracket
-  tRBrak,                           ///< a right bracket
+  tReturnStatement,
+  tSimpleExpr,
+  tStatSequence,
+  tStatement,
+  tString,
+  tSubroutineBody,
+  tSubroutineCall,
+  tSubroutineDecl,
+  tTerm,
+  tTermOp,
+  tType,
+  tVarDecl,
+  tVarDeclSequence,
+  tVarDeclaration,
+  tWhileStatement,
 
   tEOF,                             ///< end of file
   tIOError,                         ///< I/O error
@@ -273,6 +294,19 @@ class CScanner {
     /// @param n number of characters to read
     /// @retval string containing the characters read
     string GetChar(int n);
+
+    /// @brief Compare strlen(input) characters from the input stream to tokenString
+    ///
+    /// @param input string to compare to.
+    /// @retval input string if it is the same.
+    string StrCmp(string input);
+
+    /// @brief check if a comment is present
+    ///
+    /// @param c character
+    /// @retval true character is comment
+    /// @retval false character is not comment
+    bool IsComment(char c) const;
 
     /// @brief check if a character is a white character
     ///
