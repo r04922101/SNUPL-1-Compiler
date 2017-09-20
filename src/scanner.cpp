@@ -50,43 +50,46 @@ using namespace std;
 #define TOKEN_STRLEN 32
 
 char ETokenName[][TOKEN_STRLEN] = {
-    "tAssignment",
-    "tBaseType",
-    "tBegin",
-    "tBoolean",
-    "tChar",
-    "tEnd",
-    "tExpression",
-    "tFactOp",
-    "tFactor",
-    "tFormalParam",
-    "tFunctionDecl",
-    "tIdent",
-    "tIfStatement",
-    "tModule",
-    "tNumber",
-    "tProcedureDecl",
-    "tQualident",
-    "tRelOp",                         ///< relational operator
-    "tReturnStatement",
-    "tSimpleExpr",
-    "tStatSequence",
-    "tStatement",
-    "tString",
-    "tSubroutineBody",
-    "tSubroutineCall",
-    "tSubroutineDecl",
-    "tTerm",
-    "tTermOp",
-    "tType",
-    "tVarDecl",
-    "tVarDeclSequence",
-    "tVarDeclaration",
-    "tWhileStatement",
+  "tIdent",                           ///< ident
+  "tNumber",                          ///< number
+  "tBoolConst",                       ///< boolean constant
+  "tCharConst",                       ///< character constant
+  "tString",                          ///< string constant
+  "tPlusMinus",                       ///< '+' or '-'
+  "tMulDiv",                          ///< '*' or '/'
+  "tOr",                              ///< '||'
+  "tAnd",                             ///< '&&'
+  "tNot",                             ///< '!'
+  "tRelOp",                           ///< relational operator
+  "tAssign",                          ///< assignment operator
+  "tComma",                           ///< a comma
+  "tSemicolon",                       ///< a semicolon
+  "tColon",                           ///< a colon
+  "tDot",                             ///< a dot
+  "tLParens",                         ///< a left parenthesis
+  "tRParens",                         ///< a right parenthesis
+  "tLBrak",                           ///< a left bracket
+  "tRBrak",                           ///< a right bracket
 
-    "tEOF",                           ///< end of file
-    "tIOError",                       ///< I/O error
-    "tUndefined"                    ///< undefined
+  "tModule",                          ///< 'module'
+  "tProcedure",                       ///< 'procedure'
+  "tFunction",                        ///< 'function'
+  "tVarDecl",                         ///< 'var'
+  "tInteger",                         ///< 'integer'
+  "tBoolean",                         ///< 'boolean'
+  "tChar",                            ///< 'char'
+  "tBegin",                           ///< 'begin'
+  "tEnd",                             ///< 'end'
+  "tIf",                              ///< 'if'
+  "tThen",                            ///< 'then'
+  "tElse",                            ///< 'else'
+  "tWhile",                           ///< 'while'
+  "tDo",                              ///< 'do'
+  "tReturn",                          ///< 'return'
+
+  "tEOF",                             ///< end of file
+  "tIOError",                         ///< I/O error
+  "tUndefined",                       ///< undefined
 };
 
 
@@ -95,41 +98,46 @@ char ETokenName[][TOKEN_STRLEN] = {
 //
 
 char ETokenStr[][TOKEN_STRLEN] = {
-    "tAssignment",
-    "tBaseType (%s)",
-    "tBoolean (%s)",
-    "tChar (%s)",
-    "tExpression",
-    "tFactOp (%s)",
-    "tFactor (%s)",
-    "tFormalParam",
-    "tFunctionDecl",
-    "tIdent (%s)",
-    "tIfStatement (%s)",
-    "tModule",
-    "tNumber (%s)",
-    "tProcedureDecl",
-    "tQualident (%s)",
-    "tRelOp (%s)",                    ///< relational operator
-    "tReturnStatement",
-    "tSimpleExpr",
-    "tStatSequence",
-    "tStatement",
-    "tString (%s)",
-    "tSubroutineBody",
-    "tSubroutineCall",
-    "tSubroutineDecl",
-    "tTerm",
-    "tTermOp (%s)",
-    "tType (%s)",
-    "tVarDecl",
-    "tVarDeclSequence",
-    "tVarDeclaration",
-    "tWhileStatement",
+  "tIdent (%s)",                           ///< ident
+  "tNumber (%s)",                          ///< number
+  "tBoolConst (%s)",                       ///< boolean constant
+  "tCharConst (%s)",                       ///< character constant
+  "tString (%s)",                          ///< string constant
+  "tPlusMinus",                       ///< '+' or '-'
+  "tMulDiv",                          ///< '*' or '/'
+  "tOr",                              ///< '||'
+  "tAnd",                             ///< '&&'
+  "tNot",                             ///< '!'
+  "tRelOp",                           ///< relational operator
+  "tAssign",                          ///< assignment operator
+  "tComma",                           ///< a comma
+  "tSemicolon",                       ///< a semicolon
+  "tColon",                           ///< a colon
+  "tDot",                             ///< a dot
+  "tLParens",                         ///< a left parenthesis
+  "tRParens",                         ///< a right parenthesis
+  "tLBrak",                           ///< a left bracket
+  "tRBrak",                           ///< a right bracket
 
-    "tEOF",                           ///< end of file
-    "tIOError",                       ///< I/O error
-    "tUndefined (%s)"                 ///< undefined
+  "tModule",                          ///< 'module'
+  "tProcedure",                       ///< 'procedure'
+  "tFunction",                        ///< 'function'
+  "tVarDecl",                         ///< 'var'
+  "tInteger",                         ///< 'integer'
+  "tBoolean",                         ///< 'boolean'
+  "tChar",                            ///< 'char'
+  "tBegin",                           ///< 'begin'
+  "tEnd",                             ///< 'end'
+  "tIf",                              ///< 'if'
+  "tThen",                            ///< 'then'
+  "tElse",                            ///< 'else'
+  "tWhile",                           ///< 'while'
+  "tDo",                              ///< 'do'
+  "tReturn",                          ///< 'return'
+
+  "tEOF",                             ///< end of file
+  "tIOError",                         ///< I/O error
+  "tUndefined (%s)",                       ///< undefined
 };
 
 
@@ -138,22 +146,22 @@ char ETokenStr[][TOKEN_STRLEN] = {
 //
 pair<const char*, EToken> Keywords[] = {
     {"module", tModule },
-    {"begin", tSubroutineBody },
-    {"end" , tSubroutineBody },
-    {"true", tBoolean },    // done
-    {"false", tBoolean },   // done
-    {"if", tIfStatement},   // done
-    {"then", tIfStatement},
-    {"else", tIfStatement},
-    {"while", tWhileStatement},
-    {"do", tWhileStatement},
-    {"return", tReturnStatement},
-    {"var", tVarDeclaration},
-    {"procedure", tProcedureDecl},
-    {"function", tFunctionDecl},
-    {"boolean", tBaseType}, // done
-    {"integer", tBaseType}, // done
-    {"char", tBaseType},    // done
+    {"begin", tBegin },
+    {"end" , tEnd },
+    {"true", tBoolConst },    // done
+    {"false", tBoolConst },   // done
+    {"if", tIf},   // done
+    {"then", tThen},
+    {"else", tElse},
+    {"while", tWhile},
+    {"do", tDo},
+    {"return", tReturn},
+    {"var", tVarDecl},
+    {"procedure", tProcedure},
+    {"function", tFunction},
+    {"boolean", tBoolean}, // done
+    {"integer", tInteger}, // done
+    {"char", tChar},    // done
 };
 
 
@@ -328,26 +336,26 @@ CToken* CScanner::Scan() {
         case ':':
             if (_in->peek() == '=') {
                 tokval += GetChar();
-                token = tAssignment;
+                token = tAssign;
             }
             break;
 
         case '|':
             if (_in->peek() == '|') {
                 tokval += GetChar();
-                token = tTermOp;
+                token = tOr;
             }
             break;
 
         case '+':
         case '-':
-            token = tTermOp;
+            token = tPlusMinus;
             break;
 
         case '&':
             if (_in->peek() == '&') {
                 tokval += GetChar();
-                token = tFactOp;
+                token = tAnd;
             }
             break;
 
@@ -357,11 +365,11 @@ CToken* CScanner::Scan() {
                 break;
             }
 
-            token = tFactOp;
+            token = tMulDiv;
             break;
 
         case '*':
-            token = tFactOp;
+            token = tMulDiv;
             break;
 
         case '<':
@@ -391,14 +399,14 @@ CToken* CScanner::Scan() {
         case 'b':
             if(Peek(6) == "oolean"){
                 tokval += GetChar(6);
-                token = tBaseType;
+                token = tBoolean;
             }
             break;
 
         case 'c':
             if(Peek(3) == "har"){
                 tokval += GetChar(3);
-                token = tBaseType;
+                token = tChar;
             }
             break;
 
@@ -412,11 +420,11 @@ CToken* CScanner::Scan() {
         case 'i':
             if(Peek(6) == "nteger"){
                 tokval += GetChar(6);
-                token = tBaseType;
+                token = tInteger;
             }
             else if(_in->peek() == 'f'){
                 tokval += GetChar();
-                token = tIfStatement;
+                token = tIf;
             }
             break;
 

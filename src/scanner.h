@@ -49,37 +49,42 @@ using namespace std;
 /// each member of this enumeration represents a token in SnuPL/0
 ///
 enum EToken {
-  tAssignment = 0,                  ///< :=
-  tBaseType,                        ///< "boolean" | "char" | "integer"
-  tBoolean,
-  tChar,
-  tExpression,
-  tFactOp,
-  tFactor,
-  tFormalParam,
-  tFunctionDecl,
-  tIdent,
-  tIfStatement,
-  tModule,
-  tNumber,
-  tProcedureDecl,
-  tQualident,
+  tIdent=0,                         ///< ident
+  tNumber,                          ///< number
+  tBoolConst,                       ///< boolean constant
+  tCharConst,                       ///< character constant
+  tString,                          ///< string constant
+  tPlusMinus,                       ///< '+' or '-'
+  tMulDiv,                          ///< '*' or '/'
+  tOr,                              ///< '||'
+  tAnd,                             ///< '&&'
+  tNot,                             ///< '!'
   tRelOp,                           ///< relational operator
-  tReturnStatement,
-  tSimpleExpr,
-  tStatSequence,
-  tStatement,
-  tString,
-  tSubroutineBody,
-  tSubroutineCall,
-  tSubroutineDecl,
-  tTerm,
-  tTermOp,
-  tType,
-  tVarDecl,
-  tVarDeclSequence,
-  tVarDeclaration,
-  tWhileStatement,
+  tAssign,                          ///< assignment operator
+  tComma,                           ///< a comma
+  tSemicolon,                       ///< a semicolon
+  tColon,                           ///< a colon
+  tDot,                             ///< a dot
+  tLParens,                         ///< a left parenthesis
+  tRParens,                         ///< a right parenthesis
+  tLBrak,                           ///< a left bracket
+  tRBrak,                           ///< a right bracket
+
+  tModule,                          ///< 'module'
+  tProcedure,                       ///< 'procedure'
+  tFunction,                        ///< 'function'
+  tVarDecl,                         ///< 'var'
+  tInteger,                         ///< 'integer'
+  tBoolean,                         ///< 'boolean'
+  tChar,                            ///< 'char'
+  tBegin,                           ///< 'begin'
+  tEnd,                             ///< 'end'
+  tIf,                              ///< 'if'
+  tThen,                            ///< 'then'
+  tElse,                            ///< 'else'
+  tWhile,                           ///< 'while'
+  tDo,                              ///< 'do'
+  tReturn,                          ///< 'return'
 
   tEOF,                             ///< end of file
   tIOError,                         ///< I/O error
