@@ -333,6 +333,7 @@ CToken* CScanner::Scan() {
     token = tUndefined;
 
     switch (c) {
+
         case ':':
             if (_in->peek() == '=') {
                 tokval += GetChar();
@@ -449,6 +450,14 @@ CToken* CScanner::Scan() {
                 token = tChar;
                 // || _in -> peek() == '\n' || _in -> peek() == '\t' || _in -> peek() == '\"' || _in -> peek() == '\'' || _in -> peek() == '\\' || _in -> peek() == '\0')
             }
+            break;
+
+        case '"':
+            do {
+                c = _in->get();
+                if (_in->eof()) return NewToken(tEOF);
+                if (!_in->good()) return NewToken(tIOError);
+            } while(c != '"');
             break;
 
         default:
