@@ -179,7 +179,11 @@ CToken::CToken() {
 
 CToken::CToken(int line, int charpos, EToken type, const string value) {
     _type = type;
-    _value = escape(value);
+    if (!( type == tString || type == tCharConst )) {
+        _value = escape(value);
+    } else {
+        _value = value;
+    }
     _line = line;
     _char = charpos;
 }
@@ -438,16 +442,15 @@ label:
 
         case '\'':
             if(_in -> peek() >= 32 && _in -> peek() <= 126 && _in -> peek() != 92) {
-                tokval += GetChar();
-                tokval += GetChar();
                 token = tCharConst;
+                tokval = GetChar();
+                GetChar();
             }
             else if(_in -> peek() == '\\'){
-
-                tokval += GetChar();
-                tokval += GetChar();
-                tokval += GetChar();
                 token = tCharConst;
+                tokval = GetChar();
+                tokval += GetChar();
+                GetChar();
                 // || _in -> peek() == '\n' || _in -> peek() == '\t' || _in -> peek() == '\"' || _in -> peek() == '\'' || _in -> peek() == '\\' || _in -> peek() == '\0')
             }
             break;
@@ -460,7 +463,6 @@ label:
                 tokval += c;
             } while(c != '"');
             token = tString;
-            tokval = tokval.substr(1, tokval.length() - 2);
             break;
 
         default:
@@ -471,7 +473,7 @@ label:
                     c = GetChar();
                     tokval += c;
                 }
-            } else if ((('a' <= c) && (c <= 'z')) || c == '_'){
+            } else if ((('a' <= c) && (c <= 'z')) || c == '_' || (('A' <= c) && (c <= 'Z'))){
                 token = tIdent;
                 while (c = _in->peek(), (('0' <= c) && (c <= '9')) ||
                         (('a' <= c) && (c <= 'z')) || (('A' <= c) && (c <= 'Z')) ||
@@ -479,10 +481,6 @@ label:
                     c = GetChar();
                     tokval += c;
 
-                    if (IsKeyword(tokval)) {
-                        token = keywords[tokval];
-                        break;
-                    }
                 }
             } else {
                 tokval = "invalid character '";
@@ -492,6 +490,9 @@ label:
             break;
     }
 
+    if (IsKeyword(tokval)) {
+        token = keywords[tokval];
+    }
     return NewToken(token, tokval);
 }
 
@@ -546,14 +547,6 @@ bool CScanner::IsKeyword(string input){
     if(keywords.find(input) == keywords.end())
         return false;
     return true;
-}
-
-bool CScanner::IsComment(char c) const {
-    if (c == '/' && _in->peek() == '/') {
-        return true;
-    }
-
-    return false;
 }
 
 bool CScanner::IsWhite(char c) const {

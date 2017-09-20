@@ -323,13 +323,6 @@ class CScanner {
     /// @retval false string is not keyword
     bool IsKeyword(string input);
 
-    /// @brief check if a comment is present
-    ///
-    /// @param c character
-    /// @retval true character is comment
-    /// @retval false character is not comment
-    bool IsComment(char c) const;
-
     /// @brief check if a character is a white character
     ///
     /// @param c character
