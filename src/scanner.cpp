@@ -87,6 +87,7 @@ char ETokenName[][TOKEN_STRLEN] = {
   "tDo",                              ///< 'do'
   "tReturn",                          ///< 'return'
 
+  "tComment",                         ///< comment ('// .... \n')
   "tEOF",                             ///< end of file
   "tIOError",                         ///< I/O error
   "tUndefined",                       ///< undefined
@@ -135,6 +136,7 @@ char ETokenStr[][TOKEN_STRLEN] = {
   "tDo",                              ///< 'do'
   "tReturn",                          ///< 'return'
 
+  "tComment",                         ///< comment ('// .... \n')
   "tEOF",                             ///< end of file
   "tIOError",                         ///< I/O error
   "tUndefined (%s)",                       ///< undefined
@@ -321,6 +323,7 @@ CToken* CScanner::Scan() {
     string tokval;
     char c;
 
+label:
     while (_in->good() && IsWhite(_in->peek())) GetChar();
 
     RecordStreamPosition();
@@ -333,6 +336,16 @@ CToken* CScanner::Scan() {
     token = tUndefined;
 
     switch (c) {
+        case '/':
+            if (_in->peek() == '/') {
+                token = tComment;
+                GetChar();
+                IgnoreRestofLine();
+                goto label;
+            }
+
+            token = tMulDiv;
+            break;
 
         case ':':
             if (_in->peek() == '=') {
@@ -358,15 +371,6 @@ CToken* CScanner::Scan() {
                 tokval += GetChar();
                 token = tAnd;
             }
-            break;
-
-        case '/':
-            if (_in->peek() == '/') {
-                    IgnoreRestofLine();
-                break;
-            }
-
-            token = tMulDiv;
             break;
 
         case '*':
@@ -397,45 +401,6 @@ CToken* CScanner::Scan() {
             token = tRelOp;
             break;
 
-        case 'b':
-            if(Peek(6) == "oolean"){
-                tokval += GetChar(6);
-                token = tBoolean;
-            }
-            break;
-
-        case 'c':
-            if(Peek(3) == "har"){
-                tokval += GetChar(3);
-                token = tChar;
-            }
-            break;
-
-        case 'f':
-            if(Peek(4) == "alse"){
-                tokval += GetChar(4);
-                token = tBoolean;
-            }
-            break;
-
-        case 'i':
-            if(Peek(6) == "nteger"){
-                tokval += GetChar(6);
-                token = tInteger;
-            }
-            else if(_in->peek() == 'f'){
-                tokval += GetChar();
-                token = tIf;
-            }
-            break;
-
-        case 't':
-            if(Peek(3) == "rue"){
-                tokval += GetChar(3);
-                token = tBoolean;
-            }
-            break;
-
         case '\'':
             if(_in -> peek() >= 32 && _in -> peek() <= 126 && _in -> peek() != 92) {
                 tokval += GetChar();
@@ -464,19 +429,28 @@ CToken* CScanner::Scan() {
             if (('0' <= c) && (c <= '9')) {
                 token = tNumber;
 
-                do {
+                while (c = _in->peek(), ('0' <= c) && (c <= '9') ) {
+                    c = GetChar();
                     tokval += c;
-                    c = _in->peek();
-                } while (('0' <= c) && (c <= '9'));
-
-            } else
-                if (('a' <= c) && (c <= 'z')) {
-                    token = tString;
-                } else {
-                    tokval = "invalid character '";
-                    tokval += c;
-                    tokval += "'";
                 }
+            } else if ((('a' <= c) && (c <= 'z'))){
+                token = tIdent;
+                while (c = _in->peek(), (('0' <= c) && (c <= '9')) ||
+                        (('a' <= c) && (c <= 'z')) || (('A' <= c) && (c <= 'Z')) ||
+                        ('_' == c)) {
+                    c = GetChar();
+                    tokval += c;
+
+                    if (IsKeyword(tokval)) {
+                        token = keywords[tokval];
+                        break;
+                    }
+                }
+            } else {
+                tokval = "invalid character '";
+                tokval += c;
+                tokval += "'";
+            }
             break;
     }
 

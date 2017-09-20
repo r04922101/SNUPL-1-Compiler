@@ -86,6 +86,7 @@ enum EToken {
   tDo,                              ///< 'do'
   tReturn,                          ///< 'return'
 
+  tComment,                         ///< comment ('// .... \n')
   tEOF,                             ///< end of file
   tIOError,                         ///< I/O error
   tUndefined,                       ///< undefined
