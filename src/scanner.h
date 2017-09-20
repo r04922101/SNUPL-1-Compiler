@@ -295,6 +295,9 @@ class CScanner {
     /// @retval string containing the characters read
     string GetChar(int n);
 
+    /// @brief Consume input until \n
+    void IgnoreRestofLine();
+
     /// @brief Compare strlen(input) characters from the input stream to tokenString
     ///
     /// @param input string to compare to.

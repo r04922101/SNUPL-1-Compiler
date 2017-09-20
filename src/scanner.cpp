@@ -151,9 +151,9 @@ pair<const char*, EToken> Keywords[] = {
     {"var", tVarDeclaration},
     {"procedure", tProcedureDecl},
     {"function", tFunctionDecl},
-    {"boolean", tBaseType}, // done 
+    {"boolean", tBaseType}, // done
     {"integer", tBaseType}, // done
-    {"char", tBaseType},    // done 
+    {"char", tBaseType},    // done
 };
 
 
@@ -353,7 +353,7 @@ CToken* CScanner::Scan() {
 
         case '/':
             if (_in->peek() == '/') {
-
+                    IgnoreRestofLine();
                 break;
             }
 
@@ -472,6 +472,16 @@ char CScanner::GetChar() {
     return c;
 }
 
+void CScanner::IgnoreRestofLine() {
+    char c;
+    do {
+        c = _in->get();
+        if (c == '\n') { _line++; _char = 1; } else _char++;
+    } while(c != '\n');
+
+    return;
+}
+
 string CScanner::GetChar(int n) {
     string str;
     for (int i=0; i<n; i++) str += GetChar();
@@ -481,7 +491,7 @@ string CScanner::GetChar(int n) {
 string CScanner::StrCmp(string input) {
     string str;
 
-    for (int i=0; i < input.size(); i++) {
+    for (int i=0; i < (int)input.size(); i++) {
         str += _in->peek();
     }
     if (input.compare(str) == 0) {
