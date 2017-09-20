@@ -419,10 +419,13 @@ label:
 
         case '"':
             do {
-                c = _in->get();
                 if (_in->eof()) return NewToken(tEOF);
                 if (!_in->good()) return NewToken(tIOError);
+                c = GetChar();
+                tokval += c;
             } while(c != '"');
+            token = tString;
+            tokval = tokval.substr(1, tokval.length() - 2);
             break;
 
         default:
