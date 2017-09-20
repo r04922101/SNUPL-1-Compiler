@@ -104,12 +104,12 @@ char ETokenStr[][TOKEN_STRLEN] = {
   "tBoolConst (%s)",                       ///< boolean constant
   "tCharConst (%s)",                       ///< character constant
   "tString (%s)",                          ///< string constant
-  "tPlusMinus",                       ///< '+' or '-'
-  "tMulDiv",                          ///< '*' or '/'
+  "tPlusMinus (%s)",                       ///< '+' or '-'
+  "tMulDiv (%s)",                          ///< '*' or '/'
   "tOr",                              ///< '||'
   "tAnd",                             ///< '&&'
   "tNot",                             ///< '!'
-  "tRelOp",                           ///< relational operator
+  "tRelOp (%s)",                           ///< relational operator
   "tAssign",                          ///< assignment operator
   "tComma",                           ///< a comma
   "tSemicolon",                       ///< a semicolon
@@ -347,13 +347,23 @@ label:
             token = tMulDiv;
             break;
 
+        case ';':
+            token = tSemicolon;
+            break;
+
+        case '!':
+            token = tNot;
+            break;
+
         case ':':
             if (_in->peek() == '=') {
                 tokval += GetChar();
                 token = tAssign;
+                break;
             }
-            break;
 
+            token = tColon;
+            break;
         case '|':
             if (_in->peek() == '|') {
                 tokval += GetChar();
@@ -375,6 +385,31 @@ label:
 
         case '*':
             token = tMulDiv;
+            break;
+
+
+        case ',':
+            token = tComma;
+            break;
+
+        case '.':
+            token = tDot;
+            break;
+
+        case '(':
+            token = tLParens;
+            break;
+
+        case ')':
+            token = tRParens;
+            break;
+
+        case '[':
+            token = tLBrak;
+            break;
+
+        case ']':
+            token = tRBrak;
             break;
 
         case '<':
@@ -405,14 +440,14 @@ label:
             if(_in -> peek() >= 32 && _in -> peek() <= 126 && _in -> peek() != 92) {
                 tokval += GetChar();
                 tokval += GetChar();
-                token = tChar;
+                token = tCharConst;
             }
             else if(_in -> peek() == '\\'){
 
                 tokval += GetChar();
                 tokval += GetChar();
                 tokval += GetChar();
-                token = tChar;
+                token = tCharConst;
                 // || _in -> peek() == '\n' || _in -> peek() == '\t' || _in -> peek() == '\"' || _in -> peek() == '\'' || _in -> peek() == '\\' || _in -> peek() == '\0')
             }
             break;
@@ -436,7 +471,7 @@ label:
                     c = GetChar();
                     tokval += c;
                 }
-            } else if ((('a' <= c) && (c <= 'z'))){
+            } else if ((('a' <= c) && (c <= 'z')) || c == '_'){
                 token = tIdent;
                 while (c = _in->peek(), (('0' <= c) && (c <= '9')) ||
                         (('a' <= c) && (c <= 'z')) || (('A' <= c) && (c <= 'Z')) ||
