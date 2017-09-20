@@ -49,8 +49,8 @@ using namespace std;
 /// each member of this enumeration represents a token in SnuPL/0
 ///
 enum EToken {
-  tAssignment = 0,
-  tBaseType,
+  tAssignment = 0,                  ///< :=
+  tBaseType,                        ///< "boolean" | "char" | "integer"
   tBoolean,
   tChar,
   tExpression,
@@ -300,6 +300,19 @@ class CScanner {
     /// @param input string to compare to.
     /// @retval input string if it is the same.
     string StrCmp(string input);
+
+    /// @brief peek the next 'n' characters from the input stream
+    ///
+    /// @param n number of characters to peek
+    /// @retval string containing the characters peeked
+    string Peek(int n);
+
+    /// @brief check if the input string is keyword
+    ///
+    /// @param input string to check
+    /// @retval true string is keyword
+    /// @retval false string is not keyword
+    bool IsKeyword(string input);
 
     /// @brief check if a comment is present
     ///

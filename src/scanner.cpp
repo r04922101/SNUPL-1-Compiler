@@ -47,7 +47,7 @@ using namespace std;
 //------------------------------------------------------------------------------
 // token names
 //
-#define TOKEN_STRLEN 16
+#define TOKEN_STRLEN 32
 
 char ETokenName[][TOKEN_STRLEN] = {
     "tAssignment",
@@ -86,7 +86,7 @@ char ETokenName[][TOKEN_STRLEN] = {
 
     "tEOF",                           ///< end of file
     "tIOError",                       ///< I/O error
-    "tUndefined",                     ///< undefined
+    "tUndefined"                    ///< undefined
 };
 
 
@@ -105,7 +105,7 @@ char ETokenStr[][TOKEN_STRLEN] = {
     "tFormalParam",
     "tFunctionDecl",
     "tIdent (%s)",
-    "tIfStatement",
+    "tIfStatement (%s)",
     "tModule",
     "tNumber (%s)",
     "tProcedureDecl",
@@ -129,7 +129,7 @@ char ETokenStr[][TOKEN_STRLEN] = {
 
     "tEOF",                           ///< end of file
     "tIOError",                       ///< I/O error
-    "tUndefined (%s)",                ///< undefined
+    "tUndefined (%s)"                 ///< undefined
 };
 
 
@@ -140,9 +140,9 @@ pair<const char*, EToken> Keywords[] = {
     {"module", tModule },
     {"begin", tSubroutineBody },
     {"end" , tSubroutineBody },
-    {"true", tBoolean },
-    {"false", tBoolean },
-    {"if", tIfStatement},
+    {"true", tBoolean },    // done
+    {"false", tBoolean },   // done
+    {"if", tIfStatement},   // done
     {"then", tIfStatement},
     {"else", tIfStatement},
     {"while", tWhileStatement},
@@ -151,9 +151,9 @@ pair<const char*, EToken> Keywords[] = {
     {"var", tVarDeclaration},
     {"procedure", tProcedureDecl},
     {"function", tFunctionDecl},
-    {"boolean", tBaseType},
-    {"integer", tBaseType},
-    {"char", tBaseType},
+    {"boolean", tBaseType}, // done 
+    {"integer", tBaseType}, // done
+    {"char", tBaseType},    // done 
 };
 
 
@@ -354,7 +354,7 @@ CToken* CScanner::Scan() {
         case '/':
             if (_in->peek() == '/') {
 
-                break
+                break;
             }
 
             token = tFactOp;
@@ -386,6 +386,61 @@ CToken* CScanner::Scan() {
         case '=':
         case '#':
             token = tRelOp;
+            break;
+
+        case 'b':
+            if(Peek(6) == "oolean"){
+                tokval += GetChar(6);
+                token = tBaseType;
+            }
+            break;
+
+        case 'c':
+            if(Peek(3) == "har"){
+                tokval += GetChar(3);
+                token = tBaseType;
+            }
+            break;
+
+        case 'f':
+            if(Peek(4) == "alse"){
+                tokval += GetChar(4);
+                token = tBoolean;
+            }
+            break;
+
+        case 'i':
+            if(Peek(6) == "nteger"){
+                tokval += GetChar(6);
+                token = tBaseType;
+            }
+            else if(_in->peek() == 'f'){
+                tokval += GetChar();
+                token = tIfStatement;
+            }
+            break;
+
+        case 't':
+            if(Peek(3) == "rue"){
+                tokval += GetChar(3);
+                token = tBoolean;
+            }
+            break;
+
+        case '\'':
+            if(_in -> peek() >= 32 && _in -> peek() <= 126 && _in -> peek() != 92) {
+                tokval += GetChar();
+                tokval += GetChar();
+                token = tChar;
+            }
+            else if(_in -> peek() == '\\'){
+
+                tokval += GetChar();
+                tokval += GetChar();
+                tokval += GetChar();
+                token = tChar;
+                // || _in -> peek() == '\n' || _in -> peek() == '\t' || _in -> peek() == '\"' || _in -> peek() == '\'' || _in -> peek() == '\\' || _in -> peek() == '\0')
+            }
             break;
 
         default:
@@ -434,6 +489,24 @@ string CScanner::StrCmp(string input) {
     }
 
     return NULL;
+}
+
+string CScanner::Peek(int n) {
+    string str;
+    for(int i = 0; i < n; i++){
+        str += _in -> get();
+    }
+
+    for(int i = n - 1; i >= 0; i--){
+        _in -> putback(str.at(i));
+    }
+    return str;
+}
+
+bool CScanner::IsKeyword(string input){
+    if(keywords.find(input) == keywords.end())
+        return false;
+    return true;
 }
 
 bool CScanner::IsComment(char c) const {
