@@ -441,17 +441,31 @@ label:
             break;
 
         case '\'':
-            if(_in -> peek() >= 32 && _in -> peek() <= 126 && _in -> peek() != 92) {
+            char d;
+            if(_in -> peek() >= ' ' && _in -> peek() <= '~') {
                 token = tCharConst;
                 tokval = GetChar();
-                GetChar();
-            }
-            else if(_in -> peek() == '\\'){
-                token = tCharConst;
-                tokval = GetChar();
-                tokval += GetChar();
-                GetChar();
-                // || _in -> peek() == '\n' || _in -> peek() == '\t' || _in -> peek() == '\"' || _in -> peek() == '\'' || _in -> peek() == '\\' || _in -> peek() == '\0')
+                if(tokval == "\\") {
+                    d = _in->peek();
+                    // || _in -> peek() == '\n' || _in -> peek() == '\t'
+                    // || _in -> peek() == '\''
+                    // || _in -> peek() == '\\' || _in -> peek() == '\0')
+                    if (d == 'n' || d == 't' || d == '\\' || d == '0' || d == '\'') {
+                        tokval += GetChar();
+                    } else {
+                        token = tUndefined;
+                        tokval = "Invalid escape code " + tokval ;
+                        return NewToken(token, tokval);
+                    }
+                }
+                d = _in->peek();
+                if (d != '\'') {
+                    token = tUndefined;
+                    tokval = "Character constant not closed. " + tokval;
+                    return NewToken(token, tokval);
+                } else {
+                    GetChar();
+                }
             }
             break;
 
