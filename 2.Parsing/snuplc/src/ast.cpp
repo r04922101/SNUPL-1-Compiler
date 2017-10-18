@@ -51,202 +51,202 @@ using namespace std;
 int CAstNode::_global_id = 0;
 
 CAstNode::CAstNode(CToken token)
-  : _token(token), _addr(NULL)
+    : _token(token), _addr(NULL)
 {
-  _id = _global_id++;
+    _id = _global_id++;
 }
 
 CAstNode::~CAstNode(void)
 {
-  if (_addr != NULL) delete _addr;
+    if (_addr != NULL) delete _addr;
 }
 
 int CAstNode::GetID(void) const
 {
-  return _id;
+    return _id;
 }
 
 CToken CAstNode::GetToken(void) const
 {
-  return _token;
+    return _token;
 }
 
 const CType* CAstNode::GetType(void) const
 {
-  return CTypeManager::Get()->GetNull();
+    return CTypeManager::Get()->GetNull();
 }
 
 string CAstNode::dotID(void) const
 {
-  ostringstream out;
-  out << "node" << dec << _id;
-  return out.str();
+    ostringstream out;
+    out << "node" << dec << _id;
+    return out.str();
 }
 
 string CAstNode::dotAttr(void) const
 {
-  return " [label=\"" + dotID() + "\"]";
+    return " [label=\"" + dotID() + "\"]";
 }
 
 void CAstNode::toDot(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  out << ind << dotID() << dotAttr() << ";" << endl;
+    out << ind << dotID() << dotAttr() << ";" << endl;
 }
 
 CTacAddr* CAstNode::GetTacAddr(void) const
 {
-  return _addr;
+    return _addr;
 }
 
 ostream& operator<<(ostream &out, const CAstNode &t)
 {
-  return t.print(out);
+    return t.print(out);
 }
 
 ostream& operator<<(ostream &out, const CAstNode *t)
 {
-  return t->print(out);
+    return t->print(out);
 }
 
 //------------------------------------------------------------------------------
 // CAstScope
 //
 CAstScope::CAstScope(CToken t, const string name, CAstScope *parent)
-  : CAstNode(t), _name(name), _symtab(NULL), _parent(parent), _statseq(NULL),
+    : CAstNode(t), _name(name), _symtab(NULL), _parent(parent), _statseq(NULL),
     _cb(NULL)
 {
-  if (_parent != NULL) _parent->AddChild(this);
+    if (_parent != NULL) _parent->AddChild(this);
 }
 
 CAstScope::~CAstScope(void)
 {
-  delete _symtab;
-  delete _statseq;
-  delete _cb;
+    delete _symtab;
+    delete _statseq;
+    delete _cb;
 }
 
 const string CAstScope::GetName(void) const
 {
-  return _name;
+    return _name;
 }
 
 CAstScope* CAstScope::GetParent(void) const
 {
-  return _parent;
+    return _parent;
 }
 
 size_t CAstScope::GetNumChildren(void) const
 {
-  return _children.size();
+    return _children.size();
 }
 
 CAstScope* CAstScope::GetChild(size_t i) const
 {
-  assert(i < _children.size());
-  return _children[i];
+    assert(i < _children.size());
+    return _children[i];
 }
 
 CSymtab* CAstScope::GetSymbolTable(void) const
 {
-  assert(_symtab != NULL);
-  return _symtab;
+    assert(_symtab != NULL);
+    return _symtab;
 }
 
 void CAstScope::SetStatementSequence(CAstStatement *statseq)
 {
-  _statseq = statseq;
+    _statseq = statseq;
 }
 
 CAstStatement* CAstScope::GetStatementSequence(void) const
 {
-  return _statseq;
+    return _statseq;
 }
 
 bool CAstScope::TypeCheck(CToken *t, string *msg) const
 {
-  bool result = true;
+    bool result = true;
 
-  return result;
+    return result;
 }
 
 ostream& CAstScope::print(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  out << ind << "CAstScope: '" << _name << "'" << endl;
-  out << ind << "  symbol table:" << endl;
-  _symtab->print(out, indent+4);
-  out << ind << "  statement list:" << endl;
-  CAstStatement *s = GetStatementSequence();
-  if (s != NULL) {
-    do {
-      s->print(out, indent+4);
-      s = s->GetNext();
-    } while (s != NULL);
-  } else {
-    out << ind << "    empty." << endl;
-  }
-
-  out << ind << "  nested scopes:" << endl;
-  if (_children.size() > 0) {
-    for (size_t i=0; i<_children.size(); i++) {
-      _children[i]->print(out, indent+4);
+    out << ind << "CAstScope: '" << _name << "'" << endl;
+    out << ind << "  symbol table:" << endl;
+    _symtab->print(out, indent+4);
+    out << ind << "  statement list:" << endl;
+    CAstStatement *s = GetStatementSequence();
+    if (s != NULL) {
+        do {
+            s->print(out, indent+4);
+            s = s->GetNext();
+        } while (s != NULL);
+    } else {
+        out << ind << "    empty." << endl;
     }
-  } else {
-    out << ind << "    empty." << endl;
-  }
-  out << ind << endl;
 
-  return out;
+    out << ind << "  nested scopes:" << endl;
+    if (_children.size() > 0) {
+        for (size_t i=0; i<_children.size(); i++) {
+            _children[i]->print(out, indent+4);
+        }
+    } else {
+        out << ind << "    empty." << endl;
+    }
+    out << ind << endl;
+
+    return out;
 }
 
 void CAstScope::toDot(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  CAstNode::toDot(out, indent);
+    CAstNode::toDot(out, indent);
 
-  CAstStatement *s = GetStatementSequence();
-  if (s != NULL) {
-    string prev = dotID();
-    do {
-      s->toDot(out, indent);
-      out << ind << prev << " -> " << s->dotID() << " [style=dotted];" << endl;
-      prev = s->dotID();
-      s = s->GetNext();
-    } while (s != NULL);
-  }
+    CAstStatement *s = GetStatementSequence();
+    if (s != NULL) {
+        string prev = dotID();
+        do {
+            s->toDot(out, indent);
+            out << ind << prev << " -> " << s->dotID() << " [style=dotted];" << endl;
+            prev = s->dotID();
+            s = s->GetNext();
+        } while (s != NULL);
+    }
 
-  vector<CAstScope*>::const_iterator it = _children.begin();
-  while (it != _children.end()) {
-    CAstScope *s = *it++;
-    s->toDot(out, indent);
-    out << ind << dotID() << " -> " << s->dotID() << ";" << endl;
-  }
+    vector<CAstScope*>::const_iterator it = _children.begin();
+    while (it != _children.end()) {
+        CAstScope *s = *it++;
+        s->toDot(out, indent);
+        out << ind << dotID() << " -> " << s->dotID() << ";" << endl;
+    }
 
 }
 
 CTacAddr* CAstScope::ToTac(CCodeBlock *cb)
 {
-  return NULL;
+    return NULL;
 }
 
 CCodeBlock* CAstScope::GetCodeBlock(void) const
 {
-  return _cb;
+    return _cb;
 }
 
 void CAstScope::SetSymbolTable(CSymtab *st)
 {
-  if (_symtab != NULL) delete _symtab;
-  _symtab = st;
+    if (_symtab != NULL) delete _symtab;
+    _symtab = st;
 }
 
 void CAstScope::AddChild(CAstScope *child)
 {
-  _children.push_back(child);
+    _children.push_back(child);
 }
 
 
@@ -254,19 +254,19 @@ void CAstScope::AddChild(CAstScope *child)
 // CAstModule
 //
 CAstModule::CAstModule(CToken t, const string name)
-  : CAstScope(t, name, NULL)
+    : CAstScope(t, name, NULL)
 {
-  SetSymbolTable(new CSymtab());
+    SetSymbolTable(new CSymtab());
 }
 
 CSymbol* CAstModule::CreateVar(const string ident, const CType *type)
 {
-  return new CSymGlobal(ident, type);
+    return new CSymGlobal(ident, type);
 }
 
 string CAstModule::dotAttr(void) const
 {
-  return " [label=\"m " + GetName() + "\",shape=box]";
+    return " [label=\"m " + GetName() + "\",shape=box]";
 }
 
 
@@ -275,32 +275,32 @@ string CAstModule::dotAttr(void) const
 // CAstProcedure
 //
 CAstProcedure::CAstProcedure(CToken t, const string name,
-                             CAstScope *parent, CSymProc *symbol)
-  : CAstScope(t, name, parent), _symbol(symbol)
+        CAstScope *parent, CSymProc *symbol)
+    : CAstScope(t, name, parent), _symbol(symbol)
 {
-  assert(GetParent() != NULL);
-  SetSymbolTable(new CSymtab(GetParent()->GetSymbolTable()));
-  assert(_symbol != NULL);
+    assert(GetParent() != NULL);
+    SetSymbolTable(new CSymtab(GetParent()->GetSymbolTable()));
+    assert(_symbol != NULL);
 }
 
 CSymProc* CAstProcedure::GetSymbol(void) const
 {
-  return _symbol;
+    return _symbol;
 }
 
 CSymbol* CAstProcedure::CreateVar(const string ident, const CType *type)
 {
-  return new CSymLocal(ident, type);
+    return new CSymLocal(ident, type);
 }
 
 const CType* CAstProcedure::GetType(void) const
 {
-  return GetSymbol()->GetDataType();
+    return GetSymbol()->GetDataType();
 }
 
 string CAstProcedure::dotAttr(void) const
 {
-  return " [label=\"p/f " + GetName() + "\",shape=box]";
+    return " [label=\"p/f " + GetName() + "\",shape=box]";
 }
 
 
@@ -308,22 +308,22 @@ string CAstProcedure::dotAttr(void) const
 // CAstType
 //
 CAstType::CAstType(CToken t, const CType *type)
-  : CAstNode(t), _type(type)
+    : CAstNode(t), _type(type)
 {
-  assert(type != NULL);
+    assert(type != NULL);
 }
 
 const CType* CAstType::GetType(void) const
 {
-  return _type;
+    return _type;
 }
 
 ostream& CAstType::print(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  out << ind << "CAstType (" << _type << ")" << endl;
-  return out;
+    out << ind << "CAstType (" << _type << ")" << endl;
+    return out;
 }
 
 
@@ -331,28 +331,28 @@ ostream& CAstType::print(ostream &out, int indent) const
 // CAstStatement
 //
 CAstStatement::CAstStatement(CToken token)
-  : CAstNode(token), _next(NULL)
+    : CAstNode(token), _next(NULL)
 {
 }
 
 CAstStatement::~CAstStatement(void)
 {
-  delete _next;
+    delete _next;
 }
 
 void CAstStatement::SetNext(CAstStatement *next)
 {
-  _next = next;
+    _next = next;
 }
 
 CAstStatement* CAstStatement::GetNext(void) const
 {
-  return _next;
+    return _next;
 }
 
 CTacAddr* CAstStatement::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
-  return NULL;
+    return NULL;
 }
 
 
@@ -360,70 +360,70 @@ CTacAddr* CAstStatement::ToTac(CCodeBlock *cb, CTacLabel *next)
 // CAstStatAssign
 //
 CAstStatAssign::CAstStatAssign(CToken t,
-                               CAstConstant *lhs, CAstExpression *rhs)
-  : CAstStatement(t), _lhs(lhs), _rhs(rhs)
+        CAstConstant *lhs, CAstExpression *rhs)
+    : CAstStatement(t), _lhs(lhs), _rhs(rhs)
 {
-  assert(lhs != NULL);
-  assert(rhs != NULL);
+    assert(lhs != NULL);
+    assert(rhs != NULL);
 }
 
 CAstConstant* CAstStatAssign::GetLHS(void) const
 {
-  return _lhs;
+    return _lhs;
 }
 
 CAstExpression* CAstStatAssign::GetRHS(void) const
 {
-  return _rhs;
+    return _rhs;
 }
 
 bool CAstStatAssign::TypeCheck(CToken *t, string *msg) const
 {
-  return true;
+    return true;
 }
 
 const CType* CAstStatAssign::GetType(void) const
 {
-  return _lhs->GetType();
+    return _lhs->GetType();
 }
 
 ostream& CAstStatAssign::print(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  out << ind << ":=" << " ";
+    out << ind << ":=" << " ";
 
-  const CType *t = GetType();
-  if (t != NULL) out << t; else out << "<INVALID>";
+    const CType *t = GetType();
+    if (t != NULL) out << t; else out << "<INVALID>";
 
-  out << endl;
+    out << endl;
 
-  _lhs->print(out, indent+2);
-  _rhs->print(out, indent+2);
+    _lhs->print(out, indent+2);
+    _rhs->print(out, indent+2);
 
-  return out;
+    return out;
 }
 
 string CAstStatAssign::dotAttr(void) const
 {
-  return " [label=\":=\",shape=box]";
+    return " [label=\":=\",shape=box]";
 }
 
 void CAstStatAssign::toDot(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  CAstNode::toDot(out, indent);
+    CAstNode::toDot(out, indent);
 
-  _lhs->toDot(out, indent);
-  out << ind << dotID() << "->" << _lhs->dotID() << ";" << endl;
-  _rhs->toDot(out, indent);
-  out << ind << dotID() << "->" << _rhs->dotID() << ";" << endl;
+    _lhs->toDot(out, indent);
+    out << ind << dotID() << "->" << _lhs->dotID() << ";" << endl;
+    _rhs->toDot(out, indent);
+    out << ind << dotID() << "->" << _rhs->dotID() << ";" << endl;
 }
 
 CTacAddr* CAstStatAssign::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
-  return NULL;
+    return NULL;
 }
 
 
@@ -431,46 +431,46 @@ CTacAddr* CAstStatAssign::ToTac(CCodeBlock *cb, CTacLabel *next)
 // CAstStatCall
 //
 CAstStatCall::CAstStatCall(CToken t, CAstFunctionCall *call)
-  : CAstStatement(t), _call(call)
+    : CAstStatement(t), _call(call)
 {
-  assert(call != NULL);
+    assert(call != NULL);
 }
 
 CAstFunctionCall* CAstStatCall::GetCall(void) const
 {
-  return _call;
+    return _call;
 }
 
 bool CAstStatCall::TypeCheck(CToken *t, string *msg) const
 {
-  return GetCall()->TypeCheck(t, msg);
+    return GetCall()->TypeCheck(t, msg);
 }
 
 ostream& CAstStatCall::print(ostream &out, int indent) const
 {
-  _call->print(out, indent);
+    _call->print(out, indent);
 
-  return out;
+    return out;
 }
 
 string CAstStatCall::dotID(void) const
 {
-  return _call->dotID();
+    return _call->dotID();
 }
 
 string CAstStatCall::dotAttr(void) const
 {
-  return _call->dotAttr();
+    return _call->dotAttr();
 }
 
 void CAstStatCall::toDot(ostream &out, int indent) const
 {
-  _call->toDot(out, indent);
+    _call->toDot(out, indent);
 }
 
 CTacAddr* CAstStatCall::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
-  return NULL;
+    return NULL;
 }
 
 
@@ -478,75 +478,75 @@ CTacAddr* CAstStatCall::ToTac(CCodeBlock *cb, CTacLabel *next)
 // CAstStatReturn
 //
 CAstStatReturn::CAstStatReturn(CToken t, CAstScope *scope, CAstExpression *expr)
-  : CAstStatement(t), _scope(scope), _expr(expr)
+    : CAstStatement(t), _scope(scope), _expr(expr)
 {
-  assert(scope != NULL);
+    assert(scope != NULL);
 }
 
 CAstScope* CAstStatReturn::GetScope(void) const
 {
-  return _scope;
+    return _scope;
 }
 
 CAstExpression* CAstStatReturn::GetExpression(void) const
 {
-  return _expr;
+    return _expr;
 }
 
 bool CAstStatReturn::TypeCheck(CToken *t, string *msg) const
 {
-  return true;
+    return true;
 }
 
 const CType* CAstStatReturn::GetType(void) const
 {
-  const CType *t = NULL;
+    const CType *t = NULL;
 
-  if (GetExpression() != NULL) {
-    t = GetExpression()->GetType();
-  } else {
-    t = CTypeManager::Get()->GetNull();
-  }
+    if (GetExpression() != NULL) {
+        t = GetExpression()->GetType();
+    } else {
+        t = CTypeManager::Get()->GetNull();
+    }
 
-  return t;
+    return t;
 }
 
 ostream& CAstStatReturn::print(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  out << ind << "return" << " ";
+    out << ind << "return" << " ";
 
-  const CType *t = GetType();
-  if (t != NULL) out << t; else out << "<INVALID>";
+    const CType *t = GetType();
+    if (t != NULL) out << t; else out << "<INVALID>";
 
-  out << endl;
+    out << endl;
 
-  if (_expr != NULL) _expr->print(out, indent+2);
+    if (_expr != NULL) _expr->print(out, indent+2);
 
-  return out;
+    return out;
 }
 
 string CAstStatReturn::dotAttr(void) const
 {
-  return " [label=\"return\",shape=box]";
+    return " [label=\"return\",shape=box]";
 }
 
 void CAstStatReturn::toDot(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  CAstNode::toDot(out, indent);
+    CAstNode::toDot(out, indent);
 
-  if (_expr != NULL) {
-    _expr->toDot(out, indent);
-    out << ind << dotID() << "->" << _expr->dotID() << ";" << endl;
-  }
+    if (_expr != NULL) {
+        _expr->toDot(out, indent);
+        out << ind << dotID() << "->" << _expr->dotID() << ";" << endl;
+    }
 }
 
 CTacAddr* CAstStatReturn::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
-  return NULL;
+    return NULL;
 }
 
 
@@ -554,104 +554,104 @@ CTacAddr* CAstStatReturn::ToTac(CCodeBlock *cb, CTacLabel *next)
 // CAstStatIf
 //
 CAstStatIf::CAstStatIf(CToken t, CAstExpression *cond,
-                       CAstStatement *ifBody, CAstStatement *elseBody)
-  : CAstStatement(t), _cond(cond), _ifBody(ifBody), _elseBody(elseBody)
+        CAstStatement *ifBody, CAstStatement *elseBody)
+    : CAstStatement(t), _cond(cond), _ifBody(ifBody), _elseBody(elseBody)
 {
-  assert(cond != NULL);
+    assert(cond != NULL);
 }
 
 CAstExpression* CAstStatIf::GetCondition(void) const
 {
-  return _cond;
+    return _cond;
 }
 
 CAstStatement* CAstStatIf::GetIfBody(void) const
 {
-  return _ifBody;
+    return _ifBody;
 }
 
 CAstStatement* CAstStatIf::GetElseBody(void) const
 {
-  return _elseBody;
+    return _elseBody;
 }
 
 bool CAstStatIf::TypeCheck(CToken *t, string *msg) const
 {
-  return true;
+    return true;
 }
 
 ostream& CAstStatIf::print(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  out << ind << "if cond" << endl;
-  _cond->print(out, indent+2);
-  out << ind << "if-body" << endl;
-  if (_ifBody != NULL) {
-    CAstStatement *s = _ifBody;
-    do {
-      s->print(out, indent+2);
-      s = s->GetNext();
-    } while (s != NULL);
-  } else out << ind << "  empty." << endl;
-  out << ind << "else-body" << endl;
-  if (_elseBody != NULL) {
-    CAstStatement *s = _elseBody;
-    do {
-      s->print(out, indent+2);
-      s = s->GetNext();
-    } while (s != NULL);
-  } else out << ind << "  empty." << endl;
+    out << ind << "if cond" << endl;
+    _cond->print(out, indent+2);
+    out << ind << "if-body" << endl;
+    if (_ifBody != NULL) {
+        CAstStatement *s = _ifBody;
+        do {
+            s->print(out, indent+2);
+            s = s->GetNext();
+        } while (s != NULL);
+    } else out << ind << "  empty." << endl;
+    out << ind << "else-body" << endl;
+    if (_elseBody != NULL) {
+        CAstStatement *s = _elseBody;
+        do {
+            s->print(out, indent+2);
+            s = s->GetNext();
+        } while (s != NULL);
+    } else out << ind << "  empty." << endl;
 
-  return out;
+    return out;
 }
 
 string CAstStatIf::dotAttr(void) const
 {
-  return " [label=\"if\",shape=box]";
+    return " [label=\"if\",shape=box]";
 }
 
 void CAstStatIf::toDot(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  CAstNode::toDot(out, indent);
+    CAstNode::toDot(out, indent);
 
-  _cond->toDot(out, indent);
-  out << ind << dotID() << "->" << _cond->dotID() << ";" << endl;
+    _cond->toDot(out, indent);
+    out << ind << dotID() << "->" << _cond->dotID() << ";" << endl;
 
-  if (_ifBody != NULL) {
-    CAstStatement *s = _ifBody;
-    if (s != NULL) {
-      string prev = dotID();
-      do {
-        s->toDot(out, indent);
-        out << ind << prev << " -> " << s->dotID() << " [style=dotted];"
-            << endl;
-        prev = s->dotID();
-        s = s->GetNext();
-      } while (s != NULL);
+    if (_ifBody != NULL) {
+        CAstStatement *s = _ifBody;
+        if (s != NULL) {
+            string prev = dotID();
+            do {
+                s->toDot(out, indent);
+                out << ind << prev << " -> " << s->dotID() << " [style=dotted];"
+                    << endl;
+                prev = s->dotID();
+                s = s->GetNext();
+            } while (s != NULL);
+        }
     }
-  }
 
-  if (_elseBody != NULL) {
-    CAstStatement *s = _elseBody;
-    if (s != NULL) {
-      string prev = dotID();
-      do {
-        s->toDot(out, indent);
-        out << ind << prev << " -> " << s->dotID() << " [style=dotted];" 
-            << endl;
-        prev = s->dotID();
-        s = s->GetNext();
-      } while (s != NULL);
+    if (_elseBody != NULL) {
+        CAstStatement *s = _elseBody;
+        if (s != NULL) {
+            string prev = dotID();
+            do {
+                s->toDot(out, indent);
+                out << ind << prev << " -> " << s->dotID() << " [style=dotted];"
+                    << endl;
+                prev = s->dotID();
+                s = s->GetNext();
+            } while (s != NULL);
+        }
     }
-  }
 }
 
 CTacAddr* CAstStatIf::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
-  return NULL;
+    return NULL;
 }
 
 
@@ -659,78 +659,78 @@ CTacAddr* CAstStatIf::ToTac(CCodeBlock *cb, CTacLabel *next)
 // CAstStatWhile
 //
 CAstStatWhile::CAstStatWhile(CToken t,
-                             CAstExpression *cond, CAstStatement *body)
-  : CAstStatement(t), _cond(cond), _body(body)
+        CAstExpression *cond, CAstStatement *body)
+    : CAstStatement(t), _cond(cond), _body(body)
 {
-  assert(cond != NULL);
+    assert(cond != NULL);
 }
 
 CAstExpression* CAstStatWhile::GetCondition(void) const
 {
-  return _cond;
+    return _cond;
 }
 
 CAstStatement* CAstStatWhile::GetBody(void) const
 {
-  return _body;
+    return _body;
 }
 
 bool CAstStatWhile::TypeCheck(CToken *t, string *msg) const
 {
-  return true;
+    return true;
 }
 
 ostream& CAstStatWhile::print(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  out << ind << "while cond" << endl;
-  _cond->print(out, indent+2);
-  out << ind << "while-body" << endl;
-  if (_body != NULL) {
-    CAstStatement *s = _body;
-    do {
-      s->print(out, indent+2);
-      s = s->GetNext();
-    } while (s != NULL);
-  }
-  else out << ind << "  empty." << endl;
+    out << ind << "while cond" << endl;
+    _cond->print(out, indent+2);
+    out << ind << "while-body" << endl;
+    if (_body != NULL) {
+        CAstStatement *s = _body;
+        do {
+            s->print(out, indent+2);
+            s = s->GetNext();
+        } while (s != NULL);
+    }
+    else out << ind << "  empty." << endl;
 
-  return out;
+    return out;
 }
 
 string CAstStatWhile::dotAttr(void) const
 {
-  return " [label=\"while\",shape=box]";
+    return " [label=\"while\",shape=box]";
 }
 
 void CAstStatWhile::toDot(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  CAstNode::toDot(out, indent);
+    CAstNode::toDot(out, indent);
 
-  _cond->toDot(out, indent);
-  out << ind << dotID() << "->" << _cond->dotID() << ";" << endl;
+    _cond->toDot(out, indent);
+    out << ind << dotID() << "->" << _cond->dotID() << ";" << endl;
 
-  if (_body != NULL) {
-    CAstStatement *s = _body;
-    if (s != NULL) {
-      string prev = dotID();
-      do {
-        s->toDot(out, indent);
-        out << ind << prev << " -> " << s->dotID() << " [style=dotted];"
-            << endl;
-        prev = s->dotID();
-        s = s->GetNext();
-      } while (s != NULL);
+    if (_body != NULL) {
+        CAstStatement *s = _body;
+        if (s != NULL) {
+            string prev = dotID();
+            do {
+                s->toDot(out, indent);
+                out << ind << prev << " -> " << s->dotID() << " [style=dotted];"
+                    << endl;
+                prev = s->dotID();
+                s = s->GetNext();
+            } while (s != NULL);
+        }
     }
-  }
 }
 
 CTacAddr* CAstStatWhile::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
-  return NULL;
+    return NULL;
 }
 
 
@@ -738,29 +738,29 @@ CTacAddr* CAstStatWhile::ToTac(CCodeBlock *cb, CTacLabel *next)
 // CAstExpression
 //
 CAstExpression::CAstExpression(CToken t)
-  : CAstNode(t)
+    : CAstNode(t)
 {
 }
 
 void CAstExpression::SetParenthesized(bool parenthesized)
 {
-  _parenthesized = parenthesized;
+    _parenthesized = parenthesized;
 }
 
 bool CAstExpression::GetParenthesized(void) const
 {
-  return _parenthesized;
+    return _parenthesized;
 }
 
 CTacAddr* CAstExpression::ToTac(CCodeBlock *cb)
 {
-  return NULL;
+    return NULL;
 }
 
 CTacAddr* CAstExpression::ToTac(CCodeBlock *cb,
-                                CTacLabel *ltrue, CTacLabel *lfalse)
+        CTacLabel *ltrue, CTacLabel *lfalse)
 {
-  return NULL;
+    return NULL;
 }
 
 
@@ -768,13 +768,13 @@ CTacAddr* CAstExpression::ToTac(CCodeBlock *cb,
 // CAstOperation
 //
 CAstOperation::CAstOperation(CToken t, EOperation oper)
-  : CAstExpression(t), _oper(oper)
+    : CAstExpression(t), _oper(oper)
 {
 }
 
 EOperation CAstOperation::GetOperation(void) const
 {
-  return _oper;
+    return _oper;
 }
 
 
@@ -782,86 +782,86 @@ EOperation CAstOperation::GetOperation(void) const
 // CAstBinaryOp
 //
 CAstBinaryOp::CAstBinaryOp(CToken t, EOperation oper,
-                           CAstExpression *l,CAstExpression *r)
-  : CAstOperation(t, oper), _left(l), _right(r)
+        CAstExpression *l,CAstExpression *r)
+    : CAstOperation(t, oper), _left(l), _right(r)
 {
-  // these are the only binary operation we support for now
-  assert((oper == opAdd)        || (oper == opSub)         ||
-         (oper == opMul)        || (oper == opDiv)         ||
-         (oper == opAnd)        || (oper == opOr)          ||
-         (oper == opEqual)      || (oper == opNotEqual)    ||
-         (oper == opLessThan)   || (oper == opLessEqual)   ||
-         (oper == opBiggerThan) || (oper == opBiggerEqual)
-        );
-  assert(l != NULL);
-  assert(r != NULL);
+    // these are the only binary operation we support for now
+    assert((oper == opAdd)        || (oper == opSub)         ||
+            (oper == opMul)        || (oper == opDiv)         ||
+            (oper == opAnd)        || (oper == opOr)          ||
+            (oper == opEqual)      || (oper == opNotEqual)    ||
+            (oper == opLessThan)   || (oper == opLessEqual)   ||
+            (oper == opBiggerThan) || (oper == opBiggerEqual)
+          );
+    assert(l != NULL);
+    assert(r != NULL);
 }
 
 CAstExpression* CAstBinaryOp::GetLeft(void) const
 {
-  return _left;
+    return _left;
 }
 
 CAstExpression* CAstBinaryOp::GetRight(void) const
 {
-  return _right;
+    return _right;
 }
 
 bool CAstBinaryOp::TypeCheck(CToken *t, string *msg) const
 {
-  return true;
+    return true;
 }
 
 const CType* CAstBinaryOp::GetType(void) const
 {
-  return CTypeManager::Get()->GetInt();
+    return CTypeManager::Get()->GetInt();
 }
 
 ostream& CAstBinaryOp::print(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  out << ind << GetOperation() << " ";
+    out << ind << GetOperation() << " ";
 
-  const CType *t = GetType();
-  if (t != NULL) out << t; else out << "<INVALID>";
+    const CType *t = GetType();
+    if (t != NULL) out << t; else out << "<INVALID>";
 
-  out << endl;
+    out << endl;
 
-  _left->print(out, indent+2);
-  _right->print(out, indent+2);
+    _left->print(out, indent+2);
+    _right->print(out, indent+2);
 
-  return out;
+    return out;
 }
 
 string CAstBinaryOp::dotAttr(void) const
 {
-  ostringstream out;
-  out << " [label=\"" << GetOperation() << "\",shape=box]";
-  return out.str();
+    ostringstream out;
+    out << " [label=\"" << GetOperation() << "\",shape=box]";
+    return out.str();
 }
 
 void CAstBinaryOp::toDot(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  CAstNode::toDot(out, indent);
+    CAstNode::toDot(out, indent);
 
-  _left->toDot(out, indent);
-  out << ind << dotID() << "->" << _left->dotID() << ";" << endl;
-  _right->toDot(out, indent);
-  out << ind << dotID() << "->" << _right->dotID() << ";" << endl;
+    _left->toDot(out, indent);
+    out << ind << dotID() << "->" << _left->dotID() << ";" << endl;
+    _right->toDot(out, indent);
+    out << ind << dotID() << "->" << _right->dotID() << ";" << endl;
 }
 
 CTacAddr* CAstBinaryOp::ToTac(CCodeBlock *cb)
 {
-  return NULL;
+    return NULL;
 }
 
 CTacAddr* CAstBinaryOp::ToTac(CCodeBlock *cb,
-                              CTacLabel *ltrue, CTacLabel *lfalse)
+        CTacLabel *ltrue, CTacLabel *lfalse)
 {
-  return NULL;
+    return NULL;
 }
 
 
@@ -869,68 +869,68 @@ CTacAddr* CAstBinaryOp::ToTac(CCodeBlock *cb,
 // CAstUnaryOp
 //
 CAstUnaryOp::CAstUnaryOp(CToken t, EOperation oper, CAstExpression *e)
-  : CAstOperation(t, oper), _operand(e)
+    : CAstOperation(t, oper), _operand(e)
 {
-  assert((oper == opNeg) || (oper == opPos) || (oper == opNot));
-  assert(e != NULL);
+    assert((oper == opNeg) || (oper == opPos) || (oper == opNot));
+    assert(e != NULL);
 }
 
 CAstExpression* CAstUnaryOp::GetOperand(void) const
 {
-  return _operand;
+    return _operand;
 }
 
 bool CAstUnaryOp::TypeCheck(CToken *t, string *msg) const
 {
-  return true;
+    return true;
 }
 
 const CType* CAstUnaryOp::GetType(void) const
 {
-  return CTypeManager::Get()->GetInt();
+    return CTypeManager::Get()->GetInt();
 }
 
 ostream& CAstUnaryOp::print(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  out << ind << GetOperation() << " ";
+    out << ind << GetOperation() << " ";
 
-  const CType *t = GetType();
-  if (t != NULL) out << t; else out << "<INVALID>";
-  out << endl;
+    const CType *t = GetType();
+    if (t != NULL) out << t; else out << "<INVALID>";
+    out << endl;
 
-  _operand->print(out, indent+2);
+    _operand->print(out, indent+2);
 
-  return out;
+    return out;
 }
 
 string CAstUnaryOp::dotAttr(void) const
 {
-  ostringstream out;
-  out << " [label=\"" << GetOperation() << "\",shape=box]";
-  return out.str();
+    ostringstream out;
+    out << " [label=\"" << GetOperation() << "\",shape=box]";
+    return out.str();
 }
 
 void CAstUnaryOp::toDot(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  CAstNode::toDot(out, indent);
+    CAstNode::toDot(out, indent);
 
-  _operand->toDot(out, indent);
-  out << ind << dotID() << "->" << _operand->dotID() << ";" << endl;
+    _operand->toDot(out, indent);
+    out << ind << dotID() << "->" << _operand->dotID() << ";" << endl;
 }
 
 CTacAddr* CAstUnaryOp::ToTac(CCodeBlock *cb)
 {
-  return NULL;
+    return NULL;
 }
 
 CTacAddr* CAstUnaryOp::ToTac(CCodeBlock *cb,
-                             CTacLabel *ltrue, CTacLabel *lfalse)
+        CTacLabel *ltrue, CTacLabel *lfalse)
 {
-  return NULL;
+    return NULL;
 }
 
 
@@ -938,65 +938,65 @@ CTacAddr* CAstUnaryOp::ToTac(CCodeBlock *cb,
 // CAstSpecialOp
 //
 CAstSpecialOp::CAstSpecialOp(CToken t, EOperation oper, CAstExpression *e,
-                             const CType *type)
-  : CAstOperation(t, oper), _operand(e), _type(type)
+        const CType *type)
+    : CAstOperation(t, oper), _operand(e), _type(type)
 {
-  assert((oper == opAddress) || (oper == opDeref) || (oper = opCast));
-  assert(e != NULL);
-  assert(((oper != opCast) && (type == NULL)) ||
-         ((oper == opCast) && (type != NULL)));
+    assert((oper == opAddress) || (oper == opDeref) || (oper = opCast));
+    assert(e != NULL);
+    assert(((oper != opCast) && (type == NULL)) ||
+            ((oper == opCast) && (type != NULL)));
 }
 
 CAstExpression* CAstSpecialOp::GetOperand(void) const
 {
-  return _operand;
+    return _operand;
 }
 
 bool CAstSpecialOp::TypeCheck(CToken *t, string *msg) const
 {
-  return false;
+    return false;
 }
 
 const CType* CAstSpecialOp::GetType(void) const
 {
-  return NULL;
+    return NULL;
 }
 
 ostream& CAstSpecialOp::print(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  out << ind << GetOperation() << " ";
+    out << ind << GetOperation() << " ";
 
-  const CType *t = GetType();
-  if (t != NULL) out << t; else out << "<INVALID>";
-  out << endl;
+    const CType *t = GetType();
+    if (t != NULL) out << t; else out << "<INVALID>";
+    out << endl;
 
-  _operand->print(out, indent+2);
+    _operand->print(out, indent+2);
 
-  return out;
+    return out;
 }
 
 string CAstSpecialOp::dotAttr(void) const
 {
-  ostringstream out;
-  out << " [label=\"" << GetOperation() << "\",shape=box]";
-  return out.str();
+    ostringstream out;
+    out << " [label=\"" << GetOperation() << "\",shape=box]";
+    return out.str();
 }
 
 void CAstSpecialOp::toDot(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  CAstNode::toDot(out, indent);
+    CAstNode::toDot(out, indent);
 
-  _operand->toDot(out, indent);
-  out << ind << dotID() << "->" << _operand->dotID() << ";" << endl;
+    _operand->toDot(out, indent);
+    out << ind << dotID() << "->" << _operand->dotID() << ";" << endl;
 }
 
 CTacAddr* CAstSpecialOp::ToTac(CCodeBlock *cb)
 {
-  return NULL;
+    return NULL;
 }
 
 
@@ -1004,86 +1004,86 @@ CTacAddr* CAstSpecialOp::ToTac(CCodeBlock *cb)
 // CAstFunctionCall
 //
 CAstFunctionCall::CAstFunctionCall(CToken t, const CSymProc *symbol)
-  : CAstExpression(t), _symbol(symbol)
+    : CAstExpression(t), _symbol(symbol)
 {
-  assert(symbol != NULL);
+    assert(symbol != NULL);
 }
 
 const CSymProc* CAstFunctionCall::GetSymbol(void) const
 {
-  return _symbol;
+    return _symbol;
 }
 
 void CAstFunctionCall::AddArg(CAstExpression *arg)
 {
-  _arg.push_back(arg);
+    _arg.push_back(arg);
 }
 
 int CAstFunctionCall::GetNArgs(void) const
 {
-  return (int)_arg.size();
+    return (int)_arg.size();
 }
 
 CAstExpression* CAstFunctionCall::GetArg(int index) const
 {
-  assert((index >= 0) && (index < _arg.size()));
-  return _arg[index];
+    assert((index >= 0) && (index < _arg.size()));
+    return _arg[index];
 }
 
 bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const
 {
-  return true;
+    return true;
 }
 
 const CType* CAstFunctionCall::GetType(void) const
 {
-  return GetSymbol()->GetDataType();
+    return GetSymbol()->GetDataType();
 }
 
 ostream& CAstFunctionCall::print(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  out << ind << "call " << _symbol << " ";
-  const CType *t = GetType();
-  if (t != NULL) out << t; else out << "<INVALID>";
-  out << endl;
+    out << ind << "call " << _symbol << " ";
+    const CType *t = GetType();
+    if (t != NULL) out << t; else out << "<INVALID>";
+    out << endl;
 
-  for (size_t i=0; i<_arg.size(); i++) {
-    _arg[i]->print(out, indent+2);
-  }
+    for (size_t i=0; i<_arg.size(); i++) {
+        _arg[i]->print(out, indent+2);
+    }
 
-  return out;
+    return out;
 }
 
 string CAstFunctionCall::dotAttr(void) const
 {
-  ostringstream out;
-  out << " [label=\"call " << _symbol->GetName() << "\",shape=box]";
-  return out.str();
+    ostringstream out;
+    out << " [label=\"call " << _symbol->GetName() << "\",shape=box]";
+    return out.str();
 }
 
 void CAstFunctionCall::toDot(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  CAstNode::toDot(out, indent);
+    CAstNode::toDot(out, indent);
 
-  for (size_t i=0; i<_arg.size(); i++) {
-    _arg[i]->toDot(out, indent);
-    out << ind << dotID() << "->" << _arg[i]->dotID() << ";" << endl;
-  }
+    for (size_t i=0; i<_arg.size(); i++) {
+        _arg[i]->toDot(out, indent);
+        out << ind << dotID() << "->" << _arg[i]->dotID() << ";" << endl;
+    }
 }
 
 CTacAddr* CAstFunctionCall::ToTac(CCodeBlock *cb)
 {
-  return NULL;
+    return NULL;
 }
 
 CTacAddr* CAstFunctionCall::ToTac(CCodeBlock *cb,
-                                  CTacLabel *ltrue, CTacLabel *lfalse)
+        CTacLabel *ltrue, CTacLabel *lfalse)
 {
-  return NULL;
+    return NULL;
 }
 
 
@@ -1092,7 +1092,7 @@ CTacAddr* CAstFunctionCall::ToTac(CCodeBlock *cb,
 // CAstOperand
 //
 CAstOperand::CAstOperand(CToken t)
-  : CAstExpression(t)
+    : CAstExpression(t)
 {
 }
 
@@ -1101,64 +1101,64 @@ CAstOperand::CAstOperand(CToken t)
 // CAstDesignator
 //
 CAstDesignator::CAstDesignator(CToken t, const CSymbol *symbol)
-  : CAstOperand(t), _symbol(symbol)
+    : CAstOperand(t), _symbol(symbol)
 {
-  assert(symbol != NULL);
+    assert(symbol != NULL);
 }
 
 const CSymbol* CAstDesignator::GetSymbol(void) const
 {
-  return _symbol;
+    return _symbol;
 }
 
 bool CAstDesignator::TypeCheck(CToken *t, string *msg) const
 {
-  return true;
+    return true;
 }
 
 const CType* CAstDesignator::GetType(void) const
 {
-  return GetSymbol()->GetDataType();
+    return GetSymbol()->GetDataType();
 }
 
 ostream& CAstDesignator::print(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  out << ind << _symbol << " ";
+    out << ind << _symbol << " ";
 
-  const CType *t = GetType();
-  if (t != NULL) out << t; else out << "<INVALID>";
+    const CType *t = GetType();
+    if (t != NULL) out << t; else out << "<INVALID>";
 
-  out << endl;
+    out << endl;
 
-  return out;
+    return out;
 }
 
 string CAstDesignator::dotAttr(void) const
 {
-  ostringstream out;
-  out << " [label=\"" << _symbol->GetName();
-  out << "\",shape=ellipse]";
-  return out.str();
+    ostringstream out;
+    out << " [label=\"" << _symbol->GetName();
+    out << "\",shape=ellipse]";
+    return out.str();
 }
 
 void CAstDesignator::toDot(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  CAstNode::toDot(out, indent);
+    CAstNode::toDot(out, indent);
 }
 
 CTacAddr* CAstDesignator::ToTac(CCodeBlock *cb)
 {
-  return NULL;
+    return NULL;
 }
 
 CTacAddr* CAstDesignator::ToTac(CCodeBlock *cb,
-                                CTacLabel *ltrue, CTacLabel *lfalse)
+        CTacLabel *ltrue, CTacLabel *lfalse)
 {
-  return NULL;
+    return NULL;
 }
 
 
@@ -1166,93 +1166,93 @@ CTacAddr* CAstDesignator::ToTac(CCodeBlock *cb,
 // CAstArrayDesignator
 //
 CAstArrayDesignator::CAstArrayDesignator(CToken t, const CSymbol *symbol)
-  : CAstDesignator(t, symbol), _done(false), _offset(NULL)
+    : CAstDesignator(t, symbol), _done(false), _offset(NULL)
 {
 }
 
 void CAstArrayDesignator::AddIndex(CAstExpression *idx)
 {
-  assert(!_done);
-  _idx.push_back(idx);
+    assert(!_done);
+    _idx.push_back(idx);
 }
 
 void CAstArrayDesignator::IndicesComplete(void)
 {
-  assert(!_done);
-  _done = true;
+    assert(!_done);
+    _done = true;
 }
 
 int CAstArrayDesignator::GetNIndices(void) const
 {
-  return (int)_idx.size();
+    return (int)_idx.size();
 }
 
 CAstExpression* CAstArrayDesignator::GetIndex(int index) const
 {
-  assert((index >= 0) && (index < _idx.size()));
-  return _idx[index];
+    assert((index >= 0) && (index < _idx.size()));
+    return _idx[index];
 }
 
 bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const
 {
-  bool result = true;
+    bool result = true;
 
-  assert(_done);
+    assert(_done);
 
-  return result;
+    return result;
 }
 
 const CType* CAstArrayDesignator::GetType(void) const
 {
-  return NULL;
+    return NULL;
 }
 
 ostream& CAstArrayDesignator::print(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  out << ind << _symbol << " ";
+    out << ind << _symbol << " ";
 
-  const CType *t = GetType();
-  if (t != NULL) out << t; else out << "<INVALID>";
+    const CType *t = GetType();
+    if (t != NULL) out << t; else out << "<INVALID>";
 
-  out << endl;
+    out << endl;
 
-  for (size_t i=0; i<_idx.size(); i++) {
-    _idx[i]->print(out, indent+2);
-  }
+    for (size_t i=0; i<_idx.size(); i++) {
+        _idx[i]->print(out, indent+2);
+    }
 
-  return out;
+    return out;
 }
 
 string CAstArrayDesignator::dotAttr(void) const
 {
-  ostringstream out;
-  out << " [label=\"" << _symbol->GetName() << "[]\",shape=ellipse]";
-  return out.str();
+    ostringstream out;
+    out << " [label=\"" << _symbol->GetName() << "[]\",shape=ellipse]";
+    return out.str();
 }
 
 void CAstArrayDesignator::toDot(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  CAstNode::toDot(out, indent);
+    CAstNode::toDot(out, indent);
 
-  for (size_t i=0; i<_idx.size(); i++) {
-    _idx[i]->toDot(out, indent);
-    out << ind << dotID() << "-> " << _idx[i]->dotID() << ";" << endl;
-  }
+    for (size_t i=0; i<_idx.size(); i++) {
+        _idx[i]->toDot(out, indent);
+        out << ind << dotID() << "-> " << _idx[i]->dotID() << ";" << endl;
+    }
 }
 
 CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb)
 {
-  return NULL;
+    return NULL;
 }
 
 CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb,
-                                     CTacLabel *ltrue, CTacLabel *lfalse)
+        CTacLabel *ltrue, CTacLabel *lfalse)
 {
-  return NULL;
+    return NULL;
 }
 
 
@@ -1260,73 +1260,73 @@ CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb,
 // CAstConstant
 //
 CAstConstant::CAstConstant(CToken t, const CType *type, long long value)
-  : CAstOperand(t), _type(type), _value(value)
+    : CAstOperand(t), _type(type), _value(value)
 {
 }
 
 void CAstConstant::SetValue(long long value)
 {
-  _value = value;
+    _value = value;
 }
 
 long long CAstConstant::GetValue(void) const
 {
-  return _value;
+    return _value;
 }
 
 string CAstConstant::GetValueStr(void) const
 {
-  ostringstream out;
+    ostringstream out;
 
-  if (GetType() == CTypeManager::Get()->GetBool()) {
-    out << (_value == 0 ? "false" : "true");
-  } else {
-    out << dec << _value;
-  }
+    if (GetType() == CTypeManager::Get()->GetBool()) {
+        out << (_value == 0 ? "false" : "true");
+    } else {
+        out << dec << _value;
+    }
 
-  return out.str();
+    return out.str();
 }
 
 bool CAstConstant::TypeCheck(CToken *t, string *msg) const
 {
-  return true;
+    return true;
 }
 
 const CType* CAstConstant::GetType(void) const
 {
-  return _type;
+    return _type;
 }
 
 ostream& CAstConstant::print(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  out << ind << GetValueStr() << " ";
+    out << ind << GetValueStr() << " ";
 
-  const CType *t = GetType();
-  if (t != NULL) out << t; else out << "<INVALID>";
+    const CType *t = GetType();
+    if (t != NULL) out << t; else out << "<INVALID>";
 
-  out << endl;
+    out << endl;
 
-  return out;
+    return out;
 }
 
 string CAstConstant::dotAttr(void) const
 {
-  ostringstream out;
-  out << " [label=\"" << GetValueStr() << "\",shape=ellipse]";
-  return out.str();
+    ostringstream out;
+    out << " [label=\"" << GetValueStr() << "\",shape=ellipse]";
+    return out.str();
 }
 
 CTacAddr* CAstConstant::ToTac(CCodeBlock *cb)
 {
-  return NULL;
+    return NULL;
 }
 
 CTacAddr* CAstConstant::ToTac(CCodeBlock *cb,
-                                CTacLabel *ltrue, CTacLabel *lfalse)
+        CTacLabel *ltrue, CTacLabel *lfalse)
 {
-  return NULL;
+    return NULL;
 }
 
 
@@ -1336,83 +1336,83 @@ CTacAddr* CAstConstant::ToTac(CCodeBlock *cb,
 int CAstStringConstant::_idx = 0;
 
 CAstStringConstant::CAstStringConstant(CToken t, const string value,
-                                       CAstScope *s)
-  : CAstOperand(t)
+        CAstScope *s)
+    : CAstOperand(t)
 {
-  CTypeManager *tm = CTypeManager::Get();
-  CSymtab *st = s->GetSymbolTable();
+    CTypeManager *tm = CTypeManager::Get();
+    CSymtab *st = s->GetSymbolTable();
 
-  _type = tm->GetArray(strlen(CToken::unescape(value).c_str())+1,
-                       tm->GetChar());
-  _value = new CDataInitString(value);
+    _type = tm->GetArray(strlen(CToken::unescape(value).c_str())+1,
+            tm->GetChar());
+    _value = new CDataInitString(value);
 
-  // in case of name clashes we simply iterate until we find a
-  // name that has not yet been used
-  _sym = NULL;
-  do {
-    ostringstream o;
-    o << "_str_" << ++_idx;
-    if (st->FindSymbol(o.str(), sGlobal) == NULL) {
-      _sym = new CSymGlobal(o.str(), _type);
-    }
-  } while (_sym == NULL);
+    // in case of name clashes we simply iterate until we find a
+    // name that has not yet been used
+    _sym = NULL;
+    do {
+        ostringstream o;
+        o << "_str_" << ++_idx;
+        if (st->FindSymbol(o.str(), sGlobal) == NULL) {
+            _sym = new CSymGlobal(o.str(), _type);
+        }
+    } while (_sym == NULL);
 
-  _sym->SetData(_value);
-  st->AddSymbol(_sym);
+    _sym->SetData(_value);
+    st->AddSymbol(_sym);
 }
 
 const string CAstStringConstant::GetValue(void) const
 {
-  return _value->GetData();
+    return _value->GetData();
 }
 
 const string CAstStringConstant::GetValueStr(void) const
 {
-  return GetValue();
+    return GetValue();
 }
 
 bool CAstStringConstant::TypeCheck(CToken *t, string *msg) const
 {
-  return true;
+    return true;
 }
 
 const CType* CAstStringConstant::GetType(void) const
 {
-  return NULL;
+    return NULL;
 }
 
 ostream& CAstStringConstant::print(ostream &out, int indent) const
 {
-  string ind(indent, ' ');
+    string ind(indent, ' ');
 
-  out << ind << '"' << GetValueStr() << '"' << " ";
+    out << ind << '"' << GetValueStr() << '"' << " ";
 
-  const CType *t = GetType();
-  if (t != NULL) out << t; else out << "<INVALID>";
+    const CType *t = GetType();
+    if (t != NULL) out << t; else out << "<INVALID>";
 
-  out << endl;
+    out << endl;
 
-  return out;
+    return out;
 }
 
 string CAstStringConstant::dotAttr(void) const
 {
-  ostringstream out;
-  // the string is already escaped, but dot requires double escaping
-  out << " [label=\"\\\"" << CToken::escape(GetValueStr())
-      << "\\\"\",shape=ellipse]";
-  return out.str();
+    ostringstream out;
+    // the string is already escaped, but dot requires double escaping
+    out << " [label=\"\\\"" << CToken::escape(GetValueStr())
+        << "\\\"\",shape=ellipse]";
+    return out.str();
 }
 
 CTacAddr* CAstStringConstant::ToTac(CCodeBlock *cb)
 {
-  return NULL;
+    return NULL;
 }
 
 CTacAddr* CAstStringConstant::ToTac(CCodeBlock *cb,
-                                CTacLabel *ltrue, CTacLabel *lfalse)
+        CTacLabel *ltrue, CTacLabel *lfalse)
 {
-  return NULL;
+    return NULL;
 }
 
 
