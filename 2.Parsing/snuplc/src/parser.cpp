@@ -137,9 +137,17 @@ CAstModule* CParser::module(void)
     return m;
 }
 
-CAstStatement* CParser::statSequence(CAstScope *s)
-{
-    //
+CAstStatReturn* CParser::returnStatement(CAstScope *s) {
+    CToken t;
+
+    Consume(tReturn, &t);
+
+    CAstExpression *rhs = expression(s);
+
+    return new CAstStatReturn(t, s, rhs);
+}
+
+CAstStatement* CParser::statSequence(CAstScope *s) {
     // statSequence ::= [ statement { ";" statement } ].
     // statement ::= assignment | subroutineCall | ifStatement |
     // whileStatement | returnStatement.
