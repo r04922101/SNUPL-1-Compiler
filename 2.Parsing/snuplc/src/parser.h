@@ -95,6 +95,9 @@ class CParser {
     /// @name methods for recursive-descent parsing
     /// @{
 
+    /// @brief variable declaration
+    void variable_declaration(void);
+
     CAstModule*       module(void);
 
     CAstStatement*    statSequence(CAstScope *s);

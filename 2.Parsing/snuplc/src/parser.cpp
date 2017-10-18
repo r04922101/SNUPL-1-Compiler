@@ -117,6 +117,72 @@ void CParser::InitSymbolTable(CSymtab *s)
     CTypeManager *tm = CTypeManager::Get();
 
     // TODO: add predefined functions here
+    CSymProc *dim = new CSymProc("DIM", tm -> GetInt());
+    dim -> AddParam(new CSymParam(0, "array", tm -> GetVoidPtr()));
+    dim -> AddParam(new CSymParam(1, "dim", tm -> GetInt()));
+    s -> AddSymbol(dim);
+
+    CSymProc *dofs = new CSymProc("DOFS", tm -> GetInt());
+    dofs -> AddParam(new CSymParam(0, "array", tm -> GetVoidPtr()));
+    s -> AddSymbol(dofs);
+
+    // function ReadInt(): integerread and return an integer value from stdin.
+    // –procedure WriteInt(i: integer);print integer value ‘i’ to stdout.
+    // –procedure WriteChar(c: char);write a single character to stdout.
+    // –procedure WriteStr(string: char[]);write string ‘string’ to stdout. No newline is added.
+    // –procedure WriteLn()write a newline sequence to stdout.
+    CSymProc *read_int = new CSymProc("ReadInt", tm -> GetInt());
+    s -> AddSymbol(read_int);
+
+    CSymProc *write_int = new CSymProc("WriteInt", tm -> GetNull());
+    write_int -> AddParam(new CSymParam(0, "i", tm -> GetInt()));
+    s -> AddSymbol(write_int);
+
+    CSymProc *write_char = new CSymProc("WriteChar", tm -> GetNull());
+    write_char -> AddParam(new CSymParam(0, "c", tm -> GetChar()));
+    s -> AddSymbol(write_char);
+
+    CSymProc *write_str = new CSymProc("WriteStr", tm -> GetNull());
+    write_str -> AddParam(new CSymParam(0, "string", tm -> GetPointer((tm -> GetArray(-1 , tm -> GetChar())))));
+    s -> AddSymbol(write_str);
+    
+    CSymProc *write_ln = new CSymProc("WriteLn", tm -> GetNull());
+    s -> AddSymbol(write_ln);
+
+    // ‘main’ is used to denote the module body in the generated assembly file
+    CSymbol *main_keyword = new CSymbol("main", stReserved, tm -> GetNull());
+    s -> AddSymbol(main_keyword);
+}
+
+
+void CParser::variable_declaration(void){
+    // varDeclaration = [ "var" varDeclSequence ";" ].
+    // varDeclSequence = varDecl { ";" varDecl }.
+    // varDecl = ident { "," ident } ":" type.
+    vector<CToken> variables;
+    EToken peek_type = _scanner->Peek().GetType();
+    while(peek_type != tBegin && peek_type != tProcedure && peek_type != tFunction){
+        // at least one var
+        CToken tmp;
+        Consume(tIdent, &tmp);
+        variables.push_back(tmp);
+        cout << tmp << endl;
+        peek_type = _scanner->Peek().GetType();
+        cout << "peek " << peek_type << endl;
+        while(peek_type != tColon){
+            Consume(tComma);
+            Consume(tIdent, &tmp);
+            variables.push_back(tmp);
+            peek_type = _scanner->Peek().GetType();
+        }
+        Consume(tColon);
+        // type
+        // todo: need to deal with type here
+        while(variables.size() != 0){
+            cout << variables.front() << endl;
+            variables.erase(variables.begin());
+        }
+    }
 }
 
 CAstModule* CParser::module(void)
@@ -124,15 +190,34 @@ CAstModule* CParser::module(void)
     //
     // module ::= statSequence  ".".
     //
+    // module ::= "module" ident ";" varDeclaration { subroutineDecl } "begin" statSequence "end" ident ".".
+
+    CToken module_name;
     Consume(tModule);
+    Consume(tIdent, &module_name);
+    Consume(tSemicolon);
+
     CToken dummy;
     CAstModule *m = new CAstModule(dummy, "placeholder");
-    CAstStatement *statseq = NULL;
+    InitSymbolTable(m -> GetSymbolTable());
 
-    statseq = statSequence(m);
+    // variable declaration
+    if(_scanner->Peek().GetType() == tVarDecl){
+        Consume(tVarDecl);
+        variable_declaration();
+    }
+    // subroutine declaration
+    
+    Consume(tBegin);
+    // CAstStatement *statseq = NULL;
+    // statseq = statSequence(m);
+
+    CToken check_module_name;
+    Consume(tEnd);
+    Consume(tIdent, &check_module_name);
     Consume(tDot);
 
-    m->SetStatementSequence(statseq);
+    // m->SetStatementSequence(statseq);
 
     return m;
 }
