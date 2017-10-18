@@ -363,6 +363,9 @@ CAstStatWhile* CParser::whileStatement(CAstScope *s) {
     //
     // whileStatement ::= "while" "(" expression ")" "do" statSequence "end"
     //
+    // FIRST(while) = { tWhile }
+    // FOLLOW(while) = { tEnd }
+    //
     CToken t;
     CAstExpression *cond = NULL;
     CAstStatement *body = NULL;
@@ -381,6 +384,9 @@ CAstStatWhile* CParser::whileStatement(CAstScope *s) {
 CAstStatIf* CParser::ifStatement(CAstScope *s) {
     //
     // ifStatement ::= "if" "(" expression ")" "then" statSequence ["else"] statSequence "end"
+    //
+    // FIRST(if) = { tIf }
+    // FOLLOW(if) = { tEnd }
     //
 
     CToken t;
