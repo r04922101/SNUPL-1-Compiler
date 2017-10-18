@@ -322,6 +322,24 @@ CAstExpression* CParser::factor(CAstScope *s)
     return n;
 }
 
+CAstStringConstant* CParser::stringConstant(CAstScope *s)
+{
+    //
+    // string ::= '"' { character }'"'.
+    //
+    // "digit { digit }" is scanned as one token (tNumber)
+    //
+
+    CToken t;
+
+    Consume(tString, &t);
+
+    errno = 0;
+    string v = t.GetValue().c_str();
+
+    return new CAstStringConstant(t, v, s);
+}
+
 CAstConstant* CParser::number(void)
 {
     //
