@@ -141,14 +141,15 @@ CAstStatement* CParser::statSequence(CAstScope *s)
 {
     //
     // statSequence ::= [ statement { ";" statement } ].
-    // statement ::= assignment.
-    // FIRST(statSequence) = { tNumber }
-    // FOLLOW(statSequence) = { tDot }
+    // statement ::= assignment | subroutineCall | ifStatement |
+    // whileStatement | returnStatement.
+    // FIRST(statSequence) = { tIdent, tIf, tWhile, tReturn }
+    // FOLLOW(statSequence) = { tElse, tEnd }
     //
     CAstStatement *head = NULL;
 
     EToken tt = _scanner->Peek().GetType();
-    if (!(tt == tDot)) {
+    if (!(tt == tElse) && !(tt == tEnd)) {
         CAstStatement *tail = NULL;
 
         do {
@@ -158,7 +159,10 @@ CAstStatement* CParser::statSequence(CAstScope *s)
 
             switch (tt) {
                 // statement ::= assignment
-                case tNumber:
+                case tIf:
+                case tWhile:
+                    st = whileStatement(s);
+                case tReturn:
                 case tIdent:
                     st = assignment(s);
                     break;
@@ -173,7 +177,11 @@ CAstStatement* CParser::statSequence(CAstScope *s)
             tail = st;
 
             tt = _scanner->Peek().GetType();
-            if (tt == tDot) break;
+            if (tt == tElse) {
+                break;
+            } else if (tt == tEnd) {
+                break;
+            }
 
             Consume(tSemicolon);
         } while (!_abort);
@@ -278,7 +286,7 @@ CAstExpression* CParser::factor(CAstScope *s)
     //
     // factor ::= number | "(" expression ")"
     //
-    // FIRST(factor) = { tNumber, tLBrak }
+    // FIRST(factor) = { tNumber, tLBrak, tBoolConst, tCharConst, tString, tIdent, tNot }
     //
 
     CToken t;
@@ -290,12 +298,21 @@ CAstExpression* CParser::factor(CAstScope *s)
         case tNumber:
             n = number();
             break;
-
             // factor ::= "(" expression ")"
         case tLParens:
             Consume(tLParens);
             n = expression(s);
             Consume(tRParens);
+            break;
+        case tBoolConst:
+            break;
+        case tCharConst:
+            break;
+        case tString:
+            break;
+        case tIdent:
+            break;
+        case tNot:
             break;
 
         default:

@@ -108,6 +108,8 @@ class CParser {
     CAstExpression*   factor(CAstScope *s);
 
     CAstConstant*     number(void);
+    CAstConstant*     constchar(void);
+    CAstConstant*     constbool(void);
 
     /// @}
 
