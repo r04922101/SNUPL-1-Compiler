@@ -99,6 +99,7 @@ class CParser {
 
     CAstStatement*    statSequence(CAstScope *s);
 
+    CAstStatIf*       ifStatement(CAstScope *s);
     CAstStatAssign*   assignment(CAstScope *s);
     CAstStatWhile*    whileStatement(CAstScope *s);
     CAstStatReturn*   returnStatement(CAstScope *s);

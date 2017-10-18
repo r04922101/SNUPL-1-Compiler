@@ -49,14 +49,12 @@ using namespace std;
 //------------------------------------------------------------------------------
 // CParser
 //
-CParser::CParser(CScanner *scanner)
-{
+CParser::CParser(CScanner *scanner) {
     _scanner = scanner;
     _module = NULL;
 }
 
-CAstNode* CParser::Parse(void)
-{
+CAstNode* CParser::Parse(void) {
     _abort = false;
 
     if (_module != NULL) { delete _module; _module = NULL; }
@@ -76,28 +74,24 @@ CAstNode* CParser::Parse(void)
     return _module;
 }
 
-const CToken* CParser::GetErrorToken(void) const
-{
+const CToken* CParser::GetErrorToken(void) const {
     if (_abort) return &_error_token;
     else return NULL;
 }
 
-string CParser::GetErrorMessage(void) const
-{
+string CParser::GetErrorMessage(void) const {
     if (_abort) return _message;
     else return "";
 }
 
-void CParser::SetError(CToken t, const string message)
-{
+void CParser::SetError(CToken t, const string message) {
     _error_token = t;
     _message = message;
     _abort = true;
     throw message;
 }
 
-bool CParser::Consume(EToken type, CToken *token)
-{
+bool CParser::Consume(EToken type, CToken *token) {
     if (_abort) return false;
 
     CToken t = _scanner->Get();
@@ -198,8 +192,7 @@ CAstStatement* CParser::statSequence(CAstScope *s) {
     return head;
 }
 
-CAstStatAssign* CParser::assignment(CAstScope *s)
-{
+CAstStatAssign* CParser::assignment(CAstScope *s) {
     //
     // assignment ::= number ":=" expression.
     //
@@ -213,8 +206,7 @@ CAstStatAssign* CParser::assignment(CAstScope *s)
     return new CAstStatAssign(t, lhs, rhs);
 }
 
-CAstExpression* CParser::expression(CAstScope* s)
-{
+CAstExpression* CParser::expression(CAstScope* s) {
     //
     // expression ::= simpleexpr [ relOp simpleexpr ].
     //
@@ -238,8 +230,7 @@ CAstExpression* CParser::expression(CAstScope* s)
     }
 }
 
-CAstExpression* CParser::simpleexpr(CAstScope *s)
-{
+CAstExpression* CParser::simpleexpr(CAstScope *s) {
     //
     // simpleexpr ::= term { termOp term }.
     //
@@ -262,8 +253,7 @@ CAstExpression* CParser::simpleexpr(CAstScope *s)
     return n;
 }
 
-CAstExpression* CParser::term(CAstScope *s)
-{
+CAstExpression* CParser::term(CAstScope *s) {
     //
     // term ::= factor { ("*"|"/") factor }.
     //
@@ -368,4 +358,32 @@ CAstStatWhile* CParser::whileStatement(CAstScope *s) {
     Consume(tEnd);
 
     return new CAstStatWhile(t, cond, body);
+}
+
+CAstStatIf* CParser::ifStatement(CAstScope *s) {
+    //
+    // ifStatement ::= "if" "(" expression ")" "then" statSequence ["else"] statSequence "end"
+    //
+
+    CToken t;
+    CAstExpression *cond = NULL;
+    CAstStatement *ifbody = NULL;
+    CAstStatement *elsebody = NULL;
+
+    Consume(tIf, &t);
+    Consume(tLParens);
+    cond = expression(s);
+    Consume(tRParens);
+    Consume(tThen);
+    ifbody = statSequence(s);
+
+    EToken tt = _scanner->Peek().GetType();
+
+    if (tt == tElse) {
+        Consume(tElse);
+        elsebody = statSequence(s);
+    }
+
+    Consume(tEnd);
+    return new CAstStatIf(t, cond, ifbody, elsebody);
 }
