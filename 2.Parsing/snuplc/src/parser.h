@@ -102,6 +102,7 @@ class CParser {
 
     CAstStatement*    statSequence(CAstScope *s);
 
+    CAstStatIf*       ifStatement(CAstScope *s);
     CAstStatAssign*   assignment(CAstScope *s);
     CAstStatWhile*    whileStatement(CAstScope *s);
     CAstStatReturn*   returnStatement(CAstScope *s);
@@ -112,9 +113,12 @@ class CParser {
     CAstExpression*   factor(CAstScope *s);
 
     CAstConstant*     number(void);
+    CAstStringConstant* stringConstant(CAstScope *s);
+
     CAstConstant*     constchar(void);
     CAstConstant*     constbool(void);
 
+    CAstArrayDesignator* qualident(void);
     /// @}
 
 
