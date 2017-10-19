@@ -442,86 +442,6 @@ class CAstStatement : public CAstNode {
 };
 
 
-//------------------------------------------------------------------------------
-/// @brief AST assignment statement node
-///
-/// node representing an assignment statement
-///
-
-class CAstStatAssign : public CAstStatement {
-  public:
-    /// @name constructors/destructors
-    /// @{
-
-    /// @param t token in input stream (used for error reporting purposes)
-    /// @param lhs left-hand side of assignment (designator)
-    /// @param rhs right-hand side of assignment (expression)
-    CAstStatAssign(CToken t, CAstConstant *lhs, CAstExpression *rhs);
-
-    /// @}
-
-    /// @name property manipulation
-    /// @{
-
-    /// @brief return the LHS of the assignment
-    /// @retval CAstDesignator* LHS of the assignment
-    CAstConstant* GetLHS(void) const;
-
-    /// @brief return the RHS of the assignment
-    /// @retval CAstExpression* RHS of the assignment
-    CAstExpression* GetRHS(void) const;
-
-    /// @}
-
-
-    /// @name type management
-    /// @{
-
-    /// @brief perform type checking
-    /// @param t (out, optional) type error at token t
-    /// @param msg (out, optional) type error message
-    /// @retval true if no type error has been found
-    /// @retval false otherwise
-    virtual bool TypeCheck(CToken *t, string *msg) const;
-
-    /// @brief return (compute) the type of the expression.
-    virtual const CType* GetType(void) const;
-
-    /// @}
-
-    /// @name output
-    /// @{
-
-    /// @brief print the node to an output stream
-    /// @param out output stream
-    /// @param indent indentation
-    virtual ostream&  print(ostream &out, int indent=0) const;
-
-    /// @brief return the node's attributes in (dot) string format
-    /// @retval string node attributes as a string
-    virtual string dotAttr(void) const;
-
-    /// @brief print the node in dot format to an output stream
-    /// @param out output stream
-    /// @param indent indentation
-    virtual void toDot(ostream &out, int indent=0) const;
-
-    /// @}
-
-
-    /// @name transformation into TAC
-    /// @{
-
-    virtual CTacAddr* ToTac(CCodeBlock *cb, CTacLabel *next);
-
-    /// @}
-
-
-  private:
-    CAstConstant   *_lhs;           ///< LHS (designator)
-    CAstExpression *_rhs;           ///< RHS (expression)
-};
-
 
 //------------------------------------------------------------------------------
 /// @brief AST procedure call statement node
@@ -1433,6 +1353,86 @@ class CAstArrayDesignator : public CAstDesignator {
                                     ///< have been added
     vector<CAstExpression*> _idx;   ///< index expressions
     CAstExpression *_offset;        ///< address computation expression
+};
+
+//------------------------------------------------------------------------------
+/// @brief AST assignment statement node
+///
+/// node representing an assignment statement
+///
+
+class CAstStatAssign : public CAstStatement {
+  public:
+    /// @name constructors/destructors
+    /// @{
+
+    /// @param t token in input stream (used for error reporting purposes)
+    /// @param lhs left-hand side of assignment (designator)
+    /// @param rhs right-hand side of assignment (expression)
+    CAstStatAssign(CToken t, CAstArrayDesignator *lhs, CAstExpression *rhs);
+
+    /// @}
+
+    /// @name property manipulation
+    /// @{
+
+    /// @brief return the LHS of the assignment
+    /// @retval CAstDesignator* LHS of the assignment
+    CAstArrayDesignator* GetLHS(void) const;
+
+    /// @brief return the RHS of the assignment
+    /// @retval CAstExpression* RHS of the assignment
+    CAstExpression* GetRHS(void) const;
+
+    /// @}
+
+
+    /// @name type management
+    /// @{
+
+    /// @brief perform type checking
+    /// @param t (out, optional) type error at token t
+    /// @param msg (out, optional) type error message
+    /// @retval true if no type error has been found
+    /// @retval false otherwise
+    virtual bool TypeCheck(CToken *t, string *msg) const;
+
+    /// @brief return (compute) the type of the expression.
+    virtual const CType* GetType(void) const;
+
+    /// @}
+
+    /// @name output
+    /// @{
+
+    /// @brief print the node to an output stream
+    /// @param out output stream
+    /// @param indent indentation
+    virtual ostream&  print(ostream &out, int indent=0) const;
+
+    /// @brief return the node's attributes in (dot) string format
+    /// @retval string node attributes as a string
+    virtual string dotAttr(void) const;
+
+    /// @brief print the node in dot format to an output stream
+    /// @param out output stream
+    /// @param indent indentation
+    virtual void toDot(ostream &out, int indent=0) const;
+
+    /// @}
+
+
+    /// @name transformation into TAC
+    /// @{
+
+    virtual CTacAddr* ToTac(CCodeBlock *cb, CTacLabel *next);
+
+    /// @}
+
+
+  private:
+    CAstArrayDesignator   *_lhs;           ///< LHS (designator)
+    CAstExpression *_rhs;           ///< RHS (expression)
 };
 
 

@@ -140,7 +140,7 @@ void CParser::InitSymbolTable(CSymtab *s)
     CSymProc *write_str = new CSymProc("WriteStr", tm -> GetNull());
     write_str -> AddParam(new CSymParam(0, "string", tm -> GetPointer((tm -> GetArray(-1 , tm -> GetChar())))));
     s -> AddSymbol(write_str);
-    
+
     CSymProc *write_ln = new CSymProc("WriteLn", tm -> GetNull());
     s -> AddSymbol(write_ln);
 
@@ -208,7 +208,27 @@ CAstType* CParser::type(){
     }
 }
 
-void CParser::variable_declaration(CSymtab *s){
+CAstArrayDesignator* CParser::qualident(CAstScope *s) {
+    //
+    // assignment ::= number ":=" expression.
+    //
+    CAstArrayDesignator* cad;
+    CAstExpression* head = NULL;
+    CToken t;
+
+    Consume(tIdent, &t);
+    cad = new CAstArrayDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue()));
+    EToken tt = _scanner->Peek().GetType();
+    if (tt == tLBrak) {
+        head = expression(s);
+        cad->AddIndex(head);
+        Consume(tRBrak);
+    }
+
+    return cad;
+}
+
+void CParser::variable_declaration(CSymtab *s) {
     // varDeclaration ::= [ "var" varDeclSequence ";" ].
     // varDeclSequence ::= varDecl { ";" varDecl }.
     // varDecl ::= ident { "," ident } ":" type.
@@ -372,13 +392,17 @@ CAstStatement* CParser::statSequence(CAstScope *s) {
             CToken t;
             EToken tt = _scanner->Peek().GetType();
             CAstStatement *st = NULL;
-
             switch (tt) {
                 // statement ::= assignment
                 case tIf:
+                    st = ifStatement(s);
+                    break;
                 case tWhile:
                     st = whileStatement(s);
+                    break;
                 case tReturn:
+                    st = returnStatement(s);
+                    break;
                 case tIdent:
                     st = assignment(s);
                     break;
@@ -406,13 +430,14 @@ CAstStatement* CParser::statSequence(CAstScope *s) {
     return head;
 }
 
+
 CAstStatAssign* CParser::assignment(CAstScope *s) {
     //
     // assignment ::= number ":=" expression.
     //
     CToken t;
 
-    CAstConstant *lhs = number();
+    CAstArrayDesignator *lhs = qualident(s);
     Consume(tAssign, &t);
 
     CAstExpression *rhs = expression(s);
