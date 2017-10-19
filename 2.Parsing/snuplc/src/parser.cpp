@@ -149,6 +149,64 @@ void CParser::InitSymbolTable(CSymtab *s)
     s -> AddSymbol(main_keyword);
 }
 
+CAstType* CParser::type(){
+    // type ::= basetype | type "[" [ number ] "]".
+    // basetype ::= "boolean" | "char" | "integer".
+    // left recursive, change it to the following
+    // type ::= basetype T
+    // T ::= "["[number]"]"T | empty
+
+    // check variable type
+    EToken peek_type = _scanner->Peek().GetType();
+    CToken name;
+    if(peek_type == tInteger) Consume(tInteger, &name);
+    else if(peek_type == tChar) Consume(tChar, &name);
+    else if(peek_type == tBoolean) Consume(tBoolean, &name);
+    else SetError(_scanner->Peek(), "basetype expected");
+
+    CTypeManager *tm = CTypeManager::Get();
+    // array type
+    if(_scanner->Peek().GetType() == tLBrak){
+        int dimension = 0;
+        vector<int> index;
+        CToken number;
+        do{
+            Consume(tLBrak);
+            Consume(tNumber, &number);
+            index.push_back(stoi(number.GetValue()));
+            Consume(tRBrak);
+            dimension++;
+        } while(_scanner->Peek().GetType() == tLBrak);
+        
+        int tmp_dimension = dimension;
+        CSymbol *global_variable;
+        const CType *inner_type;
+        const CType *basetype;
+        if(name.GetType() == tInteger) basetype = tm -> GetInt();
+        else if(name.GetType() == tChar) basetype = tm -> GetChar();
+        else if(name.GetType() == tBoolean) basetype = tm -> GetBool();
+    
+        int nelem = index.back();
+        index.pop_back();
+    
+        const CType *outer_type = tm -> GetArray(nelem, basetype);
+        while(tmp_dimension != 1){
+            inner_type = outer_type;
+            int nelem = index.back();
+            index.pop_back();
+            const CType *tmp =  tm -> GetArray(nelem, inner_type);
+            outer_type = tmp;
+            tmp_dimension--;
+        }
+        return new CAstType(name ,outer_type);
+    }
+    // basetype
+    else {
+        if(name.GetType() == tInteger) return new CAstType(name, tm -> GetInt());
+        else if(name.GetType() == tChar) return new CAstType(name, tm -> GetChar());
+        else if(name.GetType() == tBoolean) return new CAstType(name, tm -> GetBool());
+    }
+}
 
 void CParser::variable_declaration(CSymtab *s){
     // varDeclaration ::= [ "var" varDeclSequence ";" ].
@@ -176,85 +234,34 @@ void CParser::variable_declaration(CSymtab *s){
         }
         Consume(tColon);
 
-        // type ::= basetype | type "[" [ number ] "]".
-        // basetype ::= "boolean" | "char" | "integer".
-        // left recursive, change it to the following
-        // type ::= basetype T
-        // T ::= "["[number]"]"T | empty
-
-        // check variable type
-        peek_type = _scanner->Peek().GetType();
-        CToken type;
-        if(peek_type == tInteger) Consume(tInteger, &type);
-        else if(peek_type == tChar) Consume(tChar, &type);
-        else if(peek_type == tBoolean) Consume(tBoolean, &type);
-        else SetError(_scanner->Peek(), "basetype expected");
-
-        // array type
-        if(_scanner->Peek().GetType() == tLBrak){
-            int dimension = 0;
-            vector<int> index;
-            CToken number;
-            do{
-                Consume(tLBrak);
-                Consume(tNumber, &number);
-                index.push_back(stoi(number.GetValue()));
-                Consume(tRBrak);
-                dimension++;
-            } while(_scanner->Peek().GetType() == tLBrak);
-            add_array_type_to_global_symtab(variables, type.GetType(), dimension, index, s);
+        CAstType *variable_type = type();
+        if(variable_type -> GetType() -> IsArray()){
+            while(variables.size() != 0){
+                CSymGlobal *global_variable = new CSymGlobal(variables.front().GetValue(), variable_type -> GetType());
+                variables.erase(variables.begin());
+                s -> AddSymbol(global_variable);
+            }
         }
-        // basetype
-        else add_basetype_to_global_symtab(variables, type.GetType(), s);
+        else{
+            while(variables.size() != 0){
+                CSymbol *global_variable = new CSymGlobal(variables.front().GetValue(), variable_type -> GetType());
+                
+                variables.erase(variables.begin());
+                s -> AddSymbol(global_variable);
+            }
+        }
+
         Consume(tSemicolon);
         peek_type = _scanner->Peek().GetType();
     }
 }
 
 void CParser::add_basetype_to_global_symtab(vector<CToken> variables, EToken type, CSymtab *s){
-    CTypeManager *tm = CTypeManager::Get();
-    while(variables.size() != 0){
-        CSymbol *global_variable;
-        if(type == tInteger)
-            global_variable = new CSymGlobal(variables.front().GetValue(), tm -> GetInt());
-        else if(type == tChar)
-            global_variable = new CSymGlobal(variables.front().GetValue(), tm -> GetChar());
-        else if(type == tBoolean)
-            global_variable = new CSymGlobal(variables.front().GetValue(), tm -> GetBool());
-        
-        variables.erase(variables.begin());
-        s -> AddSymbol(global_variable);
-    }
+    
 }
 
 void CParser::add_array_type_to_global_symtab(vector<CToken> variables, EToken type, int dimension, vector<int> index, CSymtab *s){
-    CTypeManager *tm = CTypeManager::Get();
-    int tmp_dimension = dimension;
-    CSymbol *global_variable;
-    const CType *inner_type;
-    const CType *basetype;
-    if(type == tInteger) basetype = tm -> GetInt();
-    else if(type == tChar) basetype = tm -> GetChar();
-    else if(type == tBoolean) basetype = tm -> GetBool();
 
-    int nelem = index.back();
-    index.pop_back();
-
-    const CType *outer_type = tm -> GetArray(nelem, basetype);
-    while(tmp_dimension != 1){
-        inner_type = outer_type;
-        int nelem = index.back();
-        index.pop_back();
-        const CType *tmp =  tm -> GetArray(nelem, inner_type);
-        outer_type = tmp;
-        tmp_dimension--;
-    }
-
-    while(variables.size() != 0){
-        global_variable = new CSymGlobal(variables.front().GetValue(), outer_type);
-        variables.erase(variables.begin());
-        s -> AddSymbol(global_variable);
-    }
 }
 
 CAstModule* CParser::module(void)
@@ -278,8 +285,11 @@ CAstModule* CParser::module(void)
         Consume(tVarDecl);
         variable_declaration(m -> GetSymbolTable());
     }
-    cout << "end of variable_declartion\n";
+    
     // subroutine declaration
+    // subroutineDeclaration(m, );
+
+    
     Consume(tBegin);
     // CAstStatement *statseq = NULL;
     // statseq = statSequence(m);
@@ -293,6 +303,47 @@ CAstModule* CParser::module(void)
 
     return m;
 }
+
+// CAstProcedure* CParser::subroutineDeclaration(CAstScope *parent, CSymProc *symbol){
+//     EToken tt = _scanner->Peek().GetType();
+//     if(tt == tProcedure) return procedureDeclaration(parent, symbol);
+//     else if(tt == tFunction) return functionDeclaration(parent, symbol);
+//     else return NULL;
+// }
+
+// CAstProcedure* CParser::procedureDeclaration(CAstScope *parent, CSymProc *symbol){
+//     Consume(tFunction);
+//     CToken name;
+//     Consume(tIdent, &name);
+
+//     CAstProcedure* procedure = new CAstProcedure(name, name.GetValue(), parent, symbol);
+//     // has parameter
+//     if(_scanner->Peek().GetType() == tLParens){
+//         Consume(tLParens);
+//         variable_declaration(procedure.GetSymbolTable());
+//     }
+//     else{
+//         Consume(tSemicolon);
+//     }
+//     return function;
+// }
+
+// CAstProcedure* CParser::functionDeclaration(CAstScope *parent, CSymProc *symbol){
+//     Consume(tFunction);
+//     CToken name;
+//     Consume(tIdent, &name);
+
+//     CAstProcedure* function = new CAstProcedure(name, name.GetValue(), parent, symbol);
+//     // has parameter
+//     if(_scanner->Peek().GetType() == tLParens){
+//         Consume(tLParens);
+//         variable_declaration(function.GetSymbolTable());
+//     }
+//     else{
+//         Consume(tColon);
+//     }
+//     return function;
+// }
 
 CAstStatReturn* CParser::returnStatement(CAstScope *s) {
     CToken t;
