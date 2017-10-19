@@ -276,13 +276,6 @@ void CParser::variable_declaration(CSymtab *s) {
     }
 }
 
-void CParser::add_basetype_to_global_symtab(vector<CToken> variables, EToken type, CSymtab *s){
-    
-}
-
-void CParser::add_array_type_to_global_symtab(vector<CToken> variables, EToken type, int dimension, vector<int> index, CSymtab *s){
-
-}
 
 CAstModule* CParser::module(void)
 {
@@ -307,7 +300,6 @@ CAstModule* CParser::module(void)
     }
     
     // subroutine declaration
-    // subroutineDeclaration(m, );
 
     
     Consume(tBegin);
@@ -323,47 +315,6 @@ CAstModule* CParser::module(void)
 
     return m;
 }
-
-// CAstProcedure* CParser::subroutineDeclaration(CAstScope *parent, CSymProc *symbol){
-//     EToken tt = _scanner->Peek().GetType();
-//     if(tt == tProcedure) return procedureDeclaration(parent, symbol);
-//     else if(tt == tFunction) return functionDeclaration(parent, symbol);
-//     else return NULL;
-// }
-
-// CAstProcedure* CParser::procedureDeclaration(CAstScope *parent, CSymProc *symbol){
-//     Consume(tFunction);
-//     CToken name;
-//     Consume(tIdent, &name);
-
-//     CAstProcedure* procedure = new CAstProcedure(name, name.GetValue(), parent, symbol);
-//     // has parameter
-//     if(_scanner->Peek().GetType() == tLParens){
-//         Consume(tLParens);
-//         variable_declaration(procedure.GetSymbolTable());
-//     }
-//     else{
-//         Consume(tSemicolon);
-//     }
-//     return function;
-// }
-
-// CAstProcedure* CParser::functionDeclaration(CAstScope *parent, CSymProc *symbol){
-//     Consume(tFunction);
-//     CToken name;
-//     Consume(tIdent, &name);
-
-//     CAstProcedure* function = new CAstProcedure(name, name.GetValue(), parent, symbol);
-//     // has parameter
-//     if(_scanner->Peek().GetType() == tLParens){
-//         Consume(tLParens);
-//         variable_declaration(function.GetSymbolTable());
-//     }
-//     else{
-//         Consume(tColon);
-//     }
-//     return function;
-// }
 
 CAstStatReturn* CParser::returnStatement(CAstScope *s) {
     CToken t;

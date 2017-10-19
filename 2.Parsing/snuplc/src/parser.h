@@ -96,19 +96,7 @@ class CParser {
     /// @brief variable declaration
     void variable_declaration(CSymtab *s);
 
-    /// @brief add basetype variable to symbol table
-    /// @param variables variable tokens
-    /// @param type variable type
-    /// @param s symbol table
-    void add_basetype_to_global_symtab(vector<CToken> variables, EToken type, CSymtab *s);
-
     CAstType* type();
-
-    /// @brief add array type variable to symbol table
-    /// @param variables variable tokens
-    /// @param type variable type
-    /// @param s symbol table
-    void add_array_type_to_global_symtab(vector<CToken> variables, EToken type, int dimension, vector<int> index, CSymtab *s);
 
 
     /// @name methods for recursive-descent parsing
@@ -116,9 +104,6 @@ class CParser {
 
 
     CAstModule*       module(void);
-    // CAstProcedure*    subroutineDeclaration();
-    // CAstProcedure*    procedureDeclaration();
-    // CAstProcedure*    functionDeclaration();
     CAstStatement*    statSequence(CAstScope *s);
 
     CAstStatIf*       ifStatement(CAstScope *s);
