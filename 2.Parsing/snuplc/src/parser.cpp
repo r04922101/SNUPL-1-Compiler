@@ -228,7 +228,52 @@ CAstArrayDesignator* CParser::qualident(CAstScope *s) {
     return cad;
 }
 
-void CParser::variable_declaration(CSymtab *s) {
+void CParser::formalParam(CSymtab *s){
+    // formalParam ::= "(" [ varDeclSequence ] ")".
+    Consume(tLParens);
+    if(_scanner -> Peek().GetType() == tRParens){
+        Consume(tRParens);
+        return;
+    }
+    else{
+        vector<CToken> variables;
+        unordered_set<string> variable_name;
+        EToken peek_type = _scanner->Peek().GetType();
+        while(peek_type != tRParens){
+            // at least one var
+            CToken tmp;
+            Consume(tIdent, &tmp);
+            variables.push_back(tmp);
+            variable_name.insert(tmp.GetValue());
+            peek_type = _scanner->Peek().GetType();
+            while(peek_type != tColon){
+                Consume(tComma);
+                Consume(tIdent, &tmp);
+                // check duplicate variable declaration
+                if(variable_name.find(tmp.GetValue()) != variable_name.end())
+                    SetError(tmp, "duplicate variable declaration '" + tmp.GetValue() + "'");
+                variables.push_back(tmp);
+                variable_name.insert(tmp.GetValue());
+                peek_type = _scanner->Peek().GetType();
+            }
+            Consume(tColon);
+    
+            CAstType *variable_type = type();
+            int index = 0;
+            while(variables.size() != 0){
+                CSymParam *param_variable = new CSymParam(index++, variables.front().GetValue(), variable_type -> GetType());
+                
+                variables.erase(variables.begin());
+                s -> AddSymbol(param_variable);
+            }
+    
+            Consume(tSemicolon);
+            peek_type = _scanner->Peek().GetType();
+        }
+    }
+}
+
+void CParser::variable_declaration(CSymtab *s, string scope) {
     // varDeclaration ::= [ "var" varDeclSequence ";" ].
     // varDeclSequence ::= varDecl { ";" varDecl }.
     // varDecl ::= ident { "," ident } ":" type.
@@ -255,20 +300,13 @@ void CParser::variable_declaration(CSymtab *s) {
         Consume(tColon);
 
         CAstType *variable_type = type();
-        if(variable_type -> GetType() -> IsArray()){
-            while(variables.size() != 0){
-                CSymGlobal *global_variable = new CSymGlobal(variables.front().GetValue(), variable_type -> GetType());
-                variables.erase(variables.begin());
-                s -> AddSymbol(global_variable);
-            }
-        }
-        else{
-            while(variables.size() != 0){
-                CSymbol *global_variable = new CSymGlobal(variables.front().GetValue(), variable_type -> GetType());
-                
-                variables.erase(variables.begin());
-                s -> AddSymbol(global_variable);
-            }
+        while(variables.size() != 0){
+            CSymbol *variable;
+            if(scope == "global")  variable = new CSymGlobal(variables.front().GetValue(), variable_type -> GetType());
+            else if(scope == "local") variable = new CSymLocal(variables.front().GetValue(), variable_type -> GetType());
+            
+            variables.erase(variables.begin());
+            s -> AddSymbol(variable);
         }
 
         Consume(tSemicolon);
@@ -296,7 +334,7 @@ CAstModule* CParser::module(void)
     // variable declaration
     if(_scanner->Peek().GetType() == tVarDecl){
         Consume(tVarDecl);
-        variable_declaration(m -> GetSymbolTable());
+        variable_declaration(m -> GetSymbolTable(), "global");
     }
     
     // subroutine declaration

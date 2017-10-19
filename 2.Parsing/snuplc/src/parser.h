@@ -94,7 +94,9 @@ class CParser {
     /// @{
 
     /// @brief variable declaration
-    void variable_declaration(CSymtab *s);
+    void formalParam(CSymtab *s);
+    void variable_declaration(CSymtab *s, string scope);
+    
 
     CAstType* type();
 
