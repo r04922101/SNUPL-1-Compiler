@@ -678,3 +678,26 @@ CAstProcedure* CParser::subroutineDecl(CAstScope *parent) {
     Consume(tSemicolon);
     return subroutine;
 }
+
+
+CAstFunctionCall* CParser::subroutineCall(CAstScope* s, CAstModule* m){
+    CToken ident;
+    Consume(tIdent, &ident);
+    const CSymbol *symbol = m -> GetSymbolTable() -> FindSymbol(ident.GetValue());
+    if(symbol == NULL) {
+        SetError(ident, "undefined identifier.");
+        return NULL;
+    }
+    Consume(tLParens);
+    if(_scanner -> Peek().GetType() != tRParens){
+        expression(s);
+        while(_scanner -> Peek().GetType() == tComma) {
+            Consume(tComma);
+            expression(s);
+        }
+    }
+    Consume(tRParens);
+    CSymProc *symproc = new CSymProc(ident.GetValue(), symbol -> GetDataType());
+    CAstFunctionCall* functionCall = new CAstFunctionCall(ident, symproc);
+    return functionCall;
+}

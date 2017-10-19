@@ -124,6 +124,7 @@ class CParser {
 
     CAstArrayDesignator* qualident(CAstScope *s);
     CAstProcedure* subroutineDecl(CAstScope *parent);
+    CAstFunctionCall* subroutineCall(CAstScope* s, CAstModule* m);
     /// @}
 
 
