@@ -177,7 +177,7 @@ CAstType* CParser::type(){
             Consume(tRBrak);
             dimension++;
         } while(_scanner->Peek().GetType() == tLBrak);
-        
+
         int tmp_dimension = dimension;
         CSymbol *global_variable;
         const CType *inner_type;
@@ -185,10 +185,10 @@ CAstType* CParser::type(){
         if(name.GetType() == tInteger) basetype = tm -> GetInt();
         else if(name.GetType() == tChar) basetype = tm -> GetChar();
         else if(name.GetType() == tBoolean) basetype = tm -> GetBool();
-    
+
         int nelem = index.back();
         index.pop_back();
-    
+
         const CType *outer_type = tm -> GetArray(nelem, basetype);
         while(tmp_dimension != 1){
             inner_type = outer_type;
@@ -265,7 +265,7 @@ void CParser::variable_declaration(CSymtab *s) {
         else{
             while(variables.size() != 0){
                 CSymbol *global_variable = new CSymGlobal(variables.front().GetValue(), variable_type -> GetType());
-                
+
                 variables.erase(variables.begin());
                 s -> AddSymbol(global_variable);
             }
@@ -298,10 +298,10 @@ CAstModule* CParser::module(void)
         Consume(tVarDecl);
         variable_declaration(m -> GetSymbolTable());
     }
-    
+
     // subroutine declaration
 
-    
+
     Consume(tBegin);
     // CAstStatement *statseq = NULL;
     // statseq = statSequence(m);
@@ -600,4 +600,53 @@ CAstStatIf* CParser::ifStatement(CAstScope *s) {
 
     Consume(tEnd);
     return new CAstStatIf(t, cond, ifbody, elsebody);
+}
+
+CAstProcedure* CParser::procedureDecl(CAstScope *s) {
+    //
+    // procedureDecl ::= "procedure" ident [ formalParam ] ";"
+    //
+    // FIRST(if) = { tProcedure }
+    // FOLLOW(if) = { }
+    //
+    CToken pt;
+
+    Consume(tProcedure);
+    Consume(tIdent, &pt);
+
+    //Add to symbol table
+    CSymProc *symbol = new CSymProc(pt.GetValue(), NULL);
+    EToken tt = _scanner->Peek().GetType();
+    if (tt == tLBrak) {
+        //Add formalParam
+    }
+
+    Consume(tSemicolon);
+    return new CAstProcedure(pt, pt.GetValue(), s, symbol);
+}
+
+void CParser::functionDecl(CAstScope *s) {
+    //
+    // functionDecl ::= "functionDecl" ident [ formalParam ] ":" type ";"
+    //
+    // FIRST(if) = { tFunction }
+    // FOLLOW(if) = { }
+    //
+    CToken pt;
+
+    Consume(tFunction);
+    Consume(tIdent, &pt);
+
+    //Add to symbol table
+    EToken tt = _scanner->Peek().GetType();
+    if (tt == tLBrak) {
+        //Add formalParam
+    }
+
+    Consume(tColon);
+
+    CAstType *typeE = type();
+    CSymProc *symbol = new CSymProc(pt.GetValue(), NULL);
+    Consume(tSemicolon);
+    return;
 }
