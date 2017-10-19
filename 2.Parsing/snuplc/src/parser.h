@@ -81,8 +81,6 @@ class CParser {
     void SetError(CToken t, const string message);
 
     /// @brief consume a token given type and optionally store the token
-    /// @param type expected token type
-    /// @param token If not null, the consumed token is stored in 'token'
     /// @retval true if a token has been consumed
     /// @retval false otherwise
     bool Consume(EToken type, CToken *token=NULL);
@@ -96,7 +94,25 @@ class CParser {
     /// @{
 
     /// @brief variable declaration
-    void variable_declaration(void);
+    void variable_declaration(CSymtab *s);
+
+    /// @brief add basetype variable to symbol table
+    /// @param variables variable tokens
+    /// @param type variable type
+    /// @param s symbol table
+    void add_basetype_to_global_symtab(vector<CToken> variables, EToken type, CSymtab *s);
+
+
+    /// @brief add basetype variable to symbol table
+    /// @param variables variable tokens
+    /// @param type variable type
+    /// @param s symbol table
+    void add_array_type_to_global_symtab(vector<CToken> variables, EToken type, int dimension, vector<int> index, CSymtab *s);
+
+
+    /// @name methods for recursive-descent parsing
+    /// @{
+
 
     CAstModule*       module(void);
 
