@@ -41,6 +41,7 @@
 #include <vector>
 #include <iostream>
 #include <exception>
+#include <unordered_set>
 
 #include "parser.h"
 using namespace std;
@@ -154,28 +155,32 @@ void CParser::variable_declaration(void){
     // varDeclSequence = varDecl { ";" varDecl }.
     // varDecl = ident { "," ident } ":" type.
     vector<CToken> variables;
+    unordered_set<string> variable_name;
     EToken peek_type = _scanner->Peek().GetType();
     while(peek_type != tBegin && peek_type != tProcedure && peek_type != tFunction){
         // at least one var
         CToken tmp;
         Consume(tIdent, &tmp);
         variables.push_back(tmp);
-        cout << tmp << endl;
+        variable_name.insert(tmp.GetValue());
         peek_type = _scanner->Peek().GetType();
-        cout << "peek " << peek_type << endl;
         while(peek_type != tColon){
             Consume(tComma);
             Consume(tIdent, &tmp);
             variables.push_back(tmp);
+            variable_name.insert(tmp.GetValue());
             peek_type = _scanner->Peek().GetType();
+        }
+        // check duplicate variable declaration
+        while(variables.size() != 0){
+            if(variable_name.find(variables.front().GetValue()) != variable_name.end())
+                SetError(variables.front(), "duplicate variable declaration '" + variables.front().GetValue() + "'");
+            variables.erase(variables.begin());
         }
         Consume(tColon);
         // type
         // todo: need to deal with type here
-        while(variables.size() != 0){
-            cout << variables.front() << endl;
-            variables.erase(variables.begin());
-        }
+        
     }
 }
 
