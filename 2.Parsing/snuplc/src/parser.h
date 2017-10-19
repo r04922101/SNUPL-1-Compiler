@@ -93,8 +93,6 @@ class CParser {
     /// @name methods for recursive-descent parsing
     /// @{
 
-    /// @brief variable declaration
-    CSymProc* formalParam(CToken pt);
     void variable_declaration(CAstScope *s);
     
 
@@ -125,8 +123,7 @@ class CParser {
     CAstConstant*        constbool(void);
 
     CAstArrayDesignator* qualident(CAstScope *s);
-    CAstProcedure*       procedureDecl(CAstScope *s);
-    CAstProcedure*       functionDecl(CAstScope *s);
+    CAstProcedure* subroutineDecl(CAstScope *parent);
     /// @}
 
 
