@@ -140,7 +140,7 @@ void CParser::InitSymbolTable(CSymtab *s)
     CSymProc *write_str = new CSymProc("WriteStr", tm -> GetNull());
     write_str -> AddParam(new CSymParam(0, "string", tm -> GetPointer((tm -> GetArray(-1 , tm -> GetChar())))));
     s -> AddSymbol(write_str);
-    
+
     CSymProc *write_ln = new CSymProc("WriteLn", tm -> GetNull());
     s -> AddSymbol(write_ln);
 
@@ -149,8 +149,27 @@ void CParser::InitSymbolTable(CSymtab *s)
     s -> AddSymbol(main_keyword);
 }
 
+CAstArrayDesignator* CParser::qualident(CAstScope *s) {
+    //
+    // assignment ::= number ":=" expression.
+    //
 
-void CParser::variable_declaration(CSymtab *s){
+    CToken t;
+    Consume(tIdent, &t);
+    CAstExpression* head = NULL;
+
+    EToken tt = _scanner->Peek().GetType();
+    if (tt == tLBrak) {
+        head = expression(s)
+        Consume(tRBrak);
+    }
+
+    CAstExpression *rhs = expression(s);
+
+    return new CAstStatAssign(t, lhs, rhs);
+}
+
+void CParser::variable_declaration(CSymtab *s) {
     // varDeclaration ::= [ "var" varDeclSequence ";" ].
     // varDeclSequence ::= varDecl { ";" varDecl }.
     // varDecl ::= ident { "," ident } ":" type.
@@ -191,7 +210,7 @@ void CParser::variable_declaration(CSymtab *s){
         else SetError(_scanner->Peek(), "basetype expected");
 
         // array type
-        if(_scanner->Peek().GetType() == tLBrak){
+        if(_scanner->Peek().GetType() == tLBrak) {
             int dimension = 0;
             vector<int> index;
             CToken number;
@@ -221,7 +240,7 @@ void CParser::add_basetype_to_global_symtab(vector<CToken> variables, EToken typ
             global_variable = new CSymGlobal(variables.front().GetValue(), tm -> GetChar());
         else if(type == tBoolean)
             global_variable = new CSymGlobal(variables.front().GetValue(), tm -> GetBool());
-        
+
         variables.erase(variables.begin());
         s -> AddSymbol(global_variable);
     }
@@ -321,13 +340,17 @@ CAstStatement* CParser::statSequence(CAstScope *s) {
             CToken t;
             EToken tt = _scanner->Peek().GetType();
             CAstStatement *st = NULL;
-
             switch (tt) {
                 // statement ::= assignment
                 case tIf:
+                    st = ifStatement(s);
+                    break;
                 case tWhile:
                     st = whileStatement(s);
+                    break;
                 case tReturn:
+                    st = returnStatement(s);
+                    break;
                 case tIdent:
                     st = assignment(s);
                     break;
@@ -355,13 +378,14 @@ CAstStatement* CParser::statSequence(CAstScope *s) {
     return head;
 }
 
+
 CAstStatAssign* CParser::assignment(CAstScope *s) {
     //
     // assignment ::= number ":=" expression.
     //
     CToken t;
 
-    CAstConstant *lhs = number();
+    CAstConstant *lhs = qualident();
     Consume(tAssign, &t);
 
     CAstExpression *rhs = expression(s);
