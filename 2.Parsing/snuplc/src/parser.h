@@ -134,7 +134,7 @@ class CParser {
     CAstConstant*     constchar(void);
     CAstConstant*     constbool(void);
 
-    CAstArrayDesignator* qualident(void);
+    CAstArrayDesignator* qualident(CAstScope *s);
     /// @}
 
 

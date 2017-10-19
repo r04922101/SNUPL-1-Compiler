@@ -153,20 +153,20 @@ CAstArrayDesignator* CParser::qualident(CAstScope *s) {
     //
     // assignment ::= number ":=" expression.
     //
-
-    CToken t;
-    Consume(tIdent, &t);
+    CAstArrayDesignator* cad;
     CAstExpression* head = NULL;
+    CToken t;
 
+    Consume(tIdent, &t);
+    cad = new CAstArrayDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue()));
     EToken tt = _scanner->Peek().GetType();
     if (tt == tLBrak) {
-        head = expression(s)
+        head = expression(s);
+        cad->AddIndex(head);
         Consume(tRBrak);
     }
 
-    CAstExpression *rhs = expression(s);
-
-    return new CAstStatAssign(t, lhs, rhs);
+    return cad;
 }
 
 void CParser::variable_declaration(CSymtab *s) {
@@ -385,7 +385,7 @@ CAstStatAssign* CParser::assignment(CAstScope *s) {
     //
     CToken t;
 
-    CAstConstant *lhs = qualident();
+    CAstArrayDesignator *lhs = qualident(s);
     Consume(tAssign, &t);
 
     CAstExpression *rhs = expression(s);
