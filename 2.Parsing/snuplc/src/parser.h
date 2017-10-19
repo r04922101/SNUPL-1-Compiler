@@ -94,8 +94,8 @@ class CParser {
     /// @{
 
     /// @brief variable declaration
-    void formalParam(CSymtab *s);
-    void variable_declaration(CSymtab *s, string scope);
+    CSymProc* formalParam(CToken pt);
+    void variable_declaration(CAstScope *s);
     
 
     CAstType* type();
@@ -126,7 +126,7 @@ class CParser {
 
     CAstArrayDesignator* qualident(CAstScope *s);
     CAstProcedure*       procedureDecl(CAstScope *s);
-    void                 functionDecl(CAstScope *s);
+    CAstProcedure*       functionDecl(CAstScope *s);
     /// @}
 
 

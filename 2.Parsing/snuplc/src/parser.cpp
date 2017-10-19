@@ -41,7 +41,6 @@
 #include <vector>
 #include <iostream>
 #include <exception>
-#include <unordered_set>
 
 #include "parser.h"
 using namespace std;
@@ -228,85 +227,85 @@ CAstArrayDesignator* CParser::qualident(CAstScope *s) {
     return cad;
 }
 
-void CParser::formalParam(CSymtab *s){
+CSymProc* CParser::formalParam(CToken pt){
     // formalParam ::= "(" [ varDeclSequence ] ")".
+    // add :type here
+    // => formalParam ::= "(" [ varDeclSequence ] ")" [":" type]
     Consume(tLParens);
-    if(_scanner -> Peek().GetType() == tRParens){
-        Consume(tRParens);
-        return;
-    }
-    else{
-        vector<CToken> variables;
-        unordered_set<string> variable_name;
+    vector<CToken> variables;
+    CAstType *variable_type;
+    if(_scanner -> Peek().GetType() != tRParens){
         EToken peek_type = _scanner->Peek().GetType();
         while(peek_type != tRParens){
             // at least one var
             CToken tmp;
             Consume(tIdent, &tmp);
             variables.push_back(tmp);
-            variable_name.insert(tmp.GetValue());
             peek_type = _scanner->Peek().GetType();
             while(peek_type != tColon){
                 Consume(tComma);
                 Consume(tIdent, &tmp);
-                // check duplicate variable declaration
-                if(variable_name.find(tmp.GetValue()) != variable_name.end())
-                    SetError(tmp, "duplicate variable declaration '" + tmp.GetValue() + "'");
                 variables.push_back(tmp);
-                variable_name.insert(tmp.GetValue());
                 peek_type = _scanner->Peek().GetType();
             }
             Consume(tColon);
     
-            CAstType *variable_type = type();
-            int index = 0;
-            while(variables.size() != 0){
-                CSymParam *param_variable = new CSymParam(index++, variables.front().GetValue(), variable_type -> GetType());
-                
-                variables.erase(variables.begin());
-                s -> AddSymbol(param_variable);
-            }
-    
-            Consume(tSemicolon);
+            variable_type = type();
+
             peek_type = _scanner->Peek().GetType();
         }
     }
+    Consume(tRParens);
+    CSymProc *symbol;
+    if(_scanner->Peek().GetType() == tColon){
+        Consume(tColon);
+        CAstType *return_type = type();
+        symbol = new CSymProc(pt.GetValue(), return_type -> GetType());
+    }
+    else
+        symbol = new CSymProc(pt.GetValue(), NULL);
+
+    int index = 0;
+    while(variables.size() != 0){
+        // check duplicate variable declaration
+        int size = symbol -> GetNParams() - 1;
+        // while(size > 0){
+        //     if(variables.front().GetValue() == symbol -> GetParam(size--).) 
+        //         SetError(variables.front(), "duplicate variable declaration '" + variables.front().GetValue() + "'");
+        // }
+        symbol -> AddParam(new CSymParam(index++, variables.front().GetValue(), variable_type -> GetType()));
+        variables.erase(variables.begin());
+    }
+    return symbol;
 }
 
-void CParser::variable_declaration(CSymtab *s, string scope) {
+void CParser::variable_declaration(CAstScope *s) {
     // varDeclaration ::= [ "var" varDeclSequence ";" ].
     // varDeclSequence ::= varDecl { ";" varDecl }.
     // varDecl ::= ident { "," ident } ":" type.
     vector<CToken> variables;
-    unordered_set<string> variable_name;
     EToken peek_type = _scanner->Peek().GetType();
     while(peek_type != tBegin && peek_type != tProcedure && peek_type != tFunction){
         // at least one var
         CToken tmp;
         Consume(tIdent, &tmp);
         variables.push_back(tmp);
-        variable_name.insert(tmp.GetValue());
         peek_type = _scanner->Peek().GetType();
         while(peek_type != tColon){
             Consume(tComma);
             Consume(tIdent, &tmp);
-            // check duplicate variable declaration
-            if(variable_name.find(tmp.GetValue()) != variable_name.end())
-                SetError(tmp, "duplicate variable declaration '" + tmp.GetValue() + "'");
             variables.push_back(tmp);
-            variable_name.insert(tmp.GetValue());
             peek_type = _scanner->Peek().GetType();
         }
         Consume(tColon);
 
         CAstType *variable_type = type();
         while(variables.size() != 0){
-            CSymbol *variable;
-            if(scope == "global")  variable = new CSymGlobal(variables.front().GetValue(), variable_type -> GetType());
-            else if(scope == "local") variable = new CSymLocal(variables.front().GetValue(), variable_type -> GetType());
-            
+            // check duplicate variable declaration
+            if(s -> GetSymbolTable() -> FindSymbol(variables.front().GetValue()) !=  NULL)
+                SetError(variables.front(), "duplicate variable declaration '" + variables.front().GetValue() + "'");
+            s -> GetSymbolTable() -> AddSymbol(s -> CreateVar(variables.front().GetValue(), variable_type -> GetType()));
             variables.erase(variables.begin());
-            s -> AddSymbol(variable);
         }
 
         Consume(tSemicolon);
@@ -334,7 +333,7 @@ CAstModule* CParser::module(void)
     // variable declaration
     if(_scanner->Peek().GetType() == tVarDecl){
         Consume(tVarDecl);
-        variable_declaration(m -> GetSymbolTable(), "global");
+        variable_declaration(m);
     }
 
     // subroutine declaration
@@ -644,8 +643,8 @@ CAstProcedure* CParser::procedureDecl(CAstScope *s) {
     //
     // procedureDecl ::= "procedure" ident [ formalParam ] ";"
     //
-    // FIRST(if) = { tProcedure }
-    // FOLLOW(if) = { }
+    // FIRST(procedureDecl) = { tProcedure }
+    // FOLLOW(procedureDecl) = { }
     //
     CToken pt;
 
@@ -653,22 +652,24 @@ CAstProcedure* CParser::procedureDecl(CAstScope *s) {
     Consume(tIdent, &pt);
 
     //Add to symbol table
-    CSymProc *symbol = new CSymProc(pt.GetValue(), NULL);
     EToken tt = _scanner->Peek().GetType();
-    if (tt == tLBrak) {
+    CSymProc* symbol;
+    if (tt == tLParens) {
         //Add formalParam
+        symbol = formalParam(pt);
     }
 
+    CAstProcedure *procedure = new CAstProcedure(pt, pt.GetValue(), s, symbol);
     Consume(tSemicolon);
-    return new CAstProcedure(pt, pt.GetValue(), s, symbol);
+    return procedure;
 }
 
-void CParser::functionDecl(CAstScope *s) {
+CAstProcedure* CParser::functionDecl(CAstScope *s) {
     //
     // functionDecl ::= "functionDecl" ident [ formalParam ] ":" type ";"
     //
-    // FIRST(if) = { tFunction }
-    // FOLLOW(if) = { }
+    // FIRST(functionDecl) = { tFunction }
+    // FOLLOW(functionDecl) = { }
     //
     CToken pt;
 
@@ -677,14 +678,18 @@ void CParser::functionDecl(CAstScope *s) {
 
     //Add to symbol table
     EToken tt = _scanner->Peek().GetType();
-    if (tt == tLBrak) {
+    CSymProc* symbol;
+    if (tt == tLParens) {
         //Add formalParam
+        symbol = formalParam(pt);
     }
 
-    Consume(tColon);
+    CAstProcedure *function = new CAstProcedure(pt, pt.GetValue(), s, symbol);
+    Consume(tSemicolon);
 
     CAstType *typeE = type();
-    CSymProc *symbol = new CSymProc(pt.GetValue(), NULL);
+    // CSymProc *symbol = new CSymProc(pt.GetValue(), typeE -> GetType());
     Consume(tSemicolon);
-    return;
+    return function;
 }
+
