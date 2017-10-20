@@ -170,35 +170,72 @@ CAstType* CParser::type(){
         int dimension = 0;
         vector<int> index;
         CToken number;
-        do{
-            Consume(tLBrak);
+        Consume(tLBrak);
+        if(_scanner -> Peek().GetType() == tRBrak){
+            Consume(tRBrak);
+            dimension++;
+            while(_scanner->Peek().GetType() == tLBrak){
+                Consume(tLBrak);
+                Consume(tRBrak);
+                dimension++;
+            }
+
+            int tmp_dimension = dimension;
+            CSymbol *global_variable;
+            const CType *inner_type;
+            const CType *basetype;
+            if(name.GetType() == tInteger) basetype = tm -> GetInt();
+            else if(name.GetType() == tChar) basetype = tm -> GetChar();
+            else if(name.GetType() == tBoolean) basetype = tm -> GetBool();
+
+            const CType *outer_type = tm -> GetArray(-1, basetype);
+            while(tmp_dimension != 1){
+                inner_type = outer_type;
+                if(inner_type == NULL) SetError(name, "array too big");
+                const CType *tmp =  tm -> GetArray(-1, inner_type);
+                if(tmp == NULL) SetError(name, "array too big");
+                outer_type = tmp;
+                tmp_dimension--;
+            }
+            cout << "good\n";
+            return new CAstType(name ,outer_type);
+        }
+        else{
             Consume(tNumber, &number);
             index.push_back(stoi(number.GetValue()));
             Consume(tRBrak);
             dimension++;
-        } while(_scanner->Peek().GetType() == tLBrak);
+            while(_scanner->Peek().GetType() == tLBrak){
+                Consume(tLBrak);
+                Consume(tNumber, &number);
+                index.push_back(stoi(number.GetValue()));
+                Consume(tRBrak);
+                dimension++;
+            }
 
-        int tmp_dimension = dimension;
-        CSymbol *global_variable;
-        const CType *inner_type;
-        const CType *basetype;
-        if(name.GetType() == tInteger) basetype = tm -> GetInt();
-        else if(name.GetType() == tChar) basetype = tm -> GetChar();
-        else if(name.GetType() == tBoolean) basetype = tm -> GetBool();
+            int tmp_dimension = dimension;
+            CSymbol *global_variable;
+            const CType *inner_type;
+            const CType *basetype;
+            if(name.GetType() == tInteger) basetype = tm -> GetInt();
+            else if(name.GetType() == tChar) basetype = tm -> GetChar();
+            else if(name.GetType() == tBoolean) basetype = tm -> GetBool();
 
-        int nelem = index.back();
-        index.pop_back();
-
-        const CType *outer_type = tm -> GetArray(nelem, basetype);
-        while(tmp_dimension != 1){
-            inner_type = outer_type;
             int nelem = index.back();
             index.pop_back();
-            const CType *tmp =  tm -> GetArray(nelem, inner_type);
-            outer_type = tmp;
-            tmp_dimension--;
+
+            const CType *outer_type = tm -> GetArray(nelem, basetype);
+            while(tmp_dimension != 1){
+                inner_type = outer_type;
+                int nelem = index.back();
+                index.pop_back();
+                const CType *tmp =  tm -> GetArray(nelem, inner_type);
+                if(tmp == NULL) SetError(number, "array too big");
+                outer_type = tmp;
+                tmp_dimension--;
+            }
+            return new CAstType(name ,outer_type);
         }
-        return new CAstType(name ,outer_type);
     }
     // basetype
     else {
@@ -208,24 +245,32 @@ CAstType* CParser::type(){
     }
 }
 
-CAstArrayDesignator* CParser::qualident(CAstScope *s) {
+CAstDesignator* CParser::qualident(CAstScope *s) {
     //
-    // assignment ::= number ":=" expression.
+    // qualident ::= ident { "[" expression "]" }.
     //
     CAstArrayDesignator* cad;
     CAstExpression* head = NULL;
     CToken t;
 
     Consume(tIdent, &t);
+    cout << t.GetValue() << endl;
+    if(s->GetSymbolTable()->FindSymbol(t.GetValue()) == NULL) cout << "fuck\n";
     cad = new CAstArrayDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue()));
     EToken tt = _scanner->Peek().GetType();
-    while (tt == tLBrak) {
-        Consume(tLBrak);
-        head = expression(s);
-        cad->AddIndex(head);
-        Consume(tRBrak);
-
-        tt = _scanner->Peek().GetType();
+    if(tt == tLBrak){
+        while (tt == tLBrak) {
+            Consume(tLBrak);
+            head = expression(s);
+            cad->AddIndex(head);
+            Consume(tRBrak);
+    
+            tt = _scanner->Peek().GetType();
+        }
+        return cad;
+    }
+    else{if(s->GetSymbolTable()->FindSymbol(t.GetValue()) == NULL) cout << "fuck\n";
+        return new CAstDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue()));
     }
 
     return cad;
@@ -380,7 +425,7 @@ CAstStatAssign* CParser::assignment(CAstScope *s) {
     //
     CToken t;
 
-    CAstArrayDesignator *lhs = qualident(s);
+    CAstDesignator *lhs = qualident(s);
     Consume(tAssign, &t);
 
     CAstExpression *rhs = expression(s);

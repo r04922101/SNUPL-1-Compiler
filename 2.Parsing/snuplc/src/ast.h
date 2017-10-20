@@ -1369,7 +1369,7 @@ class CAstStatAssign : public CAstStatement {
     /// @param t token in input stream (used for error reporting purposes)
     /// @param lhs left-hand side of assignment (designator)
     /// @param rhs right-hand side of assignment (expression)
-    CAstStatAssign(CToken t, CAstArrayDesignator *lhs, CAstExpression *rhs);
+    CAstStatAssign(CToken t, CAstDesignator *lhs, CAstExpression *rhs);
 
     /// @}
 
@@ -1378,7 +1378,7 @@ class CAstStatAssign : public CAstStatement {
 
     /// @brief return the LHS of the assignment
     /// @retval CAstDesignator* LHS of the assignment
-    CAstArrayDesignator* GetLHS(void) const;
+    CAstDesignator* GetLHS(void) const;
 
     /// @brief return the RHS of the assignment
     /// @retval CAstExpression* RHS of the assignment
@@ -1431,7 +1431,7 @@ class CAstStatAssign : public CAstStatement {
 
 
   private:
-    CAstArrayDesignator   *_lhs;           ///< LHS (designator)
+    CAstDesignator   *_lhs;           ///< LHS (designator)
     CAstExpression *_rhs;           ///< RHS (expression)
 };
 

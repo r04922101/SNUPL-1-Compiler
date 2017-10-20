@@ -122,7 +122,7 @@ class CParser {
     CAstConstant*        constchar(void);
     CAstConstant*        constbool(void);
 
-    CAstArrayDesignator* qualident(CAstScope *s);
+    CAstDesignator*      qualident(CAstScope *s);
     CAstProcedure* subroutineDecl(CAstScope *parent);
     CAstFunctionCall* subroutineCall(CAstScope* s, CAstModule* m);
     /// @}

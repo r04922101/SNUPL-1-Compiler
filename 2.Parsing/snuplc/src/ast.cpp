@@ -360,14 +360,14 @@ CTacAddr* CAstStatement::ToTac(CCodeBlock *cb, CTacLabel *next)
 // CAstStatAssign
 //
 CAstStatAssign::CAstStatAssign(CToken t,
-        CAstArrayDesignator *lhs, CAstExpression *rhs)
+        CAstDesignator *lhs, CAstExpression *rhs)
     : CAstStatement(t), _lhs(lhs), _rhs(rhs)
 {
     assert(lhs != NULL);
     assert(rhs != NULL);
 }
 
-CAstArrayDesignator* CAstStatAssign::GetLHS(void) const
+CAstDesignator* CAstStatAssign::GetLHS(void) const
 {
     return _lhs;
 }
