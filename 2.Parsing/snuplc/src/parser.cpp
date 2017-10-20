@@ -548,8 +548,6 @@ CAstExpression* CParser::factor(CAstScope *s) {
                 CAstExpression* head = NULL;
                 CToken t;
 
-                cout << t.GetValue() << endl;
-                if(s->GetSymbolTable()->FindSymbol(t.GetValue()) == NULL) cout << "fuck\n";
                 cad = new CAstArrayDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue()));
                 EToken tt = _scanner->Peek().GetType();
                 if(tt == tLBrak){
@@ -563,7 +561,7 @@ CAstExpression* CParser::factor(CAstScope *s) {
                     }
                     n = cad;
                 }
-                else{if(s->GetSymbolTable()->FindSymbol(t.GetValue()) == NULL) cout << "fuck\n";
+                else{
                     return new CAstDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue()));
                 }
 
