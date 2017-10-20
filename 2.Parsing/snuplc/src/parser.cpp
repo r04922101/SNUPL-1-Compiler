@@ -327,8 +327,8 @@ CAstStatement* CParser::statSequence(CAstScope *s) {
     //
     CAstStatement *head = NULL;
 
-    EToken tt = _scanner->Peek().GetType();
-    if (!(tt == tElse) && !(tt == tEnd)) {
+    EToken ti = _scanner->Peek().GetType();
+    if (!(ti == tElse) && !(ti == tEnd)) {
         CAstStatement *tail = NULL;
 
         do {
@@ -359,10 +359,10 @@ CAstStatement* CParser::statSequence(CAstScope *s) {
             else tail->SetNext(st);
             tail = st;
 
-            tt = _scanner->Peek().GetType();
-            if (tt == tElse) {
+            ti = _scanner->Peek().GetType();
+            if (ti == tElse) {
                 break;
-            } else if (tt == tEnd) {
+            } else if (ti == tEnd) {
                 break;
             }
 
@@ -408,6 +408,7 @@ CAstExpression* CParser::expression(CAstScope* s) {
         else if (t.GetValue() == "<=") relop = opLessEqual;
         else if (t.GetValue() == ">")  relop = opBiggerThan;
         else if (t.GetValue() == ">=") relop = opBiggerEqual;
+        else if (t.GetValue() == "!=")  relop = opNotEqual;
         else SetError(t, "invalid relation.");
 
         return new CAstBinaryOp(t, relop, left, right);
@@ -493,8 +494,7 @@ CAstExpression* CParser::factor(CAstScope *s) {
         case tCharConst:
             break;
         case tString:
-            break;
-        case tNot:
+            n = stringConstant(s);
             break;
         case tIdent:
             tr = _scanner->Peek().GetType();

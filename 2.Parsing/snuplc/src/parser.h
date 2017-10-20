@@ -94,7 +94,7 @@ class CParser {
     /// @{
 
     void variable_declaration(CAstScope *s);
-    
+
 
     CAstType* type();
 
