@@ -374,9 +374,16 @@ CAstStatement* CParser::statSequence(CAstScope *s, CAstModule *m) {
 
         
     EToken ti = _scanner->Peek().GetType();
-    if (!(ti == tSemicolon)) {
+    if (ti != tSemicolon && ti != tElse && ti != tEnd) {
         CAstStatement *tail = NULL;
 
+        // vector<CSymbol*> sym1 = s -> GetSymbolTable() -> GetSymbols();
+        // for(vector<CSymbol*>::iterator it = sym1.begin() ; it != sym1.end(); ++it)
+        //     cout << (*it) -> GetName() << endl;
+        //     sym1 = m -> GetSymbolTable() -> GetSymbols();
+        //     cout << endl;
+        //     for(vector<CSymbol*>::iterator it = sym1.begin() ; it != sym1.end(); ++it)
+        //         cout << (*it) -> GetName() << endl;
         do {
             CToken t;
             EToken tt = _scanner->Peek().GetType();
@@ -395,13 +402,17 @@ CAstStatement* CParser::statSequence(CAstScope *s, CAstModule *m) {
                 case tIdent:
                     if(s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sLocal) != NULL){
                         // cout << _scanner -> Peek().GetValue() << " local not found\n";
+                        cout << "her";
                         st = assignment(s);
                     }
-                    else if(s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) != NULL){
+                    else if(m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) != NULL){
                         // cout << _scanner -> Peek().GetValue() << " subroutine not found\n";
+                        cout << "ther";
                         st = new CAstStatCall(_scanner -> Peek(), subroutineCall(s, m));
                     }
-                    else SetError(_scanner -> Peek(), "undefined identifier");
+                    else {
+                        SetError(_scanner -> Peek(), "undefined identifier");
+                    }
                     break;
                 default:
                     SetError(_scanner->Peek(), "statement expected.");
@@ -732,6 +743,10 @@ CAstProcedure* CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
         symbol = new CSymProc(pt.GetValue(), CTypeManager::Get()->GetNull());
     CAstProcedure *subroutine = new CAstProcedure(pt, pt.GetValue(), parent, symbol);
     int index = 0;
+
+    // dim -> AddParam(new CSymParam(0, "array", tm -> GetVoidPtr()));
+    // dim -> AddParam(new CSymParam(1, "dim", tm -> GetInt()));
+
     while(variable_count.size() > 0){
         // check duplicate variable declaration
         int count = variable_count.front();
@@ -745,7 +760,8 @@ CAstProcedure* CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
             if(find(symbols_string.begin(), symbols_string.end(), variables.front().GetValue()) !=  symbols_string.end()){
                 SetError(variables.front(), "duplicate variable declaration '" + variables.front().GetValue() + "'");
             }
-            subroutine -> GetSymbolTable() -> AddSymbol(new CSymParam(index++, variables.front().GetValue(), types.front() -> GetType()));
+            subroutine -> GetSymbolTable() -> AddSymbol(new CSymParam(index, variables.front().GetValue(), types.front() -> GetType()));
+            symbol -> AddParam(new CSymParam(index++, variables.front().GetValue(), types.front() -> GetType()));
             variables.erase(variables.begin());
         }
         types.erase(types.begin());
@@ -767,6 +783,7 @@ CAstProcedure* CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
     if(check_subroutine_name.GetValue() != pt.GetValue())
         SetError(check_subroutine_name, "procedure/function identifier mismatch ('" + pt.GetValue() + "' != '" + check_subroutine_name.GetValue() + "')");
     Consume(tSemicolon);
+    parent -> GetSymbolTable() -> AddSymbol(symbol);
     return subroutine;
 }
 
