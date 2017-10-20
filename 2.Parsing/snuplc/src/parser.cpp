@@ -261,7 +261,7 @@ CAstDesignator* CParser::qualident(CAstScope *s) {
             head = expression(s);
             cad->AddIndex(head);
             Consume(tRBrak);
-    
+
             tt = _scanner->Peek().GetType();
         }
         return cad;
@@ -541,11 +541,34 @@ CAstExpression* CParser::factor(CAstScope *s) {
             n = stringConstant(s);
             break;
         case tIdent:
+            Consume(tIdent, &t);
             tt = _scanner->Peek().GetType();
             if (tt == tLBrak) {
-                n = qualident(s);
+                CAstArrayDesignator* cad;
+                CAstExpression* head = NULL;
+                CToken t;
+
+                cout << t.GetValue() << endl;
+                if(s->GetSymbolTable()->FindSymbol(t.GetValue()) == NULL) cout << "fuck\n";
+                cad = new CAstArrayDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue()));
+                EToken tt = _scanner->Peek().GetType();
+                if(tt == tLBrak){
+                    while (tt == tLBrak) {
+                        Consume(tLBrak);
+                        head = expression(s);
+                        cad->AddIndex(head);
+                        Consume(tRBrak);
+
+                        tt = _scanner->Peek().GetType();
+                    }
+                    n = cad;
+                }
+                else{if(s->GetSymbolTable()->FindSymbol(t.GetValue()) == NULL) cout << "fuck\n";
+                    return new CAstDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue()));
+                }
+
+                n = cad;
             } else {
-                Consume(tIdent, &t);
                 n = new CAstDesignator(t, s -> GetSymbolTable() -> FindSymbol(t.GetValue()));
             }
             break;
