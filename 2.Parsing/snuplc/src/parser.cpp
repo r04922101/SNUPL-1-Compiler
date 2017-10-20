@@ -376,14 +376,6 @@ CAstStatement* CParser::statSequence(CAstScope *s, CAstModule *m) {
     EToken ti = _scanner->Peek().GetType();
     if (ti != tSemicolon && ti != tElse && ti != tEnd) {
         CAstStatement *tail = NULL;
-
-        // vector<CSymbol*> sym1 = s -> GetSymbolTable() -> GetSymbols();
-        // for(vector<CSymbol*>::iterator it = sym1.begin() ; it != sym1.end(); ++it)
-        //     cout << (*it) -> GetName() << endl;
-        //     sym1 = m -> GetSymbolTable() -> GetSymbols();
-        //     cout << endl;
-        //     for(vector<CSymbol*>::iterator it = sym1.begin() ; it != sym1.end(); ++it)
-        //         cout << (*it) -> GetName() << endl;
         do {
             CToken t;
             EToken tt = _scanner->Peek().GetType();
@@ -400,14 +392,10 @@ CAstStatement* CParser::statSequence(CAstScope *s, CAstModule *m) {
                     st = returnStatement(s);
                     break;
                 case tIdent:
-                    if(s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sLocal) != NULL){
-                        // cout << _scanner -> Peek().GetValue() << " local not found\n";
-                        // cout << "her";
+                    if(s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sLocal) != NULL && s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sLocal) -> GetSymbolType() != stProcedure){
                         st = assignment(s);
                     }
-                    else if(m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) != NULL){
-                        // cout << _scanner -> Peek().GetValue() << " subroutine not found\n";
-                        // cout << "ther";
+                    else if(m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) != NULL && m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) -> GetSymbolType() == stProcedure){
                         st = new CAstStatCall(_scanner -> Peek(), subroutineCall(s, m));
                     }
                     else {
