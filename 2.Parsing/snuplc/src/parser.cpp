@@ -373,7 +373,7 @@ CAstStatement* CParser::statSequence(CAstScope *s) {
     CAstStatement *head = NULL;
 
     EToken ti = _scanner->Peek().GetType();
-    if (!(ti == tElse) && !(ti == tEnd)) {
+    if (!(ti == tSemicolon)) {
         CAstStatement *tail = NULL;
 
         do {
@@ -405,13 +405,12 @@ CAstStatement* CParser::statSequence(CAstScope *s) {
             tail = st;
 
             ti = _scanner->Peek().GetType();
-            if (ti == tElse) {
-                break;
-            } else if (ti == tEnd) {
+            if (ti == tSemicolon) {
+                Consume(tSemicolon);
+            } else {
                 break;
             }
 
-            Consume(tSemicolon);
         } while (!_abort);
     }
 
@@ -520,8 +519,7 @@ CAstExpression* CParser::factor(CAstScope *s) {
 
     CToken t;
     EToken tt = _scanner->Peek().GetType();
-    EToken tr;
-    CAstExpression *unary = NULL, *n = NULL;
+    CAstExpression *n = NULL;
 
     switch (tt) {
         // factor ::= number
@@ -542,8 +540,8 @@ CAstExpression* CParser::factor(CAstScope *s) {
             n = stringConstant(s);
             break;
         case tIdent:
-            tr = _scanner->Peek().GetType();
-            if (tr == tLBrak) {
+            tt = _scanner->Peek().GetType();
+            if (tt == tLBrak) {
                 n = qualident(s);
             } else {
                 Consume(tIdent, &t);
