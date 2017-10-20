@@ -402,12 +402,12 @@ CAstStatement* CParser::statSequence(CAstScope *s, CAstModule *m) {
                 case tIdent:
                     if(s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sLocal) != NULL){
                         // cout << _scanner -> Peek().GetValue() << " local not found\n";
-                        cout << "her";
+                        // cout << "her";
                         st = assignment(s);
                     }
                     else if(m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) != NULL){
                         // cout << _scanner -> Peek().GetValue() << " subroutine not found\n";
-                        cout << "ther";
+                        // cout << "ther";
                         st = new CAstStatCall(_scanner -> Peek(), subroutineCall(s, m));
                     }
                     else {
