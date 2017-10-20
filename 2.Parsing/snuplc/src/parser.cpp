@@ -253,7 +253,8 @@ CAstDesignator* CParser::qualident(CAstScope *s) {
     CToken t;
 
     Consume(tIdent, &t);
-    cad = new CAstArrayDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue()));
+    if(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) == NULL) SetError(_scanner->Peek(), "undefined identifier");
+    cad = new CAstArrayDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
     EToken tt = _scanner->Peek().GetType();
     if(tt == tLBrak){
         while (tt == tLBrak) {
@@ -267,7 +268,8 @@ CAstDesignator* CParser::qualident(CAstScope *s) {
         return cad;
     }
     else{
-        return new CAstDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue()));
+        if(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) == NULL) SetError(_scanner->Peek(), "undefined identifier");
+        return new CAstDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
     }
 
     return cad;
@@ -297,7 +299,7 @@ void CParser::variable_declaration(CAstScope *s) {
         CAstType *variable_type = type();
         while(variables.size() != 0){
             // check duplicate variable declaration
-            if(s -> GetSymbolTable() -> FindSymbol(variables.front().GetValue()) !=  NULL)
+            if(s -> GetSymbolTable() -> FindSymbol(variables.front().GetValue(), sLocal) !=  NULL)
                 SetError(variables.front(), "duplicate variable declaration '" + variables.front().GetValue() + "'");
             s -> GetSymbolTable() -> AddSymbol(s -> CreateVar(variables.front().GetValue(), variable_type -> GetType()));
             variables.erase(variables.begin());
@@ -369,6 +371,8 @@ CAstStatement* CParser::statSequence(CAstScope *s, CAstModule *m) {
     //
     CAstStatement *head = NULL;
 
+
+        
     EToken ti = _scanner->Peek().GetType();
     if (!(ti == tSemicolon)) {
         CAstStatement *tail = NULL;
@@ -389,10 +393,14 @@ CAstStatement* CParser::statSequence(CAstScope *s, CAstModule *m) {
                     st = returnStatement(s);
                     break;
                 case tIdent:
-                    if(s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue()) != NULL)
+                    if(s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sLocal) != NULL){
+                        // cout << _scanner -> Peek().GetValue() << " local not found\n";
                         st = assignment(s);
-                    else if(m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue()) != NULL)
+                    }
+                    else if(s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) != NULL){
+                        // cout << _scanner -> Peek().GetValue() << " subroutine not found\n";
                         st = new CAstStatCall(_scanner -> Peek(), subroutineCall(s, m));
+                    }
                     else SetError(_scanner -> Peek(), "undefined identifier");
                     break;
                 default:
@@ -546,9 +554,10 @@ CAstExpression* CParser::factor(CAstScope *s) {
             if (tt == tLBrak) {
                 CAstArrayDesignator* cad;
                 CAstExpression* head = NULL;
-                CToken t;
-
-                cad = new CAstArrayDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue()));
+                if(s->GetSymbolTable()->FindSymbol(t.GetValue()) == NULL) {
+                    SetError(t, "undefined identifier");
+                }
+                cad = new CAstArrayDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
                 EToken tt = _scanner->Peek().GetType();
                 if(tt == tLBrak){
                     while (tt == tLBrak) {
@@ -562,12 +571,16 @@ CAstExpression* CParser::factor(CAstScope *s) {
                     n = cad;
                 }
                 else{
-                    return new CAstDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue()));
+                    if(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) == NULL) SetError(_scanner->Peek(), "undefined identifier");
+                    
+                    return new CAstDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
                 }
 
                 n = cad;
             } else {
-                n = new CAstDesignator(t, s -> GetSymbolTable() -> FindSymbol(t.GetValue()));
+                if(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) == NULL) SetError(_scanner->Peek(), "undefined identifier");
+                
+                n = new CAstDesignator(t, s -> GetSymbolTable() -> FindSymbol(t.GetValue(), sLocal));
             }
             break;
         default:
@@ -740,7 +753,7 @@ CAstProcedure* CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
     Consume(tSemicolon);
 
     variable_declaration(subroutine);
-
+    
     Consume(tBegin);
 
     // statSequence
