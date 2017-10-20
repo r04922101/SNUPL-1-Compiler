@@ -474,6 +474,7 @@ CAstExpression* CParser::factor(CAstScope *s) {
 
     CToken t;
     EToken tt = _scanner->Peek().GetType();
+    EToken tr;
     CAstExpression *unary = NULL, *n = NULL;
 
     switch (tt) {
@@ -493,13 +494,17 @@ CAstExpression* CParser::factor(CAstScope *s) {
             break;
         case tString:
             break;
-        case tIdent:
-            Consume(tIdent, &t);
-            n = new CAstDesignator(t, s -> GetSymbolTable() -> FindSymbol(t.GetValue()));
-            break;
         case tNot:
             break;
-
+        case tIdent:
+            tr = _scanner->Peek().GetType();
+            if (tr == tLBrak) {
+                n = qualident(s);
+            } else {
+                Consume(tIdent, &t);
+                n = new CAstDesignator(t, s -> GetSymbolTable() -> FindSymbol(t.GetValue()));
+            }
+            break;
         default:
             cout << "got " << _scanner->Peek() << endl;
             SetError(_scanner->Peek(), "factor expected.");
