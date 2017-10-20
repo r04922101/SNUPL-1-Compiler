@@ -104,11 +104,11 @@ class CParser {
 
 
     CAstModule*          module(void);
-    CAstStatement*       statSequence(CAstScope *s);
+    CAstStatement*       statSequence(CAstScope *s, CAstModule *m) ;
 
-    CAstStatIf*          ifStatement(CAstScope *s);
+    CAstStatIf*          ifStatement(CAstScope *s, CAstModule *m);
     CAstStatAssign*      assignment(CAstScope *s);
-    CAstStatWhile*       whileStatement(CAstScope *s);
+    CAstStatWhile*       whileStatement(CAstScope *s, CAstModule *m);
     CAstStatReturn*      returnStatement(CAstScope *s);
 
     CAstExpression*      expression(CAstScope *s);
@@ -123,7 +123,7 @@ class CParser {
     CAstConstant*        constbool(void);
 
     CAstDesignator*      qualident(CAstScope *s);
-    CAstProcedure* subroutineDecl(CAstScope *parent);
+    CAstProcedure* subroutineDecl(CAstScope *parent, CAstModule *m);
     CAstFunctionCall* subroutineCall(CAstScope* s, CAstModule* m);
     /// @}
 

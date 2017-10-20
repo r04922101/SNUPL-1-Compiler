@@ -197,7 +197,6 @@ CAstType* CParser::type(){
                 outer_type = tmp;
                 tmp_dimension--;
             }
-            cout << "good\n";
             return new CAstType(name ,outer_type);
         }
         else{
@@ -254,8 +253,6 @@ CAstDesignator* CParser::qualident(CAstScope *s) {
     CToken t;
 
     Consume(tIdent, &t);
-    cout << t.GetValue() << endl;
-    if(s->GetSymbolTable()->FindSymbol(t.GetValue()) == NULL) cout << "fuck\n";
     cad = new CAstArrayDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue()));
     EToken tt = _scanner->Peek().GetType();
     if(tt == tLBrak){
@@ -269,7 +266,7 @@ CAstDesignator* CParser::qualident(CAstScope *s) {
         }
         return cad;
     }
-    else{if(s->GetSymbolTable()->FindSymbol(t.GetValue()) == NULL) cout << "fuck\n";
+    else{
         return new CAstDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue()));
     }
 
@@ -335,11 +332,11 @@ CAstModule* CParser::module(void)
 
     // subroutine declaration
     while(_scanner->Peek().GetType() == tProcedure || _scanner->Peek().GetType() == tFunction)
-        subroutineDecl(m);
+        subroutineDecl(m, m);
 
     Consume(tBegin);
     CAstStatement *statseq = NULL;
-    statseq = statSequence(m);
+    statseq = statSequence(m, m);
     m->SetStatementSequence(statseq);
 
     CToken check_module_name;
@@ -363,7 +360,7 @@ CAstStatReturn* CParser::returnStatement(CAstScope *s) {
     return new CAstStatReturn(t, s, rhs);
 }
 
-CAstStatement* CParser::statSequence(CAstScope *s) {
+CAstStatement* CParser::statSequence(CAstScope *s, CAstModule *m) {
     // statSequence ::= [ statement { ";" statement } ].
     // statement ::= assignment | subroutineCall | ifStatement |
     // whileStatement | returnStatement.
@@ -383,16 +380,20 @@ CAstStatement* CParser::statSequence(CAstScope *s) {
             switch (tt) {
                 // statement ::= assignment
                 case tIf:
-                    st = ifStatement(s);
+                    st = ifStatement(s, m);
                     break;
                 case tWhile:
-                    st = whileStatement(s);
+                    st = whileStatement(s, m);
                     break;
                 case tReturn:
                     st = returnStatement(s);
                     break;
                 case tIdent:
-                    st = assignment(s);
+                    if(s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue()) != NULL)
+                        st = assignment(s);
+                    else if(m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue()) != NULL)
+                        st = new CAstStatCall(_scanner -> Peek(), subroutineCall(s, m));
+                    else SetError(_scanner -> Peek(), "undefined identifier");
                     break;
                 default:
                     SetError(_scanner->Peek(), "statement expected.");
@@ -594,7 +595,7 @@ CAstConstant* CParser::number(void)
     return new CAstConstant(t, CTypeManager::Get()->GetInt(), v);
 }
 
-CAstStatWhile* CParser::whileStatement(CAstScope *s) {
+CAstStatWhile* CParser::whileStatement(CAstScope *s, CAstModule *m) {
     //
     // whileStatement ::= "while" "(" expression ")" "do" statSequence "end"
     //
@@ -610,13 +611,13 @@ CAstStatWhile* CParser::whileStatement(CAstScope *s) {
     cond = expression(s);
     Consume(tRParens);
     Consume(tDo);
-    body = statSequence(s);
+    body = statSequence(s, m);
     Consume(tEnd);
 
     return new CAstStatWhile(t, cond, body);
 }
 
-CAstStatIf* CParser::ifStatement(CAstScope *s) {
+CAstStatIf* CParser::ifStatement(CAstScope *s, CAstModule *m) {
     //
     // ifStatement ::= "if" "(" expression ")" "then" statSequence ["else"] statSequence "end"
     //
@@ -634,19 +635,19 @@ CAstStatIf* CParser::ifStatement(CAstScope *s) {
     cond = expression(s);
     Consume(tRParens);
     Consume(tThen);
-    ifbody = statSequence(s);
+    ifbody = statSequence(s, m);
 
     EToken tt = _scanner->Peek().GetType();
 
     if (tt == tElse) {
         Consume(tElse);
-        elsebody = statSequence(s);
+        elsebody = statSequence(s, m);
     }
 
     Consume(tEnd);
     return new CAstStatIf(t, cond, ifbody, elsebody);
 }
-CAstProcedure* CParser::subroutineDecl(CAstScope *parent) {
+CAstProcedure* CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
 
     CToken pt;
     if(_scanner -> Peek().GetType() == tFunction) Consume(tFunction);
@@ -723,7 +724,7 @@ CAstProcedure* CParser::subroutineDecl(CAstScope *parent) {
 
     // statSequence
     CAstStatement *statseq = NULL;
-    statseq = statSequence(subroutine);
+    statseq = statSequence(subroutine, m);
     subroutine -> SetStatementSequence(statseq);
 
     Consume(tEnd);
