@@ -219,10 +219,13 @@ CAstArrayDesignator* CParser::qualident(CAstScope *s) {
     Consume(tIdent, &t);
     cad = new CAstArrayDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue()));
     EToken tt = _scanner->Peek().GetType();
-    if (tt == tLBrak) {
+    while (tt == tLBrak) {
+        Consume(tLBrak);
         head = expression(s);
         cad->AddIndex(head);
         Consume(tRBrak);
+
+        tt = _scanner->Peek().GetType();
     }
 
     return cad;
@@ -401,6 +404,10 @@ CAstExpression* CParser::expression(CAstScope* s) {
 
         if (t.GetValue() == "=")       relop = opEqual;
         else if (t.GetValue() == "#")  relop = opNotEqual;
+        else if (t.GetValue() == "<")  relop = opLessThan;
+        else if (t.GetValue() == "<=") relop = opLessEqual;
+        else if (t.GetValue() == ">")  relop = opBiggerThan;
+        else if (t.GetValue() == ">=") relop = opBiggerEqual;
         else SetError(t, "invalid relation.");
 
         return new CAstBinaryOp(t, relop, left, right);
@@ -458,8 +465,7 @@ CAstExpression* CParser::term(CAstScope *s) {
     return n;
 }
 
-CAstExpression* CParser::factor(CAstScope *s)
-{
+CAstExpression* CParser::factor(CAstScope *s) {
     //
     // factor ::= number | "(" expression ")"
     //
@@ -488,6 +494,8 @@ CAstExpression* CParser::factor(CAstScope *s)
         case tString:
             break;
         case tIdent:
+            Consume(tIdent, &t);
+            n = new CAstDesignator(t, s -> GetSymbolTable() -> FindSymbol(t.GetValue()));
             break;
         case tNot:
             break;
