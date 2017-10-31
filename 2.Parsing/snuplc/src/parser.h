@@ -96,7 +96,7 @@ class CParser {
     void variable_declaration(CAstScope *s);
 
 
-    CAstType* type();
+    CAstType* type(bool open);
 
 
     /// @name methods for recursive-descent parsing

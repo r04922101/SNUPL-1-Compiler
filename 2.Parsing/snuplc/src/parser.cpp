@@ -149,7 +149,7 @@ void CParser::InitSymbolTable(CSymtab *s)
     s -> AddSymbol(main_keyword);
 }
 
-CAstType* CParser::type(){
+CAstType* CParser::type(bool open){
     // type ::= basetype | type "[" [ number ] "]".
     // basetype ::= "boolean" | "char" | "integer".
     // left recursive, change it to the following
@@ -165,17 +165,31 @@ CAstType* CParser::type(){
     else SetError(_scanner->Peek(), "basetype expected");
 
     CTypeManager *tm = CTypeManager::Get();
+    
+    int dimension = 0;
+    vector<int> index;
+    CToken number;
+
     // array type
     if(_scanner->Peek().GetType() == tLBrak){
-        int dimension = 0;
-        vector<int> index;
-        CToken number;
-        Consume(tLBrak);
-        if(_scanner -> Peek().GetType() == tRBrak){
-            Consume(tRBrak);
-            dimension++;
+        const CType *outer_type;
+        if(open){
+            // allow open array
+            bool not_open = false;
             while(_scanner->Peek().GetType() == tLBrak){
                 Consume(tLBrak);
+                if(_scanner->Peek().GetType() == tNumber){
+                    not_open = true;
+                    Consume(tNumber, &number);
+                    index.push_back(stoi(number.GetValue()));
+                }
+                else{
+                    if(not_open) {
+                        Consume(tNumber, &number);
+                        SetError(number, "not allowed array declaration");
+                    }
+                    index.push_back(-1);
+                }
                 Consume(tRBrak);
                 dimension++;
             }
@@ -188,18 +202,23 @@ CAstType* CParser::type(){
             else if(name.GetType() == tChar) basetype = tm -> GetChar();
             else if(name.GetType() == tBoolean) basetype = tm -> GetBool();
 
-            const CType *outer_type = tm -> GetArray(-1, basetype);
+            int nelem = index.back();
+            index.pop_back();
+            outer_type = tm -> GetArray(nelem, basetype);
             while(tmp_dimension != 1){
                 inner_type = outer_type;
                 if(inner_type == NULL) SetError(name, "array too big");
-                const CType *tmp =  tm -> GetArray(-1, inner_type);
+                int nelem = index.back();
+                const CType *tmp =  tm -> GetArray(nelem, inner_type);
                 if(tmp == NULL) SetError(name, "array too big");
                 outer_type = tmp;
                 tmp_dimension--;
             }
-            return new CAstType(name ,outer_type);
+            return new CAstType(name , tm -> GetPointer(outer_type));
         }
         else{
+            // doesn't allow open array
+            Consume(tLBrak);
             Consume(tNumber, &number);
             index.push_back(stoi(number.GetValue()));
             Consume(tRBrak);
@@ -219,11 +238,12 @@ CAstType* CParser::type(){
             if(name.GetType() == tInteger) basetype = tm -> GetInt();
             else if(name.GetType() == tChar) basetype = tm -> GetChar();
             else if(name.GetType() == tBoolean) basetype = tm -> GetBool();
+            else SetError(name, "unsupported data type");
 
             int nelem = index.back();
             index.pop_back();
 
-            const CType *outer_type = tm -> GetArray(nelem, basetype);
+            outer_type = tm -> GetArray(nelem, basetype);
             while(tmp_dimension != 1){
                 inner_type = outer_type;
                 int nelem = index.back();
@@ -233,7 +253,7 @@ CAstType* CParser::type(){
                 outer_type = tmp;
                 tmp_dimension--;
             }
-            return new CAstType(name ,outer_type);
+            return new CAstType(name, outer_type);
         }
     }
     // basetype
@@ -296,7 +316,7 @@ void CParser::variable_declaration(CAstScope *s) {
         }
         Consume(tColon);
 
-        CAstType *variable_type = type();
+        CAstType *variable_type = type(false);
         while(variables.size() != 0){
             // check duplicate variable declaration
             if(s -> GetSymbolTable() -> FindSymbol(variables.front().GetValue(), sLocal) !=  NULL)
@@ -547,9 +567,15 @@ CAstExpression* CParser::factor(CAstScope *s, CAstModule *m) {
             n = stringConstant(s);
             break;
         case tIdent:
+            // local variable
             if(s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sLocal) != NULL && s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sLocal) -> GetSymbolType() != stProcedure){
                 n = qualident(s, m);
             }
+            // global variable
+            else if(m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) != NULL && m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) -> GetSymbolType() == stGlobal){
+                n = qualident(m, m);
+            }
+            // subroutine call
             else if(m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) != NULL && m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) -> GetSymbolType() == stProcedure){
                 n = subroutineCall(s, m);
             }
@@ -661,8 +687,10 @@ CAstStatIf* CParser::ifStatement(CAstScope *s, CAstModule *m) {
     return new CAstStatIf(t, cond, ifbody, elsebody);
 }
 
-CToken pt;
-    CAstProcedure* CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
+CAstProcedure* CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
+    // procedureDecl = "procedure" ident [ formalParam ] ";".
+    // functionDecl = "function" ident [ formalParam ] ":" type ";".
+    CToken pt;
     if(_scanner -> Peek().GetType() == tFunction) Consume(tFunction);
     else Consume(tProcedure);
     Consume(tIdent, &pt);
@@ -670,40 +698,43 @@ CToken pt;
     // formalParam ::= "(" [ varDeclSequence ] ")".
     // add :type here
     // => formalParam ::= "(" [ varDeclSequence ] ")" [":" type]
-    Consume(tLParens);
     vector<CToken> variables;
     vector<int> variable_count;
     vector<CAstType*> types;
-    if(_scanner -> Peek().GetType() != tRParens){
-        EToken peek_type = _scanner->Peek().GetType();
-        while(peek_type != tRParens){
-            // at least one var
-            int count = 0;
-            CToken tmp;
-            Consume(tIdent, &tmp);
-            variables.push_back(tmp);
-            count++;
-            peek_type = _scanner->Peek().GetType();
-            while(peek_type != tColon){
-                Consume(tComma);
+    if(_scanner -> Peek().GetType() == tLParens){
+        Consume(tLParens);
+        if(_scanner -> Peek().GetType() != tRParens){
+            EToken peek_type = _scanner->Peek().GetType();
+            while(peek_type != tRParens){
+                // at least one var
+                int count = 0;
+                CToken tmp;
                 Consume(tIdent, &tmp);
                 variables.push_back(tmp);
                 count++;
                 peek_type = _scanner->Peek().GetType();
+                while(peek_type != tColon){
+                    Consume(tComma);
+                    Consume(tIdent, &tmp);
+                    variables.push_back(tmp);
+                    count++;
+                    peek_type = _scanner->Peek().GetType();
+                }
+                Consume(tColon);
+                variable_count.push_back(count);
+                types.push_back(type(true));
+    
+                peek_type = _scanner->Peek().GetType();
+                if(peek_type == tSemicolon) Consume(tSemicolon);
             }
-            Consume(tColon);
-            variable_count.push_back(count);
-            types.push_back(type());
-
-            peek_type = _scanner->Peek().GetType();
-            if(peek_type == tSemicolon) Consume(tSemicolon);
         }
+        Consume(tRParens);
     }
-    Consume(tRParens);
+
     CSymProc *symbol;
     if(_scanner->Peek().GetType() == tColon){
         Consume(tColon);
-        CAstType *return_type = type();
+        CAstType *return_type = type(true);
         symbol = new CSymProc(pt.GetValue(), return_type -> GetType());
     }
     // procedure
@@ -711,9 +742,6 @@ CToken pt;
         symbol = new CSymProc(pt.GetValue(), CTypeManager::Get()->GetNull());
     CAstProcedure *subroutine = new CAstProcedure(pt, pt.GetValue(), parent, symbol);
     int index = 0;
-
-    // dim -> AddParam(new CSymParam(0, "array", tm -> GetVoidPtr()));
-    // dim -> AddParam(new CSymParam(1, "dim", tm -> GetInt()));
 
     while(variable_count.size() > 0){
         // check duplicate variable declaration
@@ -736,7 +764,9 @@ CToken pt;
     }
     Consume(tSemicolon);
 
-    variable_declaration(subroutine);
+    if(_scanner->Peek().GetType() == tVarDecl){
+        variable_declaration(subroutine);
+    }
     
     Consume(tBegin);
 
@@ -759,7 +789,8 @@ CToken pt;
 CAstFunctionCall* CParser::subroutineCall(CAstScope* s, CAstModule* m){
     CToken ident;
     Consume(tIdent, &ident);
-    const CSymbol *symbol = m -> GetSymbolTable() -> FindSymbol(ident.GetValue());
+    
+    const CSymbol *symbol = m -> GetSymbolTable() -> FindSymbol(ident.GetValue(), sGlobal);
     if(symbol == NULL) {
         SetError(ident, "undefined identifier.");
         return NULL;
