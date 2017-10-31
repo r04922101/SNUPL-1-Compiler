@@ -1095,7 +1095,7 @@ class CAstFunctionCall : public CAstExpression {
 
     /// @param t token in input stream (used for error reporting purposes)
     /// @param symbol symbol of function to call
-    CAstFunctionCall(CToken t, const CSymProc *symbol);
+    CAstFunctionCall(CToken t, const CSymbol *symbol);
 
     /// @}
 
@@ -1103,7 +1103,7 @@ class CAstFunctionCall : public CAstExpression {
     /// @{
 
     /// @brief return the associated symbol
-    const CSymProc* GetSymbol(void) const;
+    const CSymbol* GetSymbol(void) const;
 
     /// @brief add an argument
     /// @param arg argument
@@ -1163,7 +1163,7 @@ class CAstFunctionCall : public CAstExpression {
 
 
   private:
-    const CSymProc *_symbol;        ///< symbol
+    const CSymbol *_symbol;        ///< symbol
     vector<CAstExpression*> _arg;   ///< parameter list
 };
 

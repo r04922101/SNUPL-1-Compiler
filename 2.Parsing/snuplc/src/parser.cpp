@@ -255,6 +255,16 @@ CAstDesignator* CParser::qualident(CAstScope *s) {
     Consume(tIdent, &t);
     if(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) == NULL) SetError(_scanner->Peek(), "undefined identifier");
     cad = new CAstArrayDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
+    // CType* type = s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal)->GetDataType();
+    // if(type -> isArray()){
+    //     cout << type << endl;
+    //     // type = type -> GetInnerType();
+    // }
+    // cout << type << endl;
+    // cout << s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal)->GetDataType() << endl;
+    // if (cad -> GetType() == NULL) cout << "nulllllllllllllllllll\n";
+    // else
+    // cout << "fuck " << cad -> GetType() << endl;
     EToken tt = _scanner->Peek().GetType();
     if(tt == tLBrak){
         while (tt == tLBrak) {
@@ -324,7 +334,7 @@ CAstModule* CParser::module(void)
     Consume(tSemicolon);
 
     CToken dummy;
-    CAstModule *m = new CAstModule(dummy, "placeholder");
+    CAstModule *m = new CAstModule(dummy, module_name.GetValue());
     InitSymbolTable(m -> GetSymbolTable());
 
     // variable declaration
@@ -680,8 +690,8 @@ CAstStatIf* CParser::ifStatement(CAstScope *s, CAstModule *m) {
     Consume(tEnd);
     return new CAstStatIf(t, cond, ifbody, elsebody);
 }
-CAstProcedure* CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
 
+CAstProcedure* CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
     CToken pt;
     if(_scanner -> Peek().GetType() == tFunction) Consume(tFunction);
     else Consume(tProcedure);
@@ -785,15 +795,16 @@ CAstFunctionCall* CParser::subroutineCall(CAstScope* s, CAstModule* m){
         return NULL;
     }
     Consume(tLParens);
+    CSymProc *symproc = new CSymProc(ident.GetValue(), symbol -> GetDataType());
+    CAstFunctionCall* functionCall = new CAstFunctionCall(ident, symbol);
+    
     if(_scanner -> Peek().GetType() != tRParens){
-        expression(s);
+        functionCall -> AddArg(expression(s));
         while(_scanner -> Peek().GetType() == tComma) {
             Consume(tComma);
-            expression(s);
+            functionCall -> AddArg(expression(s));
         }
     }
     Consume(tRParens);
-    CSymProc *symproc = new CSymProc(ident.GetValue(), symbol -> GetDataType());
-    CAstFunctionCall* functionCall = new CAstFunctionCall(ident, symproc);
     return functionCall;
 }
