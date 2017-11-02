@@ -496,23 +496,36 @@ CAstExpression* CParser::expression(CAstScope* s, CAstModule *m) {
 
 CAstExpression* CParser::simpleexpr(CAstScope *s, CAstModule *m) {
     //
-    // simpleexpr ::= term { termOp term }.
+    // simpleexpr ::= ["+"|"-"] term { termOp term }.
     //
     CAstExpression *n = NULL;
+    CToken unaryToken;
+    EOperation unaryOperation;
+    if(_scanner->Peek().GetType() == tPlusMinus){
+        Consume(tPlusMinus, &unaryToken);
+        if(unaryToken.GetValue() == "+") unaryOperation = opPos;
+        else unaryOperation = opNeg;
+    }
 
     n = term(s, m);
-
-    while (_scanner->Peek().GetType() == tPlusMinus) {
+    if(unaryToken.GetValue() != "") n = new CAstUnaryOp(unaryToken, unaryOperation, n);
+    
+    while (_scanner->Peek().GetType() == tPlusMinus || _scanner->Peek().GetType() == tOr) {
         CToken t;
         CAstExpression *l = n, *r;
 
-        Consume(tPlusMinus, &t);
-
-        r = term(s, m);
-
-        n = new CAstBinaryOp(t, t.GetValue() == "+" ? opAdd : opSub, l, r);
+        if(_scanner->Peek().GetType() == tPlusMinus){
+            Consume(tPlusMinus, &t);
+            r = term(s, m);
+            n = new CAstBinaryOp(t, t.GetValue() == "+" ? opAdd : opSub, l, r);
+       
+        }
+        else if(_scanner->Peek().GetType() == tOr){
+            Consume(tOr, &t);
+            r = term(s, m);
+            n = new CAstBinaryOp(t, opOr, l, r);
+        }
     }
-
 
     return n;
 }
