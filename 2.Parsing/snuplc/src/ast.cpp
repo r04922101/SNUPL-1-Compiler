@@ -1296,7 +1296,11 @@ string CAstConstant::GetValueStr(void) const
 
     if (GetType() == CTypeManager::Get()->GetBool()) {
         out << (_value == 0 ? "false" : "true");
-    } else {
+    } 
+    else if(GetType() == CTypeManager::Get()->GetChar()){
+        out << _value;
+    }
+    else {
         out << dec << _value;
     }
 

@@ -566,8 +566,10 @@ CAstExpression* CParser::factor(CAstScope *s, CAstModule *m) {
             Consume(tRParens);
             break;
         case tBoolConst:
+            n = constbool();
             break;
         case tCharConst:
+            n = constchar();
             break;
         case tString:
             n = stringConstant(s);
@@ -638,6 +640,49 @@ CAstConstant* CParser::number(void)
     if (errno != 0) SetError(t, "invalid number.");
 
     return new CAstConstant(t, CTypeManager::Get()->GetInt(), v);
+}
+
+CAstConstant* CParser::constchar(void){
+    CToken t;
+    Consume(tCharConst, &t);
+    const char *arr = t.GetValue().c_str();
+    if(t.GetValue().length() == 2){
+        char escape;
+        // || _in -> peek() == '\n' || _in -> peek() == '\t'
+        // || _in -> peek() == '\''
+        // || _in -> peek() == '\\' || _in -> peek() == '\0')
+        switch(arr[1]){
+            case 'n': 
+                escape = '\n';
+                break;
+            case 't': 
+                escape = '\t';
+                break;
+            case '\'': 
+                escape = '\'';
+                break;
+            case '\\':
+                escape = '\\';
+                break;
+            case '0':
+                escape = '\0';
+                break;
+        }
+        return new CAstConstant(t, CTypeManager::Get()->GetChar(), int(escape));
+    }
+    else if(t.GetValue().length() == 1){
+        return new CAstConstant(t, CTypeManager::Get()->GetChar(), int(arr[0]));
+    }
+    else SetError(t, "not allowed char");
+}
+
+CAstConstant* CParser::constbool(void){
+    CToken t;
+    Consume(tBoolConst, &t);
+    errno = 0;
+    long long v = strtoll(t.GetValue().c_str(), NULL, 10);
+    if (errno != 0) SetError(t, "invalid number.");
+    return new CAstConstant(t, CTypeManager::Get()->GetBool(), v);
 }
 
 CAstStatWhile* CParser::whileStatement(CAstScope *s, CAstModule *m) {

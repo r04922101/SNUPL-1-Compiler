@@ -116,9 +116,8 @@ class CParser {
     CAstExpression*      term(CAstScope *s, CAstModule *m);
     CAstExpression*      factor(CAstScope *s, CAstModule *m);
 
-    CAstConstant*        number(void);
     CAstStringConstant*  stringConstant(CAstScope *s);
-
+    CAstConstant*        number(void);
     CAstConstant*        constchar(void);
     CAstConstant*        constbool(void);
 
