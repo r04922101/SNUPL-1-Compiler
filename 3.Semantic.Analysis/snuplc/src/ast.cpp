@@ -814,7 +814,13 @@ bool CAstBinaryOp::TypeCheck(CToken *t, string *msg) const
 
 const CType* CAstBinaryOp::GetType(void) const
 {
-    return CTypeManager::Get()->GetInt();
+    EOperation oper = GetOperation();
+    if((oper == opAnd)        || (oper == opOr)          ||
+    (oper == opEqual)      || (oper == opNotEqual)    ||
+    (oper == opLessThan)   || (oper == opLessEqual)   ||
+    (oper == opBiggerThan) || (oper == opBiggerEqual)) 
+    return CTypeManager::Get()->GetBool();
+    else return CTypeManager::Get()->GetInt();
 }
 
 ostream& CAstBinaryOp::print(ostream &out, int indent) const
@@ -1003,13 +1009,13 @@ CTacAddr* CAstSpecialOp::ToTac(CCodeBlock *cb)
 //------------------------------------------------------------------------------
 // CAstFunctionCall
 //
-CAstFunctionCall::CAstFunctionCall(CToken t, const CSymProc *symbol)
+CAstFunctionCall::CAstFunctionCall(CToken t, const CSymbol *symbol)
     : CAstExpression(t), _symbol(symbol)
 {
     assert(symbol != NULL);
 }
 
-const CSymProc* CAstFunctionCall::GetSymbol(void) const
+const CSymbol* CAstFunctionCall::GetSymbol(void) const
 {
     return _symbol;
 }
@@ -1204,7 +1210,17 @@ bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const
 
 const CType* CAstArrayDesignator::GetType(void) const
 {
-    return NULL;
+    const CType *t = GetSymbol()->GetDataType();
+    // cout << *type << endl;
+
+    while(t -> IsPointer()) t = dynamic_cast<const CPointerType*>(t)->GetBaseType();
+    if (t->IsArray()) return dynamic_cast<const CArrayType*>(t)->GetBaseType();
+    else if(t -> IsPointer()){
+        t = dynamic_cast<const CPointerType*>(t)->GetBaseType();
+        if(t -> IsArray()) return dynamic_cast<const CArrayType*>(t)->GetBaseType();
+        else return t;
+    }
+    else return t;
 }
 
 ostream& CAstArrayDesignator::print(ostream &out, int indent) const

@@ -96,7 +96,7 @@ class CParser {
     void variable_declaration(CAstScope *s);
 
 
-    CAstType* type();
+    CAstType* type(bool open);
 
 
     /// @name methods for recursive-descent parsing
@@ -107,14 +107,14 @@ class CParser {
     CAstStatement*       statSequence(CAstScope *s, CAstModule *m) ;
 
     CAstStatIf*          ifStatement(CAstScope *s, CAstModule *m);
-    CAstStatAssign*      assignment(CAstScope *s);
+    CAstStatAssign*      assignment(CAstScope *s, CAstModule *m);
     CAstStatWhile*       whileStatement(CAstScope *s, CAstModule *m);
-    CAstStatReturn*      returnStatement(CAstScope *s);
+    CAstStatReturn*      returnStatement(CAstScope *s, CAstModule *m);
 
-    CAstExpression*      expression(CAstScope *s);
-    CAstExpression*      simpleexpr(CAstScope *s);
-    CAstExpression*      term(CAstScope *s);
-    CAstExpression*      factor(CAstScope *s);
+    CAstExpression*      expression(CAstScope *s, CAstModule *m);
+    CAstExpression*      simpleexpr(CAstScope *s, CAstModule *m);
+    CAstExpression*      term(CAstScope *s, CAstModule *m);
+    CAstExpression*      factor(CAstScope *s, CAstModule *m);
 
     CAstConstant*        number(void);
     CAstStringConstant*  stringConstant(CAstScope *s);
@@ -122,7 +122,7 @@ class CParser {
     CAstConstant*        constchar(void);
     CAstConstant*        constbool(void);
 
-    CAstDesignator*      qualident(CAstScope *s);
+    CAstDesignator*      qualident(CAstScope *s, CAstModule *m);
     CAstProcedure* subroutineDecl(CAstScope *parent, CAstModule *m);
     CAstFunctionCall* subroutineCall(CAstScope* s, CAstModule* m);
     /// @}
