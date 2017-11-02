@@ -618,7 +618,7 @@ CAstStringConstant* CParser::stringConstant(CAstScope *s)
     Consume(tString, &t);
 
     errno = 0;
-    string v = t.GetValue().c_str();
+    string v = t.GetValue().substr(1, t.GetValue().length() - 2);
 
     return new CAstStringConstant(t, v, s);
 }
@@ -814,6 +814,7 @@ CAstProcedure* CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
         types.erase(types.begin());
     }
     Consume(tSemicolon);
+    parent -> GetSymbolTable() -> AddSymbol(symbol);
 
     if(_scanner->Peek().GetType() == tVarDecl){
         variable_declaration(subroutine);
@@ -832,7 +833,6 @@ CAstProcedure* CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
     if(check_subroutine_name.GetValue() != pt.GetValue())
         SetError(check_subroutine_name, "procedure/function identifier mismatch ('" + pt.GetValue() + "' != '" + check_subroutine_name.GetValue() + "')");
     Consume(tSemicolon);
-    parent -> GetSymbolTable() -> AddSymbol(symbol);
     return subroutine;
 }
 
