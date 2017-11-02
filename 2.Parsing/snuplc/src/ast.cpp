@@ -814,7 +814,13 @@ bool CAstBinaryOp::TypeCheck(CToken *t, string *msg) const
 
 const CType* CAstBinaryOp::GetType(void) const
 {
-    return CTypeManager::Get()->GetInt();
+    EOperation oper = GetOperation();
+    if((oper == opAnd)        || (oper == opOr)          ||
+    (oper == opEqual)      || (oper == opNotEqual)    ||
+    (oper == opLessThan)   || (oper == opLessEqual)   ||
+    (oper == opBiggerThan) || (oper == opBiggerEqual)) 
+    return CTypeManager::Get()->GetBool();
+    else return CTypeManager::Get()->GetInt();
 }
 
 ostream& CAstBinaryOp::print(ostream &out, int indent) const

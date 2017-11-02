@@ -288,7 +288,6 @@ CAstDesignator* CParser::qualident(CAstScope *s, CAstModule *m) {
         return cad;
     }
     else{
-        if(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) == NULL) SetError(_scanner->Peek(), "undefined identifier");
         return new CAstDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
     }
 
