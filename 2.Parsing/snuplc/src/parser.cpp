@@ -273,8 +273,17 @@ CAstDesignator* CParser::qualident(CAstScope *s, CAstModule *m) {
     CToken t;
 
     Consume(tIdent, &t);
-    if(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) == NULL) SetError(_scanner->Peek(), "undefined identifier");
-    cad = new CAstArrayDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
+    if(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) != NULL) {
+        // local variable
+        cad = new CAstArrayDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
+        
+    }
+    else if(m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) != NULL){
+        // global variable
+        cad = new CAstArrayDesignator(t, m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal));
+        
+    }
+    else SetError(_scanner->Peek(), "undefined identifier");
     EToken tt = _scanner->Peek().GetType();
     if(tt == tLBrak){
         while (tt == tLBrak) {
@@ -290,8 +299,6 @@ CAstDesignator* CParser::qualident(CAstScope *s, CAstModule *m) {
     else{
         return new CAstDesignator(t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
     }
-
-    return cad;
 }
 
 void CParser::variable_declaration(CAstScope *s) {
@@ -572,7 +579,7 @@ CAstExpression* CParser::factor(CAstScope *s, CAstModule *m) {
             }
             // global variable
             else if(m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) != NULL && m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) -> GetSymbolType() == stGlobal){
-                n = qualident(m, m);
+                n = qualident(s, m);
             }
             // subroutine call
             else if(m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) != NULL && m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) -> GetSymbolType() == stProcedure){
