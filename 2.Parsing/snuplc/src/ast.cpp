@@ -1207,7 +1207,13 @@ const CType* CAstArrayDesignator::GetType(void) const
     const CType *t = GetSymbol()->GetDataType();
     // cout << *type << endl;
 
+    while(t -> IsPointer()) t = dynamic_cast<const CPointerType*>(t)->GetBaseType();
     if (t->IsArray()) return dynamic_cast<const CArrayType*>(t)->GetBaseType();
+    else if(t -> IsPointer()){
+        t = dynamic_cast<const CPointerType*>(t)->GetBaseType();
+        if(t -> IsArray()) return dynamic_cast<const CArrayType*>(t)->GetBaseType();
+        else return t;
+    }
     else return t;
 }
 
