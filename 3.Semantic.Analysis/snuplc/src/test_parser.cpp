@@ -31,17 +31,16 @@
 /// DAMAGE.
 //------------------------------------------------------------------------------
 
-#include <cstdlib>
-#include <iostream>
-#include <fstream>
 #include <cassert>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
 
-#include "scanner.h"
 #include "parser.h"
+#include "scanner.h"
 using namespace std;
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   int i = 1;
 
   while (i < argc) {
@@ -54,14 +53,12 @@ int main(int argc, char *argv[])
     if (p->HasError()) {
       const CToken *error = p->GetErrorToken();
       cout << "parse error : at " << error->GetLineNumber() << ":"
-           << error->GetCharPosition() << " : "
-           << p->GetErrorMessage() << endl;
+           << error->GetCharPosition() << " : " << p->GetErrorMessage() << endl;
     } else {
-      CAstModule *m = dynamic_cast<CAstModule*>(n);
+      CAstModule *m = dynamic_cast<CAstModule *>(n);
       assert(m != NULL);
 
-      cout << "successfully parsed." << endl
-           << "  AST:" << endl;
+      cout << "successfully parsed." << endl << "  AST:" << endl;
       m->print(cout, 4);
       cout << endl << endl;
 
@@ -78,9 +75,9 @@ int main(int argc, char *argv[])
 
       ostringstream cmd;
       cmd << "dot -Tpdf -o" << argv[i] << ".ast.pdf " << argv[i] << ".ast.dot";
-      cout << "run the following command to convert the .dot file into a PDF:" << endl
-           << "  " << cmd.str() << 
-           endl;
+      cout << "run the following command to convert the .dot file into a PDF:"
+           << endl
+           << "  " << cmd.str() << endl;
 
       delete m;
     }

@@ -36,60 +36,36 @@
 #include "type.h"
 using namespace std;
 
-
 //------------------------------------------------------------------------------
 // CType
 //
-CType::CType(void)
-{
-}
+CType::CType(void) {}
 
-CType::~CType(void)
-{
-}
+CType::~CType(void) {}
 
-unsigned int CType::GetDataSize(void) const
-{
-  return GetSize();
-}
+unsigned int CType::GetDataSize(void) const { return GetSize(); }
 
-bool CType::Compare(const CType *t) const
-{
-  return Match(t);
-}
+bool CType::Compare(const CType *t) const { return Match(t); }
 
-ostream& operator<<(ostream &out, const CType &t)
-{
-  return t.print(out);
-}
+ostream &operator<<(ostream &out, const CType &t) { return t.print(out); }
 
-ostream& operator<<(ostream &out, const CType *t)
-{
-  return t->print(out);
-}
-
+ostream &operator<<(ostream &out, const CType *t) { return t->print(out); }
 
 //------------------------------------------------------------------------------
 // CScalarType
 //
-bool CScalarType::Match(const CType *t) const
-{
-  // types are singletons and not implicit type conversions are allowed, 
+bool CScalarType::Match(const CType *t) const {
+  // types are singletons and not implicit type conversions are allowed,
   // i.e., for scalar types we can simply compare the pointers
   return (t == this);
 }
 
-
 //------------------------------------------------------------------------------
 // CNullType
 //
-CNullType::CNullType(void)
-  : CScalarType()
-{
-}
+CNullType::CNullType(void) : CScalarType() {}
 
-ostream& CNullType::print(ostream &out, int indent) const
-{
+ostream &CNullType::print(ostream &out, int indent) const {
   string ind(indent, ' ');
 
   out << ind << "<NULL>";
@@ -99,74 +75,59 @@ ostream& CNullType::print(ostream &out, int indent) const
 //------------------------------------------------------------------------------
 // CIntType
 //
-CIntType::CIntType(void)
-  : CScalarType()
-{
-}
+CIntType::CIntType(void) : CScalarType() {}
 
-ostream& CIntType::print(ostream &out, int indent) const
-{
+ostream &CIntType::print(ostream &out, int indent) const {
   string ind(indent, ' ');
 
-  out << ind << "<" << "int";
-  //out << "," << GetSize() << "," << GetAlign();
+  out << ind << "<"
+      << "int";
+  // out << "," << GetSize() << "," << GetAlign();
   out << ">";
   return out;
 }
-
 
 //------------------------------------------------------------------------------
 // CCharType
 //
-CCharType::CCharType(void)
-  : CScalarType()
-{
-}
+CCharType::CCharType(void) : CScalarType() {}
 
-ostream& CCharType::print(ostream &out, int indent) const
-{
+ostream &CCharType::print(ostream &out, int indent) const {
   string ind(indent, ' ');
 
-  out << ind << "<" << "char";
-  //out << "," << GetSize() << "," << GetAlign();
+  out << ind << "<"
+      << "char";
+  // out << "," << GetSize() << "," << GetAlign();
   out << ">";
   return out;
 }
-
 
 //------------------------------------------------------------------------------
 // CBoolType
 //
-CBoolType::CBoolType(void)
-  : CScalarType()
-{
-}
+CBoolType::CBoolType(void) : CScalarType() {}
 
-ostream& CBoolType::print(ostream &out, int indent) const
-{
+ostream &CBoolType::print(ostream &out, int indent) const {
   string ind(indent, ' ');
 
-  out << ind << "<" << "bool";
-  //out << "," << GetSize() << "," << GetAlign();
+  out << ind << "<"
+      << "bool";
+  // out << "," << GetSize() << "," << GetAlign();
   out << ">";
   return out;
 }
-
 
 //------------------------------------------------------------------------------
 // CPointerType
 //
 CPointerType::CPointerType(const CType *basetype)
-  : CScalarType(), _basetype(basetype)
-{
-}
+    : CScalarType(), _basetype(basetype) {}
 
-bool CPointerType::Match(const CType *t) const
-{
+bool CPointerType::Match(const CType *t) const {
   // check whether t is a pointer
   if ((t == NULL) || !t->IsPointer()) return false;
 
-  const CPointerType *pt = dynamic_cast<const CPointerType*>(t);
+  const CPointerType *pt = dynamic_cast<const CPointerType *>(t);
   assert(pt != NULL);
 
   // match if:
@@ -176,12 +137,11 @@ bool CPointerType::Match(const CType *t) const
   return false;
 }
 
-bool CPointerType::Compare(const CType *t) const
-{
+bool CPointerType::Compare(const CType *t) const {
   // check whether t is a pointer
   if ((t == NULL) || !t->IsPointer()) return false;
 
-  const CPointerType *pt = dynamic_cast<const CPointerType*>(t);
+  const CPointerType *pt = dynamic_cast<const CPointerType *>(t);
   assert(pt != NULL);
 
   // comparison: match if
@@ -191,74 +151,73 @@ bool CPointerType::Compare(const CType *t) const
   return false;
 }
 
-ostream& CPointerType::print(ostream &out, int indent) const
-{
+ostream &CPointerType::print(ostream &out, int indent) const {
   string ind(indent, ' ');
 
-  out << ind << "<" << "ptr" << "(" << GetSize() << ") to ";
-  if (_basetype != NULL) out << _basetype; else out << "void";
+  out << ind << "<"
+      << "ptr"
+      << "(" << GetSize() << ") to ";
+  if (_basetype != NULL)
+    out << _basetype;
+  else
+    out << "void";
   out << ">";
   return out;
 }
-
 
 //------------------------------------------------------------------------------
 // CArrayType
 //
 CArrayType::CArrayType(int nelem, const CType *innertype)
-  : CType(), _nelem(nelem), _innertype(innertype)
-{
+    : CType(), _nelem(nelem), _innertype(innertype) {
   assert((_nelem > 0) || (_nelem == OPEN));
   assert(_innertype != NULL);
 }
 
-CArrayType::~CArrayType(void)
-{
+CArrayType::~CArrayType(void) {
   // do not free _innertype; all types (also inner types) are
   // owned by the type manager
 }
 
-unsigned int CArrayType::GetSize(void) const
-{
-  return 4 + 4*GetNDim() + GetDataSize();
+unsigned int CArrayType::GetSize(void) const {
+  return 4 + 4 * GetNDim() + GetDataSize();
 }
 
-unsigned int CArrayType::GetDataSize(void) const
-{
+unsigned int CArrayType::GetDataSize(void) const {
   int n = GetNElem();
-  return n == OPEN ? 0 : n*GetInnerType()->GetDataSize();
+  return n == OPEN ? 0 : n * GetInnerType()->GetDataSize();
 }
 
-int CArrayType::GetAlign(void) const
-{
+int CArrayType::GetAlign(void) const {
   // arrays must be 4-aligned since we have integer meta-data at the beginning
   return 4;
 }
 
-const CType* CArrayType::GetBaseType(void) const
-{
+const CType *CArrayType::GetBaseType(void) const {
   const CType *t = GetInnerType();
   assert(t != NULL);
 
-  if (t->IsArray()) return dynamic_cast<const CArrayType*>(t)->GetBaseType();
-  else return t;
+  if (t->IsArray())
+    return dynamic_cast<const CArrayType *>(t)->GetBaseType();
+  else
+    return t;
 }
 
-int CArrayType::GetNDim(void) const
-{
+int CArrayType::GetNDim(void) const {
   const CType *t = GetInnerType();
   assert(t != NULL);
 
-  if (t->IsArray()) return dynamic_cast<const CArrayType*>(t)->GetNDim() + 1;
-  else return 1;
+  if (t->IsArray())
+    return dynamic_cast<const CArrayType *>(t)->GetNDim() + 1;
+  else
+    return 1;
 }
 
-bool CArrayType::Match(const CType *t) const
-{
+bool CArrayType::Match(const CType *t) const {
   // check whether t is an array
   if ((t == NULL) || !t->IsArray()) return false;
 
-  const CArrayType *at = dynamic_cast<const CArrayType*>(t);
+  const CArrayType *at = dynamic_cast<const CArrayType *>(t);
   assert(at != NULL);
 
   // match if:
@@ -268,12 +227,11 @@ bool CArrayType::Match(const CType *t) const
   return false;
 }
 
-bool CArrayType::Compare(const CType *t) const
-{
+bool CArrayType::Compare(const CType *t) const {
   // check whether t is an array
   if ((t == NULL) || !t->IsArray()) return false;
 
-  const CArrayType *at = dynamic_cast<const CArrayType*>(t);
+  const CArrayType *at = dynamic_cast<const CArrayType *>(t);
   assert(at != NULL);
 
   // comparison: match if
@@ -283,27 +241,25 @@ bool CArrayType::Compare(const CType *t) const
   return false;
 }
 
-ostream& CArrayType::print(ostream &out, int indent) const
-{
+ostream &CArrayType::print(ostream &out, int indent) const {
   string ind(indent, ' ');
   int n = GetNElem();
 
   out << ind << "<array ";
   if (n != OPEN) out << n << " ";
-  out << "of "; GetInnerType()->print(out);
-  //out << "," << GetSize() << "," << GetAlign();
+  out << "of ";
+  GetInnerType()->print(out);
+  // out << "," << GetSize() << "," << GetAlign();
   out << ">";
   return out;
 }
 
-
 //------------------------------------------------------------------------------
 // CTypeManager
 //
-CTypeManager* CTypeManager::_global_tm = NULL;
+CTypeManager *CTypeManager::_global_tm = NULL;
 
-CTypeManager::CTypeManager(void)
-{
+CTypeManager::CTypeManager(void) {
   _null = new CNullType();
   _integer = new CIntType();
   _char = new CCharType();
@@ -312,52 +268,34 @@ CTypeManager::CTypeManager(void)
   _ptr.push_back(_voidptr);
 }
 
-CTypeManager::~CTypeManager(void)
-{
+CTypeManager::~CTypeManager(void) {
   delete _null;
   delete _integer;
   delete _char;
   delete _boolean;
   // _voidptr is a member of _pointer and will get deleted just below
-  for (size_t i=0; i<_ptr.size(); i++) delete _ptr[i];
-  for (size_t i=0; i<_array.size(); i++) delete _array[i];
+  for (size_t i = 0; i < _ptr.size(); i++) delete _ptr[i];
+  for (size_t i = 0; i < _array.size(); i++) delete _array[i];
 }
 
-CTypeManager* CTypeManager::Get(void)
-{
+CTypeManager *CTypeManager::Get(void) {
   if (_global_tm == NULL) _global_tm = new CTypeManager();
 
   return _global_tm;
 }
 
-const CNullType* CTypeManager::GetNull(void) const
-{
-  return _null;
-}
+const CNullType *CTypeManager::GetNull(void) const { return _null; }
 
-const CIntType* CTypeManager::GetInt(void) const
-{
-  return _integer;
-}
+const CIntType *CTypeManager::GetInt(void) const { return _integer; }
 
-const CCharType* CTypeManager::GetChar(void) const
-{
-  return _char;
-}
+const CCharType *CTypeManager::GetChar(void) const { return _char; }
 
-const CBoolType* CTypeManager::GetBool(void) const
-{
-  return _boolean;
-}
+const CBoolType *CTypeManager::GetBool(void) const { return _boolean; }
 
-const CPointerType* CTypeManager::GetVoidPtr(void) const
-{
-  return _voidptr;
-}
+const CPointerType *CTypeManager::GetVoidPtr(void) const { return _voidptr; }
 
-const CPointerType* CTypeManager::GetPointer(const CType *basetype)
-{
-  for (size_t i=0; i<_ptr.size(); i++) {
+const CPointerType *CTypeManager::GetPointer(const CType *basetype) {
+  for (size_t i = 0; i < _ptr.size(); i++) {
     if ((_ptr[i]->GetBaseType()->Compare(basetype))) {
       return _ptr[i];
     }
@@ -369,11 +307,10 @@ const CPointerType* CTypeManager::GetPointer(const CType *basetype)
   return p;
 }
 
-const CArrayType* CTypeManager::GetArray(int nelem, const CType *innertype)
-{
+const CArrayType *CTypeManager::GetArray(int nelem, const CType *innertype) {
   if (innertype == NULL) return NULL;
 
-  for (size_t i=0; i<_array.size(); i++) {
+  for (size_t i = 0; i < _array.size(); i++) {
     if ((_array[i]->GetNElem() == nelem) &&
         (_array[i]->GetInnerType()->Compare(innertype))) {
       return _array[i];
@@ -390,8 +327,7 @@ const CArrayType* CTypeManager::GetArray(int nelem, const CType *innertype)
   return a;
 }
 
-ostream& CTypeManager::print(ostream &out, int indent) const
-{
+ostream &CTypeManager::print(ostream &out, int indent) const {
   string ind(indent, ' ');
 
   out << ind << "[[ type manager" << endl
@@ -402,11 +338,11 @@ ostream& CTypeManager::print(ostream &out, int indent) const
       << ind << "    " << _boolean << endl
       << ind << "    " << _voidptr << endl
       << ind << "  pointer types:" << endl;
-  for (size_t i=0; i<_ptr.size(); i++) {
+  for (size_t i = 0; i < _ptr.size(); i++) {
     out << ind << "    " << _ptr[i] << endl;
   }
   out << ind << "  array types:" << endl;
-  for (size_t i=0; i<_array.size(); i++) {
+  for (size_t i = 0; i < _array.size(); i++) {
     out << ind << "    " << _array[i] << endl;
   }
   out << ind << "]]" << endl;

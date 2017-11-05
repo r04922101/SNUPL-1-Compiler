@@ -36,10 +36,9 @@
 #ifndef __SnuPL_PARSER_H__
 #define __SnuPL_PARSER_H__
 
+#include "ast.h"
 #include "scanner.h"
 #include "symtab.h"
-#include "ast.h"
-
 
 //------------------------------------------------------------------------------
 /// @brief parser
@@ -47,96 +46,90 @@
 /// parses a module
 ///
 class CParser {
-  public:
-    /// @brief constructor
-    ///
-    /// @param scanner  CScanner from which the input stream is read
-    CParser(CScanner *scanner);
+ public:
+  /// @brief constructor
+  ///
+  /// @param scanner  CScanner from which the input stream is read
+  CParser(CScanner *scanner);
 
-    /// @brief parse a module
-    /// @retval CAstNode program node
-    CAstNode* Parse(void);
+  /// @brief parse a module
+  /// @retval CAstNode program node
+  CAstNode *Parse(void);
 
-    /// @name error handling
-    ///@{
+  /// @name error handling
+  ///@{
 
-    /// @brief indicates whether there was an error while parsing the source
-    /// @retval true if the parser detected an error
-    /// @retval false otherwise
-    bool HasError(void) const { return _abort; };
+  /// @brief indicates whether there was an error while parsing the source
+  /// @retval true if the parser detected an error
+  /// @retval false otherwise
+  bool HasError(void) const { return _abort; };
 
-    /// @brief returns the token that caused the error
-    /// @retval CToken containing the error token
-    const CToken* GetErrorToken(void) const;
+  /// @brief returns the token that caused the error
+  /// @retval CToken containing the error token
+  const CToken *GetErrorToken(void) const;
 
-    /// @brief returns a human-readable error message
-    /// @retval error message
-    string GetErrorMessage(void) const;
-    ///@}
+  /// @brief returns a human-readable error message
+  /// @retval error message
+  string GetErrorMessage(void) const;
+  ///@}
 
-  private:
-    /// @brief sets the token causing a parse error along with a message
-    /// @param t token causing the error
-    /// @param message human-readable error message
-    void SetError(CToken t, const string message);
+ private:
+  /// @brief sets the token causing a parse error along with a message
+  /// @param t token causing the error
+  /// @param message human-readable error message
+  void SetError(CToken t, const string message);
 
-    /// @brief consume a token given type and optionally store the token
-    /// @retval true if a token has been consumed
-    /// @retval false otherwise
-    bool Consume(EToken type, CToken *token=NULL);
+  /// @brief consume a token given type and optionally store the token
+  /// @retval true if a token has been consumed
+  /// @retval false otherwise
+  bool Consume(EToken type, CToken *token = NULL);
 
+  /// @brief initialize symbol table @a s with predefined procedures and
+  ///        global variables
+  void InitSymbolTable(CSymtab *s);
 
-    /// @brief initialize symbol table @a s with predefined procedures and
-    ///        global variables
-    void InitSymbolTable(CSymtab *s);
+  /// @name methods for recursive-descent parsing
+  /// @{
 
-    /// @name methods for recursive-descent parsing
-    /// @{
+  void variable_declaration(CAstScope *s);
 
-    void variable_declaration(CAstScope *s);
+  CAstType *type(bool open);
 
+  /// @name methods for recursive-descent parsing
+  /// @{
 
-    CAstType* type(bool open);
+  CAstModule *module(void);
+  CAstStatement *statSequence(CAstScope *s, CAstModule *m);
 
+  CAstStatIf *ifStatement(CAstScope *s, CAstModule *m);
+  CAstStatAssign *assignment(CAstScope *s, CAstModule *m);
+  CAstStatWhile *whileStatement(CAstScope *s, CAstModule *m);
+  CAstStatReturn *returnStatement(CAstScope *s, CAstModule *m);
 
-    /// @name methods for recursive-descent parsing
-    /// @{
+  CAstExpression *expression(CAstScope *s, CAstModule *m);
+  CAstExpression *simpleexpr(CAstScope *s, CAstModule *m);
+  CAstExpression *term(CAstScope *s, CAstModule *m);
+  CAstExpression *factor(CAstScope *s, CAstModule *m);
 
+  CAstConstant *number(void);
+  CAstStringConstant *stringConstant(CAstScope *s);
 
-    CAstModule*          module(void);
-    CAstStatement*       statSequence(CAstScope *s, CAstModule *m) ;
+  CAstConstant *constchar(void);
+  CAstConstant *constbool(void);
 
-    CAstStatIf*          ifStatement(CAstScope *s, CAstModule *m);
-    CAstStatAssign*      assignment(CAstScope *s, CAstModule *m);
-    CAstStatWhile*       whileStatement(CAstScope *s, CAstModule *m);
-    CAstStatReturn*      returnStatement(CAstScope *s, CAstModule *m);
+  CAstDesignator *qualident(CAstScope *s, CAstModule *m);
+  CAstProcedure *subroutineDecl(CAstScope *parent, CAstModule *m);
+  CAstFunctionCall *subroutineCall(CAstScope *s, CAstModule *m);
+  /// @}
 
-    CAstExpression*      expression(CAstScope *s, CAstModule *m);
-    CAstExpression*      simpleexpr(CAstScope *s, CAstModule *m);
-    CAstExpression*      term(CAstScope *s, CAstModule *m);
-    CAstExpression*      factor(CAstScope *s, CAstModule *m);
+  CScanner *_scanner;   ///< CScanner instance
+  CAstModule *_module;  ///< root node of the program
+  CToken _token;        ///< current token
 
-    CAstConstant*        number(void);
-    CAstStringConstant*  stringConstant(CAstScope *s);
-
-    CAstConstant*        constchar(void);
-    CAstConstant*        constbool(void);
-
-    CAstDesignator*      qualident(CAstScope *s, CAstModule *m);
-    CAstProcedure* subroutineDecl(CAstScope *parent, CAstModule *m);
-    CAstFunctionCall* subroutineCall(CAstScope* s, CAstModule* m);
-    /// @}
-
-
-    CScanner     *_scanner;       ///< CScanner instance
-    CAstModule   *_module;        ///< root node of the program
-    CToken        _token;         ///< current token
-
-    /// @name error handling
-    CToken        _error_token;   ///< error token
-    string        _message;       ///< error message
-    bool          _abort;         ///< error flag
-
+  /// @name error handling
+  CToken _error_token;  ///< error token
+  string _message;      ///< error message
+  bool _abort;          ///< error flag
 };
 
-#endif // __SnuPL_PARSER_H__
+#endif  // __SnuPL_PARSER_H__

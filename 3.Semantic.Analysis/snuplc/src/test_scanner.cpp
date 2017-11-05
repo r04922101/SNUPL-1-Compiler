@@ -31,14 +31,13 @@
 //------------------------------------------------------------------------------
 
 #include <cstdlib>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 #include "scanner.h"
 using namespace std;
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   int i = 1;
 
   while (i < argc) {

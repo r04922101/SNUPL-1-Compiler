@@ -46,24 +46,24 @@ using namespace std;
 /// base class for all data initializers
 ///
 class CDataInitializer {
-  public:
-    /// @name constructor/destructor
-    /// @{
+ public:
+  /// @name constructor/destructor
+  /// @{
 
-    /// @brief constructor
-    CDataInitializer(void);
+  /// @brief constructor
+  CDataInitializer(void);
 
-    /// @brief destructor
-    virtual ~CDataInitializer(void);
+  /// @brief destructor
+  virtual ~CDataInitializer(void);
 
-    /// @}
+  /// @}
 
-    /// @brief print the data initializer to an output stream
-    /// @param out output stream
-    /// @param indent indentation
-    virtual ostream&  print(ostream &out, int indent=0) const = 0;
+  /// @brief print the data initializer to an output stream
+  /// @param out output stream
+  /// @param indent indentation
+  virtual ostream &print(ostream &out, int indent = 0) const = 0;
 
-  private:
+ private:
 };
 
 /// @name CDataInitializer output operators
@@ -74,17 +74,16 @@ class CDataInitializer {
 /// @param out output stream
 /// @param t reference to CDataInitializer
 /// @retval output stream
-ostream& operator<<(ostream &out, const CDataInitializer &t);
+ostream &operator<<(ostream &out, const CDataInitializer &t);
 
 /// @brief CDataInitializer output operator
 ///
 /// @param out output stream
 /// @param t reference to CDataInitializer
 /// @retval output stream
-ostream& operator<<(ostream &out, const CDataInitializer *t);
+ostream &operator<<(ostream &out, const CDataInitializer *t);
 
 /// @}
-
 
 //------------------------------------------------------------------------------
 /// @brief string data initializer
@@ -92,35 +91,34 @@ ostream& operator<<(ostream &out, const CDataInitializer *t);
 /// class representing string data initializers
 ///
 class CDataInitString : public CDataInitializer {
-  public:
-    /// @name constructor/destructor
-    /// @{
+ public:
+  /// @name constructor/destructor
+  /// @{
 
-    /// @brief constructor
-    ///
-    /// @param name symbol name (identifier)
-    /// @param type symbol type
-    CDataInitString(const string data);
+  /// @brief constructor
+  ///
+  /// @param name symbol name (identifier)
+  /// @param type symbol type
+  CDataInitString(const string data);
 
-    /// @}
+  /// @}
 
-    /// @name data access
-    /// @{
+  /// @name data access
+  /// @{
 
-    /// @brief get the string data
-    /// @retval string string data
-    string GetData(void) const;
+  /// @brief get the string data
+  /// @retval string string data
+  string GetData(void) const;
 
-    /// @}
+  /// @}
 
-    /// @brief print the symbol to an output stream
-    /// @param out output stream
-    /// @param indent indentation
-    virtual ostream&  print(ostream &out, int indent=0) const;
+  /// @brief print the symbol to an output stream
+  /// @param out output stream
+  /// @param indent indentation
+  virtual ostream &print(ostream &out, int indent = 0) const;
 
-  private:
-    const string   _data;         ///< string data
+ private:
+  const string _data;  ///< string data
 };
 
-
-#endif // __SnuPL_DATA_H__
+#endif  // __SnuPL_DATA_H__

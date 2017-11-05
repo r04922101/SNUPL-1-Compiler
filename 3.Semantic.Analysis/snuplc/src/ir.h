@@ -44,56 +44,55 @@
 
 #include "symtab.h"
 
-
 //------------------------------------------------------------------------------
 /// @brief operations
 ///
 enum EOperation {
   // binary operators
   // dst = src1 op src2
-  opAdd=0,                          ///< +  addition
-  opSub,                            ///< -  subtraction
-  opMul,                            ///< *  multiplication
-  opDiv,                            ///< /  division
-  opAnd,                            ///< && binary and
-  opOr,                             ///< || binary or
+  opAdd = 0,  ///< +  addition
+  opSub,      ///< -  subtraction
+  opMul,      ///< *  multiplication
+  opDiv,      ///< /  division
+  opAnd,      ///< && binary and
+  opOr,       ///< || binary or
 
   // unary operators
   // dst = op src1
-  opNeg,                            ///< -  negation
-  opPos,                            ///< +  unary +
-  opNot,                            ///< !  binary not
+  opNeg,  ///< -  negation
+  opPos,  ///< +  unary +
+  opNot,  ///< !  binary not
 
   // memory operations
   // dst = src1
-  opAssign,                         ///< assignment
+  opAssign,  ///< assignment
 
   // special and pointer operations
-  opAddress,                        ///< reference: dst = &src1
-  opDeref,                          ///< dereference: dst = *src1
-  opCast,                           ///< type cast: dst = (type)src1
+  opAddress,  ///< reference: dst = &src1
+  opDeref,    ///< dereference: dst = *src1
+  opCast,     ///< type cast: dst = (type)src1
 
   // unconditional branching
   // goto dst
-  opGoto,                           ///< dst = target
+  opGoto,  ///< dst = target
 
   // conditional branching
   // if src1 relOp src2 then goto dst
-  opEqual,                          ///< =  equal
-  opNotEqual,                       ///< #  not equal
-  opLessThan,                       ///< <  less than
-  opLessEqual,                      ///< <= less or equal
-  opBiggerThan,                     ///< >  bigger than
-  opBiggerEqual,                    ///< >= bigger or equal
+  opEqual,        ///< =  equal
+  opNotEqual,     ///< #  not equal
+  opLessThan,     ///< <  less than
+  opLessEqual,    ///< <= less or equal
+  opBiggerThan,   ///< >  bigger than
+  opBiggerEqual,  ///< >= bigger or equal
 
   // function call-related operations
-  opCall,                           ///< call:  dst = call src1
-  opReturn,                         ///< return: return optional src1
-  opParam,                          ///< parameter: dst = index,src1 = parameter
+  opCall,    ///< call:  dst = call src1
+  opReturn,  ///< return: return optional src1
+  opParam,   ///< parameter: dst = index,src1 = parameter
 
   // special
-  opLabel,                          ///< jump label; no arguments
-  opNop,                            ///< no operation
+  opLabel,  ///< jump label; no arguments
+  opNop,    ///< no operation
 };
 
 /// @brief returns true if @a op is a relational operation
@@ -104,20 +103,16 @@ bool IsRelOp(EOperation t);
 /// @param out output stream
 /// @param t EOperation
 /// @retval output stream
-ostream& operator<<(ostream &out, EOperation t);
-
+ostream& operator<<(ostream& out, EOperation t);
 
 //------------------------------------------------------------------------------
 /// @brief address class
 ///
 /// base class for addresses (variables, constants, temporaries, array accesses)
 ///
-class CTacAddr {
-};
+class CTacAddr {};
 
-class CTacLabel {
-};
-
+class CTacLabel {};
 
 //------------------------------------------------------------------------------
 /// @brief code block
@@ -125,11 +120,8 @@ class CTacLabel {
 /// base node class for code blocks
 ///
 
-class CCodeBlock {
-};
-
+class CCodeBlock {};
 
 /// @}
 
-
-#endif // __SnuPL_IR_H__
+#endif  // __SnuPL_IR_H__
