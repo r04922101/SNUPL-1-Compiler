@@ -125,7 +125,8 @@ CPointerType::CPointerType(const CType *basetype)
 
 bool CPointerType::Match(const CType *t) const {
   // check whether t is a pointer
-  if ((t == NULL) || !t->IsPointer()) return false;
+  if ((t == NULL) || !t->IsPointer())
+    return false;
 
   const CPointerType *pt = dynamic_cast<const CPointerType *>(t);
   assert(pt != NULL);
@@ -139,7 +140,8 @@ bool CPointerType::Match(const CType *t) const {
 
 bool CPointerType::Compare(const CType *t) const {
   // check whether t is a pointer
-  if ((t == NULL) || !t->IsPointer()) return false;
+  if ((t == NULL) || !t->IsPointer())
+    return false;
 
   const CPointerType *pt = dynamic_cast<const CPointerType *>(t);
   assert(pt != NULL);
@@ -215,7 +217,8 @@ int CArrayType::GetNDim(void) const {
 
 bool CArrayType::Match(const CType *t) const {
   // check whether t is an array
-  if ((t == NULL) || !t->IsArray()) return false;
+  if ((t == NULL) || !t->IsArray())
+    return false;
 
   const CArrayType *at = dynamic_cast<const CArrayType *>(t);
   assert(at != NULL);
@@ -229,7 +232,8 @@ bool CArrayType::Match(const CType *t) const {
 
 bool CArrayType::Compare(const CType *t) const {
   // check whether t is an array
-  if ((t == NULL) || !t->IsArray()) return false;
+  if ((t == NULL) || !t->IsArray())
+    return false;
 
   const CArrayType *at = dynamic_cast<const CArrayType *>(t);
   assert(at != NULL);
@@ -246,7 +250,8 @@ ostream &CArrayType::print(ostream &out, int indent) const {
   int n = GetNElem();
 
   out << ind << "<array ";
-  if (n != OPEN) out << n << " ";
+  if (n != OPEN)
+    out << n << " ";
   out << "of ";
   GetInnerType()->print(out);
   // out << "," << GetSize() << "," << GetAlign();
@@ -274,12 +279,15 @@ CTypeManager::~CTypeManager(void) {
   delete _char;
   delete _boolean;
   // _voidptr is a member of _pointer and will get deleted just below
-  for (size_t i = 0; i < _ptr.size(); i++) delete _ptr[i];
-  for (size_t i = 0; i < _array.size(); i++) delete _array[i];
+  for (size_t i = 0; i < _ptr.size(); i++)
+    delete _ptr[i];
+  for (size_t i = 0; i < _array.size(); i++)
+    delete _array[i];
 }
 
 CTypeManager *CTypeManager::Get(void) {
-  if (_global_tm == NULL) _global_tm = new CTypeManager();
+  if (_global_tm == NULL)
+    _global_tm = new CTypeManager();
 
   return _global_tm;
 }
@@ -308,7 +316,8 @@ const CPointerType *CTypeManager::GetPointer(const CType *basetype) {
 }
 
 const CArrayType *CTypeManager::GetArray(int nelem, const CType *innertype) {
-  if (innertype == NULL) return NULL;
+  if (innertype == NULL)
+    return NULL;
 
   for (size_t i = 0; i < _array.size(); i++) {
     if ((_array[i]->GetNElem() == nelem) &&
@@ -319,7 +328,8 @@ const CArrayType *CTypeManager::GetArray(int nelem, const CType *innertype) {
 
   unsigned long long size = innertype->GetDataSize();
   size = size * nelem + 8;
-  if (size > CArrayType::MAX_SIZE) return NULL;
+  if (size > CArrayType::MAX_SIZE)
+    return NULL;
 
   CArrayType *a = new CArrayType(nelem, innertype);
   _array.push_back(a);
