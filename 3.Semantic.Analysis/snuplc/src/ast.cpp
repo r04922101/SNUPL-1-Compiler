@@ -1205,11 +1205,22 @@ CAstDesignator::CAstDesignator(CToken t, const CSymbol *symbol)
   assert(symbol != NULL);
 }
 
-const CSymbol *CAstDesignator::GetSymbol(void) const { return _symbol; }
+const CSymbol *CAstDesignator::GetSymbol() const { return _symbol; }
 
-bool CAstDesignator::TypeCheck(CToken *t, string *msg) const { return true; }
+bool CAstDesignator::TypeCheck(CToken *t, string *msg) const {
+  if (GetType() == NULL || GetType()->IsNull()) {
+    if (t != NULL) {
+      *t = GetToken();
+    }
+    if (msg != NULL) {
+      *msg = " invalid type";
+    }
+    return false;
+  }
+  return true;
+}
 
-const CType *CAstDesignator::GetType(void) const {
+const CType *CAstDesignator::GetType() const {
   return GetSymbol()->GetDataType();
 }
 
@@ -1273,14 +1284,27 @@ CAstExpression *CAstArrayDesignator::GetIndex(int index) const {
 }
 
 bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const {
-  bool result = true;
-
-  // assert(_done);
-
-  return result;
+  assert(_done);
+  for (int i = 0; i < GetNIndices(); i++) {
+    CAstExpression *exp = GetIndex(i);
+    if (!exp->TypeCheck(t, msg)) {
+      return false;
+    }
+    const CType *type = exp->GetType();
+    if (type == NULL || !type->Match(CTypeManager::Get()->GetInt())) {
+      if (t != NULL) {
+        *t = exp->GetToken();
+      }
+      if (msg != NULL) {
+        *msg = " expected index to be integer";
+      }
+      return false;
+    }
+  }
+  return true;
 }
 
-const CType *CAstArrayDesignator::GetType(void) const {
+const CType *CAstArrayDesignator::GetType() const {
   const CType *t = GetSymbol()->GetDataType();
 
   while (t->IsPointer())
