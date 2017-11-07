@@ -742,7 +742,99 @@ CAstExpression *CAstBinaryOp::GetLeft(void) const { return _left; }
 
 CAstExpression *CAstBinaryOp::GetRight(void) const { return _right; }
 
-bool CAstBinaryOp::TypeCheck(CToken *t, string *msg) const { return true; }
+bool CAstBinaryOp::TypeCheck(CToken *t, string *msg) const {
+  // Recursive type checking
+  if (!_left->TypeCheck(t, msg) || !_right->TypeCheck(t, msg)) {
+    return false;
+  }
+
+  const CType *leftType = _left->GetType();
+  const CType *rightType = _right->GetType();
+  switch (GetOperation()) {
+  case opAdd:
+  case opDiv:
+  case opMul:
+  case opSub:
+    // Integer Operations
+    if (!(leftType->Match(CTypeManager::Get()->GetInt()) &&
+          rightType->Match(CTypeManager::Get()->GetInt()))) {
+      if (t != NULL)
+        *t = GetToken();
+      if (msg != NULL)
+        *msg = "expected integer type in binary op";
+      return false;
+    } else {
+      return true;
+    }
+  case opAnd:
+  case opOr:
+    // Boolean Operations
+    if (!(leftType->Match(CTypeManager::Get()->GetBool()) &&
+          rightType->Match(CTypeManager::Get()->GetBool()))) {
+      if (t != NULL)
+        *t = GetToken();
+      if (msg != NULL)
+        *msg = "expected boolean type in binary op";
+      return false;
+    } else {
+      return true;
+    }
+  case opEqual:
+  case opNotEqual:
+    // Equality Operations
+    // Match necessary
+    if (!(leftType->Match(CTypeManager::Get()->GetBool()) ||
+          leftType->Match(CTypeManager::Get()->GetChar()) ||
+          leftType->Match(CTypeManager::Get()->GetInt()))) {
+      if (t != NULL)
+        *t = _left->GetToken();
+      if (msg != NULL)
+        *msg = "expected boolean or character or integer type expression in "
+               "left hand side";
+      return false;
+    } else if (!(rightType->Match(leftType))) {
+      if (t != NULL)
+        *t = _right->GetToken();
+      if (msg != NULL)
+        *msg = "expected right and left hand side to type match";
+      return false;
+    }
+    return true;
+  case opBiggerEqual:
+  case opBiggerThan:
+  case opLessEqual:
+  case opLessThan:
+    // Comparison Operations
+    if (!(leftType->Match(CTypeManager::Get()->GetInt()) ||
+          leftType->Match(CTypeManager::Get()->GetChar()))) {
+      if (t != NULL) {
+        *t = GetToken();
+      }
+      if (msg != NULL) {
+        *msg = " expected integer or char in left hand side";
+      }
+      return false;
+    } else if (!leftType->Match(rightType)) {
+      if (t != NULL) {
+        *t = GetToken();
+      }
+      if (msg != NULL) {
+        *msg = "operand type must match";
+      }
+      return false;
+    } else
+      return true;
+    // unknown operator
+  default:
+    if (t != NULL) {
+      *t = GetToken();
+    }
+    if (msg) {
+      *msg = "unknown operation";
+    }
+    return false;
+  }
+}
 
 const CType *CAstBinaryOp::GetType(void) const {
   EOperation oper = GetOperation();
