@@ -68,7 +68,7 @@ CAstNode *CParser::Parse(void) {
     if (_module != NULL) {
       CToken t;
       string msg;
-      // if (!_module->TypeCheck(&t, &msg)) SetError(t, msg);
+      if (!_module->TypeCheck(&t, &msg)) SetError(t, msg);
     }
   } catch (...) {
     _module = NULL;
@@ -286,37 +286,55 @@ CAstDesignator *CParser::qualident(CAstScope *s, CAstModule *m) {
   //
   // qualident ::= ident { "[" expression "]" }.
   //
-  CAstArrayDesignator *cad;
   CAstExpression *head = NULL;
   CToken t;
 
   Consume(tIdent, &t);
-  if (s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) != NULL) {
-    // local variable
-    cad = new CAstArrayDesignator(
-        t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
-
-  } else if (m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) != NULL) {
-    // global variable
-    cad = new CAstArrayDesignator(
-        t, m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal));
-
-  } else
-    SetError(_scanner->Peek(), "undefined identifier");
   EToken tt = _scanner->Peek().GetType();
-  if (tt == tLBrak) {
-    while (tt == tLBrak) {
-      Consume(tLBrak);
-      head = expression(s, m);
-      cad->AddIndex(head);
-      Consume(tRBrak);
-
-      tt = _scanner->Peek().GetType();
-    }
-    return cad;
-  } else {
-    return new CAstDesignator(
+  if(tt == tLBrak){
+    if (s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) != NULL) {
+      // local variable
+      CAstArrayDesignator *cad = new CAstArrayDesignator(
+          t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
+      while (tt == tLBrak) {
+        Consume(tLBrak);
+        head = expression(s, m);
+        cad->AddIndex(head);
+        Consume(tRBrak);
+  
+        tt = _scanner->Peek().GetType();
+      }
+      return cad;
+    } 
+    else if (m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) != NULL) {
+      // global variable
+      cout << "global qualident\n";
+      CAstArrayDesignator *cad = new CAstArrayDesignator(
+          t, m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal));
+      while (tt == tLBrak) {
+        Consume(tLBrak);
+        head = expression(s, m);
+        cad->AddIndex(head);
+        Consume(tRBrak);
+  
+        tt = _scanner->Peek().GetType();
+      }
+      return cad;
+    } 
+    else
+      SetError(_scanner->Peek(), "undefined identifier");
+  }
+  else{
+    if (s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) != NULL) {
+      return new CAstDesignator(
         t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
+    }
+    else if (m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) != NULL) {
+      return new CAstDesignator(
+        t, m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal));
+    }
+    else
+      SetError(_scanner->Peek(), "undefined identifier");
   }
 }
 
@@ -626,7 +644,7 @@ CAstExpression* CParser::factor(CAstScope *s, CAstModule *m) {
         case tIdent:
             // local variable
             if(s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sLocal) != NULL && s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sLocal) -> GetSymbolType() != stProcedure){
-                n = qualident(s, m);
+               n = qualident(s, m);
             }
             // global variable
             else if(m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) != NULL && m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) -> GetSymbolType() == stGlobal){
