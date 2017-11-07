@@ -763,9 +763,9 @@ CAstConstant *CParser::constbool(void) {
   CToken t;
   Consume(tBoolConst, &t);
   errno = 0;
-  long long v = strtoll(t.GetValue().c_str(), NULL, 10);
-  if (errno != 0)
-    SetError(t, "invalid number.");
+  int v;
+  if(t.GetValue() == "false") v = 0;
+  else v = 1;
   return new CAstConstant(t, CTypeManager::Get()->GetBool(), v);
 }
 

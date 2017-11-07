@@ -958,7 +958,7 @@ bool CAstUnaryOp::TypeCheck(CToken *t, string *msg) const {
 }
 
 const CType *CAstUnaryOp::GetType(void) const {
-  if (GetOperation() || GetOperation() == opPos)
+  if (GetOperation() == opNeg || GetOperation() == opPos)
     return CTypeManager::Get()->GetInt();
   else
     return CTypeManager::Get()->GetBool();
