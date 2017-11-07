@@ -509,7 +509,7 @@ CAstExpression* CParser::simpleexpr(CAstScope *s, CAstModule *m) {
 
     n = term(s, m);
     if(unaryToken.GetValue() != "") n = new CAstUnaryOp(unaryToken, unaryOperation, n);
-    
+
     while (_scanner->Peek().GetType() == tPlusMinus || _scanner->Peek().GetType() == tOr) {
         CToken t;
         CAstExpression *l = n, *r;
@@ -606,8 +606,9 @@ CAstExpression* CParser::factor(CAstScope *s, CAstModule *m) {
             break;
         case tNot:
         // tNot
-            Consume(tNot);
+            Consume(tNot, &t);
             n = factor(s, m);
+            n = new CAstUnaryOp(t, opNot, n);
             break;
         default:
             cout << "got " << _scanner->Peek() << endl;

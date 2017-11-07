@@ -496,23 +496,36 @@ CAstExpression* CParser::expression(CAstScope* s, CAstModule *m) {
 
 CAstExpression* CParser::simpleexpr(CAstScope *s, CAstModule *m) {
     //
-    // simpleexpr ::= term { termOp term }.
+    // simpleexpr ::= ["+"|"-"] term { termOp term }.
     //
     CAstExpression *n = NULL;
+    CToken unaryToken;
+    EOperation unaryOperation;
+    if(_scanner->Peek().GetType() == tPlusMinus){
+        Consume(tPlusMinus, &unaryToken);
+        if(unaryToken.GetValue() == "+") unaryOperation = opPos;
+        else unaryOperation = opNeg;
+    }
 
     n = term(s, m);
+    if(unaryToken.GetValue() != "") n = new CAstUnaryOp(unaryToken, unaryOperation, n);
 
-    while (_scanner->Peek().GetType() == tPlusMinus) {
+    while (_scanner->Peek().GetType() == tPlusMinus || _scanner->Peek().GetType() == tOr) {
         CToken t;
         CAstExpression *l = n, *r;
 
-        Consume(tPlusMinus, &t);
-
-        r = term(s, m);
-
-        n = new CAstBinaryOp(t, t.GetValue() == "+" ? opAdd : opSub, l, r);
+        if(_scanner->Peek().GetType() == tPlusMinus){
+            Consume(tPlusMinus, &t);
+            r = term(s, m);
+            n = new CAstBinaryOp(t, t.GetValue() == "+" ? opAdd : opSub, l, r);
+       
+        }
+        else if(_scanner->Peek().GetType() == tOr){
+            Consume(tOr, &t);
+            r = term(s, m);
+            n = new CAstBinaryOp(t, opOr, l, r);
+        }
     }
-
 
     return n;
 }
@@ -566,8 +579,10 @@ CAstExpression* CParser::factor(CAstScope *s, CAstModule *m) {
             Consume(tRParens);
             break;
         case tBoolConst:
+            n = constbool();
             break;
         case tCharConst:
+            n = constchar();
             break;
         case tString:
             n = stringConstant(s);
@@ -591,8 +606,9 @@ CAstExpression* CParser::factor(CAstScope *s, CAstModule *m) {
             break;
         case tNot:
         // tNot
-            Consume(tNot);
+            Consume(tNot, &t);
             n = factor(s, m);
+            n = new CAstUnaryOp(t, opNot, n);
             break;
         default:
             cout << "got " << _scanner->Peek() << endl;
@@ -616,7 +632,7 @@ CAstStringConstant* CParser::stringConstant(CAstScope *s)
     Consume(tString, &t);
 
     errno = 0;
-    string v = t.GetValue().c_str();
+    string v = t.GetValue().substr(1, t.GetValue().length() - 2);
 
     return new CAstStringConstant(t, v, s);
 }
@@ -638,6 +654,49 @@ CAstConstant* CParser::number(void)
     if (errno != 0) SetError(t, "invalid number.");
 
     return new CAstConstant(t, CTypeManager::Get()->GetInt(), v);
+}
+
+CAstConstant* CParser::constchar(void){
+    CToken t;
+    Consume(tCharConst, &t);
+    const char *arr = t.GetValue().c_str();
+    if(t.GetValue().length() == 2){
+        char escape;
+        // || _in -> peek() == '\n' || _in -> peek() == '\t'
+        // || _in -> peek() == '\''
+        // || _in -> peek() == '\\' || _in -> peek() == '\0')
+        switch(arr[1]){
+            case 'n': 
+                escape = '\n';
+                break;
+            case 't': 
+                escape = '\t';
+                break;
+            case '\'': 
+                escape = '\'';
+                break;
+            case '\\':
+                escape = '\\';
+                break;
+            case '0':
+                escape = '\0';
+                break;
+        }
+        return new CAstConstant(t, CTypeManager::Get()->GetChar(), int(escape));
+    }
+    else if(t.GetValue().length() == 1){
+        return new CAstConstant(t, CTypeManager::Get()->GetChar(), int(arr[0]));
+    }
+    else SetError(t, "not allowed char");
+}
+
+CAstConstant* CParser::constbool(void){
+    CToken t;
+    Consume(tBoolConst, &t);
+    errno = 0;
+    long long v = strtoll(t.GetValue().c_str(), NULL, 10);
+    if (errno != 0) SetError(t, "invalid number.");
+    return new CAstConstant(t, CTypeManager::Get()->GetBool(), v);
 }
 
 CAstStatWhile* CParser::whileStatement(CAstScope *s, CAstModule *m) {
@@ -769,6 +828,7 @@ CAstProcedure* CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
         types.erase(types.begin());
     }
     Consume(tSemicolon);
+    parent -> GetSymbolTable() -> AddSymbol(symbol);
 
     if(_scanner->Peek().GetType() == tVarDecl){
         variable_declaration(subroutine);
@@ -787,7 +847,6 @@ CAstProcedure* CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
     if(check_subroutine_name.GetValue() != pt.GetValue())
         SetError(check_subroutine_name, "procedure/function identifier mismatch ('" + pt.GetValue() + "' != '" + check_subroutine_name.GetValue() + "')");
     Consume(tSemicolon);
-    parent -> GetSymbolTable() -> AddSymbol(symbol);
     return subroutine;
 }
 

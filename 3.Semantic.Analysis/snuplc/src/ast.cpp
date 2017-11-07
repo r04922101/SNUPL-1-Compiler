@@ -893,7 +893,9 @@ bool CAstUnaryOp::TypeCheck(CToken *t, string *msg) const
 
 const CType* CAstUnaryOp::GetType(void) const
 {
-    return CTypeManager::Get()->GetInt();
+    if(GetOperation() || GetOperation() == opPos)
+        return CTypeManager::Get()->GetInt();
+    else return CTypeManager::Get()->GetBool();
 }
 
 ostream& CAstUnaryOp::print(ostream &out, int indent) const
@@ -903,6 +905,7 @@ ostream& CAstUnaryOp::print(ostream &out, int indent) const
     out << ind << GetOperation() << " ";
 
     const CType *t = GetType();
+
     if (t != NULL) out << t; else out << "<INVALID>";
     out << endl;
 
@@ -1296,7 +1299,11 @@ string CAstConstant::GetValueStr(void) const
 
     if (GetType() == CTypeManager::Get()->GetBool()) {
         out << (_value == 0 ? "false" : "true");
-    } else {
+    } 
+    else if(GetType() == CTypeManager::Get()->GetChar()){
+        out << _value;
+    }
+    else {
         out << dec << _value;
     }
 
@@ -1394,7 +1401,7 @@ bool CAstStringConstant::TypeCheck(CToken *t, string *msg) const
 
 const CType* CAstStringConstant::GetType(void) const
 {
-    return NULL;
+    return _type;
 }
 
 ostream& CAstStringConstant::print(ostream &out, int indent) const
