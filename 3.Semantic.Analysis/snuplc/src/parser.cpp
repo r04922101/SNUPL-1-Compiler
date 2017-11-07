@@ -869,12 +869,14 @@ CAstProcedure *CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
     Consume(tRParens);
   }
 
+  // return value
   CSymProc *symbol;
   if (_scanner->Peek().GetType() == tColon) {
     Consume(tColon);
     CAstType *return_type = type(true);
     symbol = new CSymProc(pt.GetValue(), return_type->GetType());
   }
+
   // procedure
   else
     symbol = new CSymProc(pt.GetValue(), CTypeManager::Get()->GetNull());
@@ -939,6 +941,10 @@ CAstFunctionCall *CParser::subroutineCall(CAstScope *s, CAstModule *m) {
       m->GetSymbolTable()->FindSymbol(ident.GetValue(), sGlobal);
   if (symbol == NULL) {
     SetError(ident, "undefined identifier.");
+    return NULL;
+  }
+  else if(symbol -> GetSymbolType() != stProcedure){
+    SetError(ident, "not a subroutine call");
     return NULL;
   }
   Consume(tLParens);
