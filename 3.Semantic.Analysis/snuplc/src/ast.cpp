@@ -520,12 +520,23 @@ bool CAstStatIf::TypeCheck(CToken *t, string *msg) const {
       *t = cond->GetToken();
     }
     if (msg != NULL) {
-      *msg = "if condition is not boolean type.";
+      *msg = "Condition is not evaluated as boolean.";
     }
     return false;
   }
 
   // Recursive type check if statements
+  for (CAstStatement *tBody = GetIfBody(); tBody != NULL;
+       tBody = tBody->GetNext()) {
+    if (!tBody->TypeCheck(t, msg))
+      return false;
+  }
+  for (CAstStatement *eBody = GetElseBody(); eBody != NULL;
+       eBody = eBody->GetNext()) {
+    if (!eBody->TypeCheck(t, msg))
+      return false;
+  }
+  return true;
 }
 
 ostream &CAstStatIf::print(ostream &out, int indent) const {
