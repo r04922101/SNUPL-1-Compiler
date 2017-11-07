@@ -302,10 +302,22 @@ CAstDesignator *CParser::qualident(CAstScope *s, CAstModule *m) {
   EToken tt = _scanner->Peek().GetType();
   if (tt == tLBrak) {
     if (s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) != NULL ) {
-      if(!s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType() -> IsArray())
+      if(!s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType() -> IsArray() 
+      && !s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType() -> IsPointer()){
         SetError(_scanner->Peek(), "not an array");
+      }
+      if(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType() -> IsPointer()
+      && !dynamic_cast<const CPointerType*>(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType()) -> GetBaseType() -> IsArray()){
+        SetError(_scanner->Peek(), "not an array");
+      }
       // local variable
-      int dimension = dynamic_cast<const CArrayType*>(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType()) -> GetNDim();
+      int dimension;
+      if(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType() -> IsPointer()){
+        dimension = dynamic_cast<const CArrayType*>(dynamic_cast<const CPointerType*>(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType()) -> GetBaseType()) -> GetNDim();  
+      }
+      else{
+        dimension = dynamic_cast<const CArrayType*>(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType()) -> GetNDim();  
+      }
       CAstArrayDesignator *cad = new CAstArrayDesignator(
           t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
       while (tt == tLBrak) {
@@ -319,10 +331,22 @@ CAstDesignator *CParser::qualident(CAstScope *s, CAstModule *m) {
       if(dimension != 0) SetError(t, "dimension not matched");
       return cad;
     } else if (m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) != NULL) {
-      if(!m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) -> GetDataType() -> IsArray())
+      if(!m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) -> GetDataType() -> IsArray() 
+      && !m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) -> GetDataType() -> IsPointer()){
         SetError(_scanner->Peek(), "not an array");
+      }
+      if(m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) -> GetDataType() -> IsPointer()
+      && !dynamic_cast<const CPointerType*>(m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) -> GetDataType()) -> GetBaseType() -> IsArray()){
+        SetError(_scanner->Peek(), "not an array");
+      }
       // global variable
-      int dimension = dynamic_cast<const CArrayType*>(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType()) -> GetNDim();
+      int dimension;
+      if(m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) -> GetDataType() -> IsPointer()){
+        dimension = dynamic_cast<const CArrayType*>(dynamic_cast<const CPointerType*>(m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) -> GetDataType()) -> GetBaseType()) -> GetNDim();  
+      }
+      else{
+        dimension = dynamic_cast<const CArrayType*>(m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) -> GetDataType()) -> GetNDim();  
+      }
       CAstArrayDesignator *cad = new CAstArrayDesignator(
           t, m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal));
       while (tt == tLBrak) {
@@ -356,8 +380,7 @@ void CParser::variable_declaration(CAstScope *s) {
   Consume(tVarDecl);
   vector<CToken> variables;
   EToken peek_type = _scanner->Peek().GetType();
-  while (peek_type != tBegin && peek_type != tProcedure &&
-         peek_type != tFunction) {
+  do {
     // at least one var
     CToken tmp;
     Consume(tIdent, &tmp);
@@ -385,7 +408,8 @@ void CParser::variable_declaration(CAstScope *s) {
 
     Consume(tSemicolon);
     peek_type = _scanner->Peek().GetType();
-  }
+  }while (peek_type != tBegin && peek_type != tProcedure &&
+    peek_type != tFunction);
 }
 
 CAstModule *CParser::module(void) {
@@ -899,6 +923,14 @@ CAstProcedure *CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
   if (_scanner->Peek().GetType() == tColon) {
     Consume(tColon);
     CAstType *return_type = type(true);
+    if(return_type -> GetType() -> IsArray()){
+      const CArrayType *array_type = dynamic_cast<const CArrayType*>(return_type -> GetType());
+      if(array_type -> GetNElem() != -1) SetError(pt, "invalid composite type for function.");
+    }
+    else if(return_type -> GetType() -> IsPointer() && dynamic_cast<const CPointerType*>(return_type -> GetType()) -> GetBaseType() -> IsArray()){
+      const CArrayType *array_type = dynamic_cast<const CArrayType*>(dynamic_cast<const CPointerType*>(return_type -> GetType()) -> GetBaseType());
+      if(array_type -> GetNElem() != -1) SetError(pt, "invalid composite type for function.");
+    }
     symbol = new CSymProc(pt.GetValue(), return_type->GetType());
   }
 
