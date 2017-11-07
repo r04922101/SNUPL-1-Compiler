@@ -194,6 +194,7 @@ CAstType *CParser::type(bool open) {
         if (_scanner->Peek().GetType() == tNumber) {
           not_open = true;
           Consume(tNumber, &number);
+          if(stoi(number.GetValue()) <= 0) SetError(number, "array dimension must >= 0");
           index.push_back(stoi(number.GetValue()));
         } else {
           if (not_open) {
@@ -236,6 +237,7 @@ CAstType *CParser::type(bool open) {
       // doesn't allow open array
       Consume(tLBrak);
       Consume(tNumber, &number);
+      if(stoi(number.GetValue()) <= 0) SetError(number, "array dimension must >= 0");
       index.push_back(stoi(number.GetValue()));
       Consume(tRBrak);
       dimension++;
