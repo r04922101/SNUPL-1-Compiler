@@ -313,7 +313,7 @@ bool CAstStatAssign::TypeCheck(CToken *t, string *msg) const {
   }
 
   const CType *rType = _rhs->GetType();
-  // Confirm right type is not invalid. Accept array variables.
+  // Confirm right type is not invalid. Accept array variables - TODO.
   if (rType == NULL || !rType->IsScalar()) {
     msg_stream << "Left hand side designator must be of type scalar. Got: ";
     rType != NULL ? msg_stream << rType : msg_stream << "<INVALID>";
@@ -1405,7 +1405,7 @@ bool CAstConstant::TypeCheck(CToken *t, string *msg) const {
   } else if (_type->Match(CTypeManager::Get()->GetInt())) {
     int64_t v = GetValue();
 
-    if (INT32_MIN > v || INT32_MAX < v) {
+    if (v < INT32_MIN || INT32_MAX < v) {
       if (t != NULL) {
         *t = GetToken();
       }

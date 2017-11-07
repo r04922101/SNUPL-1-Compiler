@@ -36,47 +36,32 @@
 #include "data.h"
 using namespace std;
 
-
 //------------------------------------------------------------------------------
 // CDataInitializer
 //
-CDataInitializer::CDataInitializer(void)
-{
-}
+CDataInitializer::CDataInitializer(void) {}
 
-CDataInitializer::~CDataInitializer(void)
-{
-}
+CDataInitializer::~CDataInitializer(void) {}
 
-ostream& operator<<(ostream &out, const CDataInitializer &t)
-{
+ostream &operator<<(ostream &out, const CDataInitializer &t) {
   return t.print(out);
 }
 
-ostream& operator<<(ostream &out, const CDataInitializer *t)
-{
+ostream &operator<<(ostream &out, const CDataInitializer *t) {
   return t->print(out);
 }
-
 
 //------------------------------------------------------------------------------
 // CDataInitString
 //
 CDataInitString::CDataInitString(const string data)
-  : CDataInitializer(), _data(data)
-{
-}
+    : CDataInitializer(), _data(data) {}
 
-string CDataInitString::GetData(void) const
-{
-  return _data;
-}
+string CDataInitString::GetData(void) const { return _data; }
 
-ostream& CDataInitString::print(ostream &out, int indent) const
-{
+ostream &CDataInitString::print(ostream &out, int indent) const {
   string ind(indent, ' ');
 
   out << ind << "[ data: '" << _data << "' ]";
   return out;
 }
-
