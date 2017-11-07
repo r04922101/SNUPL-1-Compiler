@@ -1405,7 +1405,7 @@ bool CAstConstant::TypeCheck(CToken *t, string *msg) const {
   } else if (_type->Match(CTypeManager::Get()->GetInt())) {
     int64_t v = GetValue();
 
-    if (v < -2147483648 || v > 2147483647) {
+    if (v < INT32_MIN || v > INT32_MAX) {
       if (t != NULL) {
         *t = GetToken();
       }
