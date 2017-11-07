@@ -1014,7 +1014,47 @@ CAstSpecialOp::CAstSpecialOp(CToken t, EOperation oper, CAstExpression *e,
 
 CAstExpression *CAstSpecialOp::GetOperand(void) const { return _operand; }
 
-bool CAstSpecialOp::TypeCheck(CToken *t, string *msg) const { return false; }
+bool CAstSpecialOp::TypeCheck(CToken *t, string *msg) const {
+  if (!_operand->TypeCheck(t, msg)) {
+    return false;
+  }
+  switch (GetOperation()) {
+  case opAddress:
+    // TypeCheck Array
+    if (!_operand->GetType()->IsArray()) {
+      if (t != NULL) {
+        *t = GetToken();
+      }
+      if (msg != NULL) {
+        *msg = "expect operand type to be array with opAddress";
+      }
+      return false;
+    }
+    return true;
+  case opDeref:
+    // check if the type is pointer type
+    if (!_operand->GetType()->IsPointer()) {
+      if (t != NULL) {
+        *t = GetToken();
+      }
+      if (msg != NULL) {
+        *msg = "expected pointer type in opDeref";
+      }
+      return false;
+    }
+    return true;
+  case opCast:
+    if (t != NULL) {
+      *t = GetToken();
+    }
+    if (msg != NULL) {
+      *msg = "invalid op";
+    }
+    return false;
+  default:
+    return false;
+  }
+}
 
 const CType *CAstSpecialOp::GetType(void) const { return NULL; }
 
