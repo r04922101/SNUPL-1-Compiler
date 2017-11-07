@@ -1056,7 +1056,7 @@ public:
 
   /// @param t token in input stream (used for error reporting purposes)
   /// @param symbol symbol of function to call
-  CAstFunctionCall(CToken t, const CSymbol *symbol);
+  CAstFunctionCall(CToken t, const CSymProc *symbol);
 
   /// @}
 
@@ -1064,7 +1064,7 @@ public:
   /// @{
 
   /// @brief return the associated symbol
-  const CSymbol *GetSymbol(void) const;
+  const CSymProc *GetSymbol(void) const;
 
   /// @brief add an argument
   /// @param arg argument
@@ -1121,7 +1121,7 @@ public:
   /// @}
 
 private:
-  const CSymbol *_symbol;        ///< symbol
+  const CSymProc *_symbol;       ///< symbol
   vector<CAstExpression *> _arg; ///< parameter list
 };
 

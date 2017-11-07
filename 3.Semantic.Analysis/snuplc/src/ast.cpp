@@ -1095,25 +1095,58 @@ CTacAddr *CAstSpecialOp::ToTac(CCodeBlock *cb) { return NULL; }
 //------------------------------------------------------------------------------
 // CAstFunctionCall
 //
-CAstFunctionCall::CAstFunctionCall(CToken t, const CSymbol *symbol)
+CAstFunctionCall::CAstFunctionCall(CToken t, const CSymProc *symbol)
     : CAstExpression(t), _symbol(symbol) {
   assert(symbol != NULL);
 }
 
-const CSymbol *CAstFunctionCall::GetSymbol(void) const { return _symbol; }
+const CSymProc *CAstFunctionCall::GetSymbol() const { return _symbol; }
 
 void CAstFunctionCall::AddArg(CAstExpression *arg) { _arg.push_back(arg); }
 
-int CAstFunctionCall::GetNArgs(void) const { return (int)_arg.size(); }
+int CAstFunctionCall::GetNArgs() const { return (int)_arg.size(); }
 
 CAstExpression *CAstFunctionCall::GetArg(int index) const {
   assert((index >= 0) && (index < _arg.size()));
   return _arg[index];
 }
 
-bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const { return true; }
+bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const {
+  const CSymProc *symbol = GetSymbol();
+  ostringstream out;
+  if (symbol->GetNParams() != GetNArgs()) {
+    if (t != NULL) {
+      *t = GetToken();
+    }
+    if (msg != NULL) {
+      out << " expected " << GetSymbol()->GetNParams() << " parameters. Got "
+          << GetNArgs();
+      *msg = out.str();
+    }
+    return false;
+  }
+  for (int i = 0; i < GetNArgs(); i++) {
+    CAstExpression *arg = GetArg(i);
+    if (!arg->TypeCheck(t, msg)) {
+      return false;
+    }
+    const CType *paramType = symbol->GetParam(i)->GetDataType();
+    const CType *argType = arg->GetType();
+    if (argType == NULL || paramType == NULL ||
+        !paramType->Match(arg->GetType())) {
+      if (t != NULL) {
+        *t = arg->GetToken();
+      }
+      if (msg != NULL) {
+        *msg = " mismatch of argument types";
+      }
+      return false;
+    }
+  }
+  return true;
+}
 
-const CType *CAstFunctionCall::GetType(void) const {
+const CType *CAstFunctionCall::GetType() const {
   return GetSymbol()->GetDataType();
 }
 

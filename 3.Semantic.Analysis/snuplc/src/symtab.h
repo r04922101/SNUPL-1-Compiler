@@ -45,11 +45,11 @@ using namespace std;
 /// @brief SnuPL symbol types
 ///
 enum ESymbolType {
-  stGlobal,         ///< global symbol
-  stLocal,          ///< local symbol
-  stParam,          ///< parameter symbol
-  stProcedure,      ///< procedure symbol
-  stReserved,       ///< reserved names
+  stGlobal,    ///< global symbol
+  stLocal,     ///< local symbol
+  stParam,     ///< parameter symbol
+  stProcedure, ///< procedure symbol
+  stReserved,  ///< reserved names
 };
 
 class CSymtab;
@@ -62,100 +62,100 @@ class CSymtab;
 class CSymbol {
   friend class CSymtab;
 
-  public:
-    /// @name constructor/destructor
-    /// @{
+public:
+  /// @name constructor/destructor
+  /// @{
 
-    /// @brief constructor
-    ///
-    /// @param name symbol name (identifier)
-    /// @param symboltype symbol type
-    /// @param datatype data type of the symbol
-    CSymbol(const string name, ESymbolType symboltype, const CType *datatype);
+  /// @brief constructor
+  ///
+  /// @param name symbol name (identifier)
+  /// @param symboltype symbol type
+  /// @param datatype data type of the symbol
+  CSymbol(const string name, ESymbolType symboltype, const CType *datatype);
 
-    /// @brief destructor
-    virtual ~CSymbol(void);
+  /// @brief destructor
+  virtual ~CSymbol(void);
 
-    /// @}
+  /// @}
 
-    /// @name symbol handling
-    /// @{
+  /// @name symbol handling
+  /// @{
 
-    /// @brief return the symbol's identifier
-    /// @retval string name
-    string GetName(void) const;
+  /// @brief return the symbol's identifier
+  /// @retval string name
+  string GetName(void) const;
 
-    /// @brief return the symbol's type
-    /// @retval ESymbolType symbol type
-    ESymbolType GetSymbolType(void) const;
+  /// @brief return the symbol's type
+  /// @retval ESymbolType symbol type
+  ESymbolType GetSymbolType(void) const;
 
-    /// @brief set the symbol's type
-    /// @param datatype symbol type
-    void SetDataType(const CType *datatype);
+  /// @brief set the symbol's type
+  /// @param datatype symbol type
+  void SetDataType(const CType *datatype);
 
-    /// @brief return the symbol's type
-    /// @retval CType symbol type
-    const CType* GetDataType(void) const;
+  /// @brief return the symbol's type
+  /// @retval CType symbol type
+  const CType *GetDataType(void) const;
 
-    /// @brief return the symbol table of this symbol
-    /// @retval CSymtab symbol table
-    CSymtab* GetSymbolTable(void) const;
+  /// @brief return the symbol table of this symbol
+  /// @retval CSymtab symbol table
+  CSymtab *GetSymbolTable(void) const;
 
-    /// @}
+  /// @}
 
-    /// @name data handling
-    /// @{
+  /// @name data handling
+  /// @{
 
-    /// @brief set the symbol's value (for initialized symbols)
-    /// @param data data initializer
-    virtual void SetData(const CDataInitializer *data);
+  /// @brief set the symbol's value (for initialized symbols)
+  /// @param data data initializer
+  virtual void SetData(const CDataInitializer *data);
 
-    /// @brief return the symbol's data initializer
-    /// @retval CDataInitializer data initializer
-    virtual const CDataInitializer* GetData(void) const;
+  /// @brief return the symbol's data initializer
+  /// @retval CDataInitializer data initializer
+  virtual const CDataInitializer *GetData(void) const;
 
-    /// @}
+  /// @}
 
-    /// @name memory location
-    /// @{
+  /// @name memory location
+  /// @{
 
-    /// @brief set the base register to access this symbol
-    void SetBaseRegister(string rbase);
+  /// @brief set the base register to access this symbol
+  void SetBaseRegister(string rbase);
 
-    /// @brief set the offset to access this symbol
-    void SetOffset(int offset);
+  /// @brief set the offset to access this symbol
+  void SetOffset(int offset);
 
-    /// @brief get the base register to access this symbol
-    string GetBaseRegister(void) const;
+  /// @brief get the base register to access this symbol
+  string GetBaseRegister(void) const;
 
-    /// @brief get the offset to access this symbol
-    int GetOffset(void) const;
+  /// @brief get the offset to access this symbol
+  int GetOffset(void) const;
 
-    /// @}
+  /// @}
 
-    /// @brief print the symbol to an output stream
-    /// @param out output stream
-    /// @param indent indentation
-    virtual ostream&  print(ostream &out, int indent=0) const;
+  /// @brief print the symbol to an output stream
+  /// @param out output stream
+  /// @param indent indentation
+  virtual ostream &print(ostream &out, int indent = 0) const;
 
-  private:
-    /// @name symbol handling
-    /// @{
+private:
+  /// @name symbol handling
+  /// @{
 
-    /// @brief set the symbol table owning this symbol
-    /// @param symtab symbol table
-    void SetSymbolTable(CSymtab *symtab);
+  /// @brief set the symbol table owning this symbol
+  /// @param symtab symbol table
+  void SetSymbolTable(CSymtab *symtab);
 
-    /// @}
+  /// @}
 
-    CSymtab       *_symtab;       ///< symbol table owning this symbol
-    string         _name;         ///< name
-    ESymbolType    _symboltype;   ///< symbol type
-    const CType   *_datatype;     ///< data type
-    const CDataInitializer *_data;///< data initializer
+  CSymtab *_symtab;              ///< symbol table owning this symbol
+  string _name;                  ///< name
+  ESymbolType _symboltype;       ///< symbol type
+  const CType *_datatype;        ///< data type
+  const CDataInitializer *_data; ///< data initializer
 
-    string         _rbase;        ///< base register
-    int            _offset;       ///< offset
+  string _rbase; ///< base register
+  int _offset;   ///< offset
 };
 
 /// @name CSymbol output operators
@@ -166,17 +166,16 @@ class CSymbol {
 /// @param out output stream
 /// @param t reference to CSymbol
 /// @retval output stream
-ostream& operator<<(ostream &out, const CSymbol &t);
+ostream &operator<<(ostream &out, const CSymbol &t);
 
 /// @brief CSymbol output operator
 ///
 /// @param out output stream
 /// @param t reference to CSymbol
 /// @retval output stream
-ostream& operator<<(ostream &out, const CSymbol *t);
+ostream &operator<<(ostream &out, const CSymbol *t);
 
 /// @}
-
 
 //------------------------------------------------------------------------------
 /// @brief global variable
@@ -184,26 +183,25 @@ ostream& operator<<(ostream &out, const CSymbol *t);
 /// class representing global variables
 ///
 class CSymGlobal : public CSymbol {
-  public:
-    /// @name constructor/destructor
-    /// @{
+public:
+  /// @name constructor/destructor
+  /// @{
 
-    /// @brief constructor
-    ///
-    /// @param name symbol name (identifier)
-    /// @param type symbol type
-    CSymGlobal(const string name, const CType *type);
+  /// @brief constructor
+  ///
+  /// @param name symbol name (identifier)
+  /// @param type symbol type
+  CSymGlobal(const string name, const CType *type);
 
-    /// @}
+  /// @}
 
-    /// @brief print the symbol to an output stream
-    /// @param out output stream
-    /// @param indent indentation
-    virtual ostream&  print(ostream &out, int indent=0) const;
+  /// @brief print the symbol to an output stream
+  /// @param out output stream
+  /// @param indent indentation
+  virtual ostream &print(ostream &out, int indent = 0) const;
 
-  private:
+private:
 };
-
 
 //------------------------------------------------------------------------------
 /// @brief local variable
@@ -211,42 +209,41 @@ class CSymGlobal : public CSymbol {
 /// class representing local (i.e., stack-allocated) variables
 ///
 class CSymLocal : public CSymbol {
-  public:
-    /// @name constructor/destructor
-    /// @{
+public:
+  /// @name constructor/destructor
+  /// @{
 
-    /// @brief constructor
-    ///
-    /// @param name symbol name (identifier)
-    /// @param type symbol type
-    CSymLocal(const string name, const CType *type);
+  /// @brief constructor
+  ///
+  /// @param name symbol name (identifier)
+  /// @param type symbol type
+  CSymLocal(const string name, const CType *type);
 
-    /// @}
+  /// @}
 
-    /// @name property handling
-    /// @{
+  /// @name property handling
+  /// @{
 
-    /// @}
+  /// @}
 
-    /// @brief print the symbol to an output stream
-    /// @param out output stream
-    /// @param indent indentation
-    virtual ostream&  print(ostream &out, int indent=0) const;
+  /// @brief print the symbol to an output stream
+  /// @param out output stream
+  /// @param indent indentation
+  virtual ostream &print(ostream &out, int indent = 0) const;
 
-  protected:
-    /// @name constructor/destructor
-    /// @{
+protected:
+  /// @name constructor/destructor
+  /// @{
 
-    /// @brief private constructor invoked by CSymParam
-    ///
-    /// @param name symbol name (identifier)
-    /// @param stype symbol type
-    /// @param type data type
-    CSymLocal(const string name, ESymbolType stype, const CType *type);
+  /// @brief private constructor invoked by CSymParam
+  ///
+  /// @param name symbol name (identifier)
+  /// @param stype symbol type
+  /// @param type data type
+  CSymLocal(const string name, ESymbolType stype, const CType *type);
 
-    /// @}
+  /// @}
 };
-
 
 //------------------------------------------------------------------------------
 /// @brief procedure parameter
@@ -254,36 +251,35 @@ class CSymLocal : public CSymbol {
 /// class representing procedure/function parameters
 ///
 class CSymParam : public CSymLocal {
-  public:
-    /// @name constructor/destructor
-    /// @{
+public:
+  /// @name constructor/destructor
+  /// @{
 
-    /// @brief constructor
-    ///
-    /// @param index parameter index (starting at 0)
-    /// @param name symbol name (identifier)
-    /// @param type symbol type
-    CSymParam(int index, const string name, const CType *type);
+  /// @brief constructor
+  ///
+  /// @param index parameter index (starting at 0)
+  /// @param name symbol name (identifier)
+  /// @param type symbol type
+  CSymParam(int index, const string name, const CType *type);
 
-    /// @}
+  /// @}
 
-    /// @name property handling
-    /// @{
+  /// @name property handling
+  /// @{
 
-    /// @brief return the index of the paramter
-    int GetIndex(void) const;
+  /// @brief return the index of the paramter
+  int GetIndex(void) const;
 
-    /// @}
+  /// @}
 
-    /// @brief print the symbol to an output stream
-    /// @param out output stream
-    /// @param indent indentation
-    virtual ostream&  print(ostream &out, int indent=0) const;
+  /// @brief print the symbol to an output stream
+  /// @param out output stream
+  /// @param indent indentation
+  virtual ostream &print(ostream &out, int indent = 0) const;
 
-  private:
-    int            _index;        ///< index
+private:
+  int _index; ///< index
 };
-
 
 //------------------------------------------------------------------------------
 /// @brief procedure symbol
@@ -291,51 +287,50 @@ class CSymParam : public CSymLocal {
 /// class representing a procedure/function symbol
 ///
 class CSymProc : public CSymbol {
-  public:
-    /// @name constructor/destructor
-    /// @{
+public:
+  /// @name constructor/destructor
+  /// @{
 
-    /// @brief constructor
-    ///
-    /// @param name procedure/function identifier
-    /// @param return_type return type (NULL if none)
-    CSymProc(const string name, const CType *return_type);
+  /// @brief constructor
+  ///
+  /// @param name procedure/function identifier
+  /// @param return_type return type (NULL if none)
+  CSymProc(const string name, const CType *return_type);
 
-    /// @}
+  /// @}
 
-    /// @name property handling
-    /// @{
+  /// @name property handling
+  /// @{
 
-    /// @brief add a parameter
-    /// @param param parameter
-    void AddParam(CSymParam *param);
+  /// @brief add a parameter
+  /// @param param parameter
+  void AddParam(CSymParam *param);
 
-    /// @brief return the number of parameters
-    /// @retval int number of parameters
-    int GetNParams(void) const;
+  /// @brief return the number of parameters
+  /// @retval int number of parameters
+  int GetNParams(void) const;
 
-    /// @brief return the @a index-th parameters
-    /// @retval CSymParam* parameter
-    const CSymParam* GetParam(int index) const;
+  /// @brief return the @a index-th parameters
+  /// @retval CSymParam* parameter
+  const CSymParam *GetParam(int index) const;
 
-    /// @}
+  /// @}
 
-    /// @brief print the symbol to an output stream
-    /// @param out output stream
-    /// @param indent indentation
-    virtual ostream&  print(ostream &out, int indent=0) const;
+  /// @brief print the symbol to an output stream
+  /// @param out output stream
+  /// @param indent indentation
+  virtual ostream &print(ostream &out, int indent = 0) const;
 
-  private:
-    vector<CSymParam*> _param;      ///< parameter list
+private:
+  vector<CSymParam *> _param; ///< parameter list
 };
-
 
 //------------------------------------------------------------------------------
 /// @brief search scope enumeration
 ///
 enum EScope {
-  sLocal,                         ///< local
-  sGlobal,                        ///< global
+  sLocal,  ///< local
+  sGlobal, ///< global
 };
 
 //------------------------------------------------------------------------------
@@ -344,50 +339,50 @@ enum EScope {
 /// hierarchical symbol table
 ///
 class CSymtab {
-  public:
-    /// @name constructor/destructor
-    /// @{
+public:
+  /// @name constructor/destructor
+  /// @{
 
-    /// @brief constructor for top-level symbol table
-    CSymtab(void);
+  /// @brief constructor for top-level symbol table
+  CSymtab(void);
 
-    /// @brief constructor for subordinate symbol tables
-    /// @param parent superordinate symbol table (must not be NULL)
-    CSymtab(CSymtab *parent);
+  /// @brief constructor for subordinate symbol tables
+  /// @param parent superordinate symbol table (must not be NULL)
+  CSymtab(CSymtab *parent);
 
-    /// @brief destructor
-    virtual ~CSymtab(void);
+  /// @brief destructor
+  virtual ~CSymtab(void);
 
-    ///@}
+  ///@}
 
-    /// @name symbol handling
-    /// @{
+  /// @name symbol handling
+  /// @{
 
-    /// @brief add a symbol to the symbol table
-    /// @retval true if the symbol was inserted successfully
-    /// @retval false if such a symbol already exists in the local symbol table
-    bool AddSymbol(CSymbol *s);
+  /// @brief add a symbol to the symbol table
+  /// @retval true if the symbol was inserted successfully
+  /// @retval false if such a symbol already exists in the local symbol table
+  bool AddSymbol(CSymbol *s);
 
-    /// @brief return a symbol with a given name
-    /// @param name symbol name (identifier)
-    /// @param scope search scope (default: sGlobal)
-    /// @retval CSymbol matching symbol or NULL if not found
-    const CSymbol* FindSymbol(const string name, EScope scope=sGlobal) const;
+  /// @brief return a symbol with a given name
+  /// @param name symbol name (identifier)
+  /// @param scope search scope (default: sGlobal)
+  /// @retval CSymbol matching symbol or NULL if not found
+  const CSymbol *FindSymbol(const string name, EScope scope = sGlobal) const;
 
-    /// @brief return a list of all symbols
-    vector<CSymbol*> GetSymbols(void) const;
+  /// @brief return a list of all symbols
+  vector<CSymbol *> GetSymbols(void) const;
 
-    /// @}
+  /// @}
 
-    /// @brief print the symbol table to an output stream
-    ///
-    /// @param out output stream
-    /// @param indent indentation
-    ostream&  print(ostream &out, int indent=0) const;
+  /// @brief print the symbol table to an output stream
+  ///
+  /// @param out output stream
+  /// @param indent indentation
+  ostream &print(ostream &out, int indent = 0) const;
 
-  private:
-    map<string, CSymbol*> _symtab;///< local symbol table
-    CSymtab       *_parent;       ///< parent
+private:
+  map<string, CSymbol *> _symtab; ///< local symbol table
+  CSymtab *_parent;               ///< parent
 };
 
 /// @name CSymtab output operators
@@ -398,16 +393,15 @@ class CSymtab {
 /// @param out output stream
 /// @param t reference to CSymtab
 /// @retval output stream
-ostream& operator<<(ostream &out, const CSymtab &t);
+ostream &operator<<(ostream &out, const CSymtab &t);
 
 /// @brief CSymtab output operator
 ///
 /// @param out output stream
 /// @param t reference to CSymtab
 /// @retval output stream
-ostream& operator<<(ostream &out, const CSymtab *t);
+ostream &operator<<(ostream &out, const CSymtab *t);
 
 /// @}
-
 
 #endif // __SnuPL_SYMTAB_H__
