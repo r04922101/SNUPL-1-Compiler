@@ -378,7 +378,31 @@ CAstScope *CAstStatReturn::GetScope(void) const { return _scope; }
 
 CAstExpression *CAstStatReturn::GetExpression(void) const { return _expr; }
 
-bool CAstStatReturn::TypeCheck(CToken *t, string *msg) const { return true; }
+bool CAstStatReturn::TypeCheck(CToken *t, string *msg) const { 
+  const CType *st = GetScope()->GetType();
+  CAstExpression *e = GetExpression();
+  if (st->Match(CTypeManager::Get()->GetNull())) {
+    if (e != NULL) {
+      if (t != NULL) *t = e->GetToken();
+      if (msg != NULL) *msg = "superfluous expression after return.";
+      return false;
+    }
+  } 
+  else {
+    if (e == NULL) {
+      if (t != NULL) *t = GetToken();
+      if (msg != NULL) *msg = "expression expected after return.";
+      return false;
+    }
+    if (!e->TypeCheck(t, msg)) return false;
+    if (!st->Match(e->GetType())) {
+      if (t != NULL) *t = e->GetToken();
+      if (msg != NULL) *msg = "return type mismatch.";
+      return false;
+    }
+  }
+  return true;
+}
 
 const CType *CAstStatReturn::GetType(void) const {
   const CType *t = NULL;
