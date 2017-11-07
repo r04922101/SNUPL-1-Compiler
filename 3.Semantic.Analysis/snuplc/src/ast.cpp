@@ -1389,7 +1389,58 @@ string CAstConstant::GetValueStr(void) const {
   return out.str();
 }
 
-bool CAstConstant::TypeCheck(CToken *t, string *msg) const { return true; }
+bool CAstConstant::TypeCheck(CToken *t, string *msg) const {
+  if (!_type) {
+    if (t != NULL) {
+      *t = GetToken();
+    }
+    if (msg != NULL) {
+      *msg = "invalid constant type";
+    }
+    return false;
+  } else if (_type->Match(CTypeManager::Get()->GetInt())) {
+    int64_t v = GetValue();
+
+    if (INT32_MIN > v || INT32_MAX < v) {
+      if (t != NULL) {
+        *t = GetToken();
+      }
+      if (msg != NULL) {
+        *msg = "invalid value for integer. Overflow condition";
+      }
+      return false;
+    }
+  } else if (_type->Match(CTypeManager::Get()->GetBool())) {
+    if (_value != 0 && _value != 1) {
+      if (t != NULL) {
+        *t = GetToken();
+      }
+      if (msg != NULL) {
+        *msg = "invalid value for boolean";
+      }
+      return false;
+    }
+  } else if (_type->Match(CTypeManager::Get()->GetChar())) {
+    if (_value < 0 || _value > 255) {
+      if (t != NULL) {
+        *t = GetToken();
+      }
+      if (msg != NULL) {
+        *msg = "invalid value for character constant";
+      }
+      return false;
+    }
+  } else {
+    if (t != NULL) {
+      *t = GetToken();
+    }
+    if (msg != NULL) {
+      *msg = "invalid constant type";
+    }
+    return false;
+  }
+  return true;
+}
 
 const CType *CAstConstant::GetType(void) const { return _type; }
 
