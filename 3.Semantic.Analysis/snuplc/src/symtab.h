@@ -367,7 +367,7 @@ public:
   /// @param name symbol name (identifier)
   /// @param scope search scope (default: sGlobal)
   /// @retval CSymbol matching symbol or NULL if not found
-  CSymbol *FindSymbol(const string name, EScope scope = sGlobal) const;
+  const CSymbol *FindSymbol(const string name, EScope scope = sGlobal) const;
 
   /// @brief return a list of all symbols
   vector<CSymbol *> GetSymbols(void) const;

@@ -210,7 +210,7 @@ bool CSymtab::AddSymbol(CSymbol *s) {
   }
 }
 
-CSymbol *CSymtab::FindSymbol(const string name, EScope scope) const {
+const CSymbol *CSymtab::FindSymbol(const string name, EScope scope) const {
   map<string, CSymbol *>::const_iterator it = _symtab.find(name);
 
   if (it != _symtab.end())

@@ -305,6 +305,7 @@ CAstDesignator *CParser::qualident(CAstScope *s, CAstModule *m) {
       if(!s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType() -> IsArray())
         SetError(_scanner->Peek(), "not an array");
       // local variable
+      int dimension = dynamic_cast<const CArrayType*>(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType()) -> GetNDim();
       CAstArrayDesignator *cad = new CAstArrayDesignator(
           t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
       while (tt == tLBrak) {
@@ -312,13 +313,16 @@ CAstDesignator *CParser::qualident(CAstScope *s, CAstModule *m) {
         head = expression(s, m);
         cad->AddIndex(head);
         Consume(tRBrak);
+        dimension--;
         tt = _scanner->Peek().GetType();
       }
+      if(dimension != 0) SetError(t, "dimension not matched");
       return cad;
     } else if (m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) != NULL) {
       if(!m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) -> GetDataType() -> IsArray())
         SetError(_scanner->Peek(), "not an array");
       // global variable
+      int dimension = dynamic_cast<const CArrayType*>(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType()) -> GetNDim();
       CAstArrayDesignator *cad = new CAstArrayDesignator(
           t, m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal));
       while (tt == tLBrak) {
@@ -326,9 +330,10 @@ CAstDesignator *CParser::qualident(CAstScope *s, CAstModule *m) {
         head = expression(s, m);
         cad->AddIndex(head);
         Consume(tRBrak);
-
+        dimension--;
         tt = _scanner->Peek().GetType();
       }
+      if(dimension != 0) SetError(t, "dimension not matched");            
       return cad;
     } else
       SetError(_scanner->Peek(), "undefined identifier");
@@ -958,7 +963,7 @@ CAstFunctionCall *CParser::subroutineCall(CAstScope *s, CAstModule *m) {
   Consume(tIdent, &ident);
 
   const CSymProc *symbol =  
-    dynamic_cast<CSymProc*>(m->GetSymbolTable()->FindSymbol(ident.GetValue(), sGlobal));
+    dynamic_cast<const CSymProc*>(m->GetSymbolTable()->FindSymbol(ident.GetValue(), sGlobal));
   if (symbol == NULL) {
     SetError(ident, "undefined identifier.");
     return NULL;
