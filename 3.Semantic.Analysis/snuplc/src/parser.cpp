@@ -824,6 +824,14 @@ CAstProcedure *CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
     Consume(tProcedure);
   Consume(tIdent, &pt);
 
+
+  // check duplicate subroutine declaration
+  if (m->GetSymbolTable()->FindSymbol(pt.GetValue(), sGlobal) != NULL && m->GetSymbolTable()->FindSymbol(pt.GetValue(), sGlobal) -> GetSymbolType() == stProcedure){
+
+    SetError(pt, "duplicate subroutine declaration '" +
+    pt.GetValue() + "'");
+  }
+
   // formalParam ::= "(" [ varDeclSequence ] ")".
   // add :type here
   // => formalParam ::= "(" [ varDeclSequence ] ")" [":" type]
