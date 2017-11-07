@@ -946,8 +946,8 @@ CAstFunctionCall *CParser::subroutineCall(CAstScope *s, CAstModule *m) {
   CToken ident;
   Consume(tIdent, &ident);
 
-  const CSymbol *symbol =
-      m->GetSymbolTable()->FindSymbol(ident.GetValue(), sGlobal);
+  const CSymProc *symbol =  
+    dynamic_cast<CSymProc*>(m->GetSymbolTable()->FindSymbol(ident.GetValue(), sGlobal));
   if (symbol == NULL) {
     SetError(ident, "undefined identifier.");
     return NULL;
@@ -957,8 +957,8 @@ CAstFunctionCall *CParser::subroutineCall(CAstScope *s, CAstModule *m) {
     return NULL;
   }
   Consume(tLParens);
-  CSymProc *symproc = new CSymProc(ident.GetValue(), symbol->GetDataType());
-  CAstFunctionCall *functionCall = new CAstFunctionCall(ident, symproc);
+  CAstFunctionCall *functionCall = new CAstFunctionCall(ident, symbol);
+
 
   if (_scanner->Peek().GetType() != tRParens) {
     functionCall->AddArg(expression(s, m));
