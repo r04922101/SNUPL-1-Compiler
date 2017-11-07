@@ -1288,7 +1288,8 @@ CAstExpression *CAstArrayDesignator::GetIndex(int index) const {
 }
 
 bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const {
-  assert(_done);
+  assert(!_done);
+
   for (int i = 0; i < GetNIndices(); i++) {
     CAstExpression *exp = GetIndex(i);
     if (!exp->TypeCheck(t, msg)) {
@@ -1403,7 +1404,7 @@ bool CAstConstant::TypeCheck(CToken *t, string *msg) const {
     }
     return false;
   } else if (_type->Match(CTypeManager::Get()->GetInt())) {
-    int64_t v = GetValue();
+    long long v = GetValue();
 
     if (v < INT32_MIN || v > INT32_MAX) {
       if (t != NULL) {

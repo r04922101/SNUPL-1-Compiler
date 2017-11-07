@@ -301,7 +301,9 @@ CAstDesignator *CParser::qualident(CAstScope *s, CAstModule *m) {
   Consume(tIdent, &t);
   EToken tt = _scanner->Peek().GetType();
   if (tt == tLBrak) {
-    if (s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) != NULL) {
+    if (s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) != NULL ) {
+      if(!s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType() -> IsArray())
+        SetError(_scanner->Peek(), "not an array");
       // local variable
       CAstArrayDesignator *cad = new CAstArrayDesignator(
           t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
@@ -310,11 +312,12 @@ CAstDesignator *CParser::qualident(CAstScope *s, CAstModule *m) {
         head = expression(s, m);
         cad->AddIndex(head);
         Consume(tRBrak);
-
         tt = _scanner->Peek().GetType();
       }
       return cad;
     } else if (m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) != NULL) {
+      if(!m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) -> GetDataType() -> IsArray())
+        SetError(_scanner->Peek(), "not an array");
       // global variable
       CAstArrayDesignator *cad = new CAstArrayDesignator(
           t, m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal));
@@ -566,10 +569,15 @@ CAstExpression *CParser::simpleexpr(CAstScope *s, CAstModule *m) {
     else
       unaryOperation = opNeg;
   }
-
   n = term(s, m);
-  if (unaryToken.GetValue() != "")
-    n = new CAstUnaryOp(unaryToken, unaryOperation, n);
+  CAstConstant *constant = dynamic_cast<CAstConstant*>(n);
+  if(unaryToken.GetValue() != "") {
+    n = new CAstUnaryOp(unaryToken, unaryOperation, n);    
+  }
+  if(constant != NULL && constant -> GetType() -> Match(CTypeManager::Get() -> GetInt()) && unaryToken.GetValue() == "-" ){
+      constant -> SetValue(-(constant -> GetValue()));
+      n = new CAstUnaryOp(unaryToken, unaryOperation, constant);
+  } 
 
   while (_scanner->Peek().GetType() == tPlusMinus ||
          _scanner->Peek().GetType() == tOr) {
@@ -600,15 +608,18 @@ CAstExpression *CParser::term(CAstScope *s, CAstModule *m) {
 
   EToken tt = _scanner->Peek().GetType();
 
-  while ((tt == tMulDiv)) {
+  while ((tt == tMulDiv) || tt == tAnd) {
     CToken t;
     CAstExpression *l = n, *r;
-
-    Consume(tMulDiv, &t);
+    if(tt == tMulDiv)
+      Consume(tMulDiv, &t);
+    else Consume(tAnd, &t);
 
     r = factor(s, m);
 
-    n = new CAstBinaryOp(t, t.GetValue() == "*" ? opMul : opDiv, l, r);
+    if(tt == tMulDiv)
+      n = new CAstBinaryOp(t, t.GetValue() == "*" ? opMul : opDiv, l, r);
+    else n = new CAstBinaryOp(t, opAnd, l, r);
 
     tt = _scanner->Peek().GetType();
   }
@@ -633,7 +644,7 @@ CAstExpression *CParser::factor(CAstScope *s, CAstModule *m) {
   case tNumber:
     n = number();
     break;
-    // factor ::= "(" expression ")"
+  // factor ::= "(" expression ")"
   case tLParens:
     Consume(tLParens);
     n = expression(s, m);
