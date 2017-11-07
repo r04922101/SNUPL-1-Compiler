@@ -509,7 +509,24 @@ CAstStatement *CAstStatIf::GetIfBody(void) const { return _ifBody; }
 
 CAstStatement *CAstStatIf::GetElseBody(void) const { return _elseBody; }
 
-bool CAstStatIf::TypeCheck(CToken *t, string *msg) const { return true; }
+bool CAstStatIf::TypeCheck(CToken *t, string *msg) const {
+  // Type Check condition
+  CAstExpression *cond = GetCondition();
+  if (!cond->TypeCheck(t, msg))
+    return false;
+
+  if (!cond->GetType()->Match(CTypeManager::Get()->GetBool())) {
+    if (t != NULL) {
+      *t = cond->GetToken();
+    }
+    if (msg != NULL) {
+      *msg = "if condition is not boolean type.";
+    }
+    return false;
+  }
+
+  // Recursive type check if statements
+}
 
 ostream &CAstStatIf::print(ostream &out, int indent) const {
   string ind(indent, ' ');
