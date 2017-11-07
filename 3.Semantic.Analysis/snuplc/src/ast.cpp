@@ -1507,13 +1507,22 @@ const string CAstStringConstant::GetValue(void) const {
   return _value->GetData();
 }
 
-const string CAstStringConstant::GetValueStr(void) const { return GetValue(); }
+const string CAstStringConstant::GetValueStr() const { return GetValue(); }
 
 bool CAstStringConstant::TypeCheck(CToken *t, string *msg) const {
+  if (GetType() == NULL || GetType()->IsNull()) {
+    if (t != NULL) {
+      *t = GetToken();
+    }
+    if (msg != NULL) {
+      *msg = "invalid constant type";
+    }
+    return false;
+  }
   return true;
 }
 
-const CType *CAstStringConstant::GetType(void) const { return _type; }
+const CType *CAstStringConstant::GetType() const { return _type; }
 
 ostream &CAstStringConstant::print(ostream &out, int indent) const {
   string ind(indent, ' ');
