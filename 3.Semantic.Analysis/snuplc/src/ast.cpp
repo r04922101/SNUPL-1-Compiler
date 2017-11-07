@@ -294,7 +294,11 @@ CAstExpression *CAstStatAssign::GetRHS(void) const { return _rhs; }
 
 bool CAstStatAssign::TypeCheck(CToken *t, string *msg) const {
   ostringstream msg_stream;
-  if (!_lhs->TypeCheck(t, msg) || !_rhs->TypeCheck(t, msg)) {
+
+  if (!_lhs->TypeCheck(t, msg)) {
+    return false;
+  }
+  if (!_rhs->TypeCheck(t, msg)) {
     return false;
   }
   const CType *lType = _lhs->GetType();
@@ -918,7 +922,7 @@ bool CAstUnaryOp::TypeCheck(CToken *t, string *msg) const {
   switch (GetOperation()) {
   case opNeg:
   case opPos:
-    // -- v ++
+    // - v +
     if (!type->Match(CTypeManager::Get()->GetInt())) {
       if (t != NULL)
         *t = GetToken();
