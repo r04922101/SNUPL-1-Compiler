@@ -292,7 +292,41 @@ CAstDesignator *CAstStatAssign::GetLHS(void) const { return _lhs; }
 
 CAstExpression *CAstStatAssign::GetRHS(void) const { return _rhs; }
 
-bool CAstStatAssign::TypeCheck(CToken *t, string *msg) const { return true; }
+bool CAstStatAssign::TypeCheck(CToken *t, string *msg) const {
+  ostringstream msg_stream;
+  if (!_lhs->TypeCheck(t, msg) || !_rhs->TypeCheck(t, msg)) {
+    return false;
+  }
+  const CType *lType = _lhs->GetType();
+
+  // Confirm left type is not array.
+  if (lType == NULL || !lType->IsScalar()) {
+    msg_stream << "Left hand side designator must be of type scalar. Got: ";
+    lType != NULL ? msg_stream << lType : msg_stream << "<INVALID>";
+    *msg = msg_stream.str();
+    *t = _lhs->GetToken();
+    return false;
+  }
+
+  const CType *rType = _rhs->GetType();
+  // Confirm right type is not invalid. Accept array variables.
+  if (rType == NULL || !rType->IsScalar()) {
+    msg_stream << "Left hand side designator must be of type scalar. Got: ";
+    rType != NULL ? msg_stream << rType : msg_stream << "<INVALID>";
+    *msg = msg_stream.str();
+    *t = _rhs->GetToken();
+    return false;
+  }
+
+  if (!lType->Match(rType)) {
+    msg_stream << "Right hand side designator must be of type " << lType
+               << ". Got: " << rType;
+    *msg = msg_stream.str();
+    *t = GetToken();
+    return false;
+  }
+  return true;
+}
 
 const CType *CAstStatAssign::GetType(void) const { return _lhs->GetType(); }
 
@@ -489,8 +523,9 @@ ostream &CAstStatIf::print(ostream &out, int indent) const {
       s->print(out, indent + 2);
       s = s->GetNext();
     } while (s != NULL);
-  } else
+  } else {
     out << ind << "  empty." << endl;
+  }
   out << ind << "else-body" << endl;
   if (_elseBody != NULL) {
     CAstStatement *s = _elseBody;
@@ -498,8 +533,9 @@ ostream &CAstStatIf::print(ostream &out, int indent) const {
       s->print(out, indent + 2);
       s = s->GetNext();
     } while (s != NULL);
-  } else
+  } else {
     out << ind << "  empty." << endl;
+  }
 
   return out;
 }
