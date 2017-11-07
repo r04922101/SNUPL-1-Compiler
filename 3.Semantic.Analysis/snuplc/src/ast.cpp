@@ -898,9 +898,60 @@ CAstUnaryOp::CAstUnaryOp(CToken t, EOperation oper, CAstExpression *e)
   assert(e != NULL);
 }
 
-CAstExpression *CAstUnaryOp::GetOperand(void) const { return _operand; }
+CAstExpression *CAstUnaryOp::GetOperand() const { return _operand; }
+bool CAstUnaryOp::TypeCheck(CToken *t, string *msg) const {
+  if (!_operand->TypeCheck(t, msg)) {
+    return false;
+  }
 
-bool CAstUnaryOp::TypeCheck(CToken *t, string *msg) const { return true; }
+  const CType *type = _operand->GetType();
+  if (type == NULL) {
+    if (t != NULL) {
+      *t = GetToken();
+    }
+    if (msg != NULL) {
+      *msg = "unexpected null operand";
+    }
+    return false;
+  }
+
+  switch (GetOperation()) {
+  case opNeg:
+  case opPos:
+    // -- v ++
+    if (!type->Match(CTypeManager::Get()->GetInt())) {
+      if (t != NULL)
+        *t = GetToken();
+      if (msg != NULL)
+        *msg = " expected integer in operand";
+      return false;
+    } else {
+      return true;
+    }
+  case opNot:
+    // !
+    if (!type->Match(CTypeManager::Get()->GetBool())) {
+      if (t != NULL) {
+        *t = GetToken();
+      }
+      if (msg != NULL) {
+        *msg = " expected boolean in operand";
+      }
+      return false;
+    } else {
+      return true;
+    }
+  default:
+    if (t != NULL) {
+      *t = GetToken();
+    }
+    if (msg != NULL) {
+      *msg = " invalid operation";
+    }
+    return false;
+  }
+  return true;
+}
 
 const CType *CAstUnaryOp::GetType(void) const {
   if (GetOperation() || GetOperation() == opPos)
