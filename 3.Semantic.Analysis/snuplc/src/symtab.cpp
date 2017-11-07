@@ -37,84 +37,43 @@
 #include "symtab.h"
 using namespace std;
 
-
 //------------------------------------------------------------------------------
 // CSymbol
 //
 CSymbol::CSymbol(const string name, ESymbolType stype, const CType *dtype)
-  : _name(name), _symboltype(stype), _datatype(dtype), _data(NULL), 
-    _rbase(""), _offset(0), _symtab(NULL)
-{
+    : _name(name), _symboltype(stype), _datatype(dtype), _data(NULL),
+      _rbase(""), _offset(0), _symtab(NULL) {
   assert(_name != "");
   assert(_datatype != NULL);
 }
 
-CSymbol::~CSymbol(void)
-{
-}
+CSymbol::~CSymbol(void) {}
 
-string CSymbol::GetName(void) const
-{
-  return _name;
-}
+string CSymbol::GetName(void) const { return _name; }
 
-ESymbolType CSymbol::GetSymbolType(void) const
-{
-  return _symboltype;
-}
+ESymbolType CSymbol::GetSymbolType(void) const { return _symboltype; }
 
-void CSymbol::SetDataType(const CType *datatype)
-{
-  _datatype = datatype;
-}
+void CSymbol::SetDataType(const CType *datatype) { _datatype = datatype; }
 
-const CType* CSymbol::GetDataType(void) const
-{
-  return _datatype;
-}
+const CType *CSymbol::GetDataType(void) const { return _datatype; }
 
-void CSymbol::SetSymbolTable(CSymtab *symtab)
-{
-  _symtab = symtab;
-}
+void CSymbol::SetSymbolTable(CSymtab *symtab) { _symtab = symtab; }
 
-CSymtab* CSymbol::GetSymbolTable(void) const
-{
-  return _symtab;
-}
+CSymtab *CSymbol::GetSymbolTable(void) const { return _symtab; }
 
-void CSymbol::SetData(const CDataInitializer *data)
-{
-  _data = data;
-}
+void CSymbol::SetData(const CDataInitializer *data) { _data = data; }
 
-const CDataInitializer* CSymbol::GetData(void) const
-{
-  return _data;
-}
+const CDataInitializer *CSymbol::GetData(void) const { return _data; }
 
-void CSymbol::SetBaseRegister(string rbase)
-{
-  _rbase = rbase;
-}
+void CSymbol::SetBaseRegister(string rbase) { _rbase = rbase; }
 
-string CSymbol::GetBaseRegister(void) const
-{
-  return _rbase;
-}
+string CSymbol::GetBaseRegister(void) const { return _rbase; }
 
-void CSymbol::SetOffset(int offset)
-{
-  _offset = offset;
-}
+void CSymbol::SetOffset(int offset) { _offset = offset; }
 
-int CSymbol::GetOffset(void) const
-{
-  return _offset;
-}
+int CSymbol::GetOffset(void) const { return _offset; }
 
-ostream& CSymbol::print(ostream &out, int indent) const
-{
+ostream &CSymbol::print(ostream &out, int indent) const {
   string ind(indent, ' ');
 
   out << ind << "[ " << left << setw(8) << GetName() << right << " ";
@@ -123,27 +82,17 @@ ostream& CSymbol::print(ostream &out, int indent) const
   return out;
 }
 
-ostream& operator<<(ostream &out, const CSymbol &t)
-{
-  return t.print(out);
-}
+ostream &operator<<(ostream &out, const CSymbol &t) { return t.print(out); }
 
-ostream& operator<<(ostream &out, const CSymbol *t)
-{
-  return t->print(out);
-}
-
+ostream &operator<<(ostream &out, const CSymbol *t) { return t->print(out); }
 
 //------------------------------------------------------------------------------
 // CSymGlobal
 //
 CSymGlobal::CSymGlobal(const string name, const CType *type)
-  : CSymbol(name, stGlobal, type)
-{
-}
+    : CSymbol(name, stGlobal, type) {}
 
-ostream& CSymGlobal::print(ostream &out, int indent) const
-{
+ostream &CSymGlobal::print(ostream &out, int indent) const {
   string ind(indent, ' ');
 
   out << ind << "[ @" << left << setw(8) << GetName() << right << " ";
@@ -152,97 +101,76 @@ ostream& CSymGlobal::print(ostream &out, int indent) const
   return out;
 }
 
-
 //------------------------------------------------------------------------------
 // CSymLocal
 //
 CSymLocal::CSymLocal(const string name, const CType *type)
-  : CSymbol(name, stLocal, type)
-{
-}
+    : CSymbol(name, stLocal, type) {}
 
 CSymLocal::CSymLocal(const string name, ESymbolType stype, const CType *type)
-  : CSymbol(name, stype, type)
-{
-}
+    : CSymbol(name, stype, type) {}
 
-ostream& CSymLocal::print(ostream &out, int indent) const
-{
+ostream &CSymLocal::print(ostream &out, int indent) const {
   string ind(indent, ' ');
 
   out << ind << "[ $" << left << setw(8) << GetName() << right << " ";
   GetDataType()->print(out);
   if (GetBaseRegister() != "") {
     out << " " << GetBaseRegister();
-    if (GetOffset() >= 0) out << "+";
+    if (GetOffset() >= 0)
+      out << "+";
     out << GetOffset();
   }
   out << ind << " ]";
   return out;
 }
 
-
 //------------------------------------------------------------------------------
 // CSymParam
 //
 CSymParam::CSymParam(int index, const string name, const CType *type)
-  : CSymLocal(name, stParam, type), _index(index)
-{
-}
+    : CSymLocal(name, stParam, type), _index(index) {}
 
-ostream& CSymParam::print(ostream &out, int indent) const
-{
+ostream &CSymParam::print(ostream &out, int indent) const {
   string ind(indent, ' ');
 
   out << ind << "[ %" << left << setw(8) << GetName() << right << " ";
   GetDataType()->print(out);
   if (GetBaseRegister() != "") {
     out << " " << GetBaseRegister();
-    if (GetOffset() >= 0) out << "+";
+    if (GetOffset() >= 0)
+      out << "+";
     out << GetOffset();
   }
   out << ind << " ]";
   return out;
 }
 
-int CSymParam::GetIndex(void) const
-{
-  return _index;
-}
-
+int CSymParam::GetIndex(void) const { return _index; }
 
 //------------------------------------------------------------------------------
 // CSymProc
 //
 CSymProc::CSymProc(const string name, const CType *return_type)
-  : CSymbol(name, stProcedure, return_type)
-{
-}
+    : CSymbol(name, stProcedure, return_type) {}
 
-void CSymProc::AddParam(CSymParam *param)
-{
-  _param.push_back(param);
-}
+void CSymProc::AddParam(CSymParam *param) { _param.push_back(param); }
 
-int CSymProc::GetNParams(void) const
-{
-  return (int)_param.size();
-}
+int CSymProc::GetNParams(void) const { return (int)_param.size(); }
 
-const CSymParam* CSymProc::GetParam(int index) const
-{
+const CSymParam *CSymProc::GetParam(int index) const {
   assert((index >= 0) && (index < _param.size()));
   return _param[index];
 }
 
-ostream& CSymProc::print(ostream &out, int indent) const
-{
+ostream &CSymProc::print(ostream &out, int indent) const {
   string ind(indent, ' ');
 
   out << ind << "[ *" << GetName() << "(";
-  for (size_t i=0; i<_param.size(); i++) {
+  for (size_t i = 0; i < _param.size(); i++) {
     const CType *t = _param[i]->GetDataType();
-    if (i > 0) out << ",";
+    if (i > 0)
+      out << ",";
     t->print(out);
   }
   out << ") --> ";
@@ -251,30 +179,21 @@ ostream& CSymProc::print(ostream &out, int indent) const
   return out;
 }
 
-
 //------------------------------------------------------------------------------
 // CSymtab
 //
-CSymtab::CSymtab(void)
-  : _parent(NULL)
-{
-}
+CSymtab::CSymtab(void) : _parent(NULL) {}
 
-CSymtab::CSymtab(CSymtab *parent)
-  : _parent(parent)
-{
-  assert(parent != NULL);
-}
+CSymtab::CSymtab(CSymtab *parent) : _parent(parent) { assert(parent != NULL); }
 
-CSymtab::~CSymtab(void)
-{
-  map<string, CSymbol*>::const_iterator it = _symtab.begin();
-  while (it != _symtab.end()) delete (*it++).second;
+CSymtab::~CSymtab(void) {
+  map<string, CSymbol *>::const_iterator it = _symtab.begin();
+  while (it != _symtab.end())
+    delete (*it++).second;
   _symtab.clear();
 }
 
-bool CSymtab::AddSymbol(CSymbol *s)
-{
+bool CSymtab::AddSymbol(CSymbol *s) {
   assert(s != NULL);
 
   // global symbols always get pushed up to the global symbol table
@@ -291,22 +210,23 @@ bool CSymtab::AddSymbol(CSymbol *s)
   }
 }
 
-const CSymbol* CSymtab::FindSymbol(const string name, EScope scope) const
-{
-  map<string, CSymbol*>::const_iterator it = _symtab.find(name);
+const CSymbol *CSymtab::FindSymbol(const string name, EScope scope) const {
+  map<string, CSymbol *>::const_iterator it = _symtab.find(name);
 
-  if (it != _symtab.end()) return (*it).second;
+  if (it != _symtab.end())
+    return (*it).second;
   else {
-    if ((scope == sLocal) || (_parent == NULL)) return NULL;
-    else return _parent->FindSymbol(name, scope);
+    if ((scope == sLocal) || (_parent == NULL))
+      return NULL;
+    else
+      return _parent->FindSymbol(name, scope);
   }
 }
 
-vector<CSymbol*> CSymtab::GetSymbols(void) const
-{
-  vector<CSymbol*> _res;
+vector<CSymbol *> CSymtab::GetSymbols(void) const {
+  vector<CSymbol *> _res;
 
-  map<string, CSymbol*>::const_iterator it = _symtab.begin();
+  map<string, CSymbol *>::const_iterator it = _symtab.begin();
   while (it != _symtab.end()) {
     _res.push_back(it->second);
     it++;
@@ -315,22 +235,21 @@ vector<CSymbol*> CSymtab::GetSymbols(void) const
   return _res;
 }
 
-ostream& CSymtab::print(ostream &out, int indent) const
-{
+ostream &CSymtab::print(ostream &out, int indent) const {
   string ind(indent, ' ');
 
   out << ind << "[[";
-  map<string, CSymbol*>::const_iterator it = _symtab.begin();
+  map<string, CSymbol *>::const_iterator it = _symtab.begin();
   while (it != _symtab.end()) {
     out << endl;
 
     const CSymbol *s = (*it++).second;
-    s->print(out, indent+2);
+    s->print(out, indent + 2);
 
     const CDataInitializer *di = s->GetData();
     if (di != NULL) {
       out << endl;
-      di->print(out, indent+4);
+      di->print(out, indent + 4);
     }
   }
   out << endl << ind << "]]" << endl;
@@ -338,13 +257,6 @@ ostream& CSymtab::print(ostream &out, int indent) const
   return out;
 }
 
-ostream& operator<<(ostream &out, const CSymtab &t)
-{
-  return t.print(out);
-}
+ostream &operator<<(ostream &out, const CSymtab &t) { return t.print(out); }
 
-ostream& operator<<(ostream &out, const CSymtab *t)
-{
-  return t->print(out);
-}
-
+ostream &operator<<(ostream &out, const CSymtab *t) { return t->print(out); }
