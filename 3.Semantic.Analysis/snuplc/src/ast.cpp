@@ -489,8 +489,9 @@ ostream &CAstStatIf::print(ostream &out, int indent) const {
       s->print(out, indent + 2);
       s = s->GetNext();
     } while (s != NULL);
-  } else
+  } else {
     out << ind << "  empty." << endl;
+  }
   out << ind << "else-body" << endl;
   if (_elseBody != NULL) {
     CAstStatement *s = _elseBody;
@@ -498,8 +499,9 @@ ostream &CAstStatIf::print(ostream &out, int indent) const {
       s->print(out, indent + 2);
       s = s->GetNext();
     } while (s != NULL);
-  } else
+  } else {
     out << ind << "  empty." << endl;
+  }
 
   return out;
 }
