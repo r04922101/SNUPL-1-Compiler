@@ -622,7 +622,32 @@ CAstExpression *CAstStatWhile::GetCondition(void) const { return _cond; }
 
 CAstStatement *CAstStatWhile::GetBody(void) const { return _body; }
 
-bool CAstStatWhile::TypeCheck(CToken *t, string *msg) const { return true; }
+bool CAstStatWhile::TypeCheck(CToken *t, string *msg) const {
+  // Type Check condition
+  CAstExpression *cond = GetCondition();
+  if (!cond->TypeCheck(t, msg))
+    return false;
+
+  if (!cond->GetType()->Match(CTypeManager::Get()->GetBool())) {
+    if (t != NULL) {
+      *t = cond->GetToken();
+    }
+    if (msg != NULL) {
+      *msg = "Condition is not evaluated as boolean.";
+    }
+    return false;
+  }
+
+  // Recursive type check if statements
+  for (CAstStatement *tBody = GetBody(); tBody != NULL;
+       tBody = tBody->GetNext()) {
+    if (!tBody->TypeCheck(t, msg)) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 ostream &CAstStatWhile::print(ostream &out, int indent) const {
   string ind(indent, ' ');
