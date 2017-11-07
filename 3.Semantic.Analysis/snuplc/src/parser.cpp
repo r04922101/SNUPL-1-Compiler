@@ -626,71 +626,58 @@ CAstExpression *CParser::factor(CAstScope *s, CAstModule *m) {
   // tNot }
   //
 
-    CToken t;
-    EToken tt = _scanner->Peek().GetType();
-    CAstExpression *n = NULL;
+  CToken t;
+  EToken tt = _scanner->Peek().GetType();
+  CAstExpression *n = NULL;
 
-    switch (tt) {
-        // factor ::= number
-        case tNumber:
-            n = number();
-            break;
-            // factor ::= "(" expression ")"
-        case tLParens:
-            Consume(tLParens);
-            n = expression(s, m);
-            Consume(tRParens);
-            break;
-        case tBoolConst:
-            n = constbool();
-            break;
-        case tCharConst:
-            n = constchar();
-            break;
-        case tString:
-            n = stringConstant(s);
-            break;
-        case tIdent:
-            // local variable
-            if(s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sLocal) != NULL && s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sLocal) -> GetSymbolType() != stProcedure){
-               n = qualident(s, m);
-            }
-            // global variable
-            else if(m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) != NULL && m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) -> GetSymbolType() == stGlobal){
-                n = qualident(s, m);
-            }
-            // subroutine call
-            else if(m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) != NULL && m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) -> GetSymbolType() == stProcedure){
-                n = subroutineCall(s, m);
-            }
-            else {
-                SetError(_scanner -> Peek(), "undefined identifier");
-            }
-            break;
-        case tNot:
-        // tNot
-            Consume(tNot, &t);
-            n = factor(s, m);
-            n = new CAstUnaryOp(t, opNot, n);
-            break;
-        default:
-            cout << "got " << _scanner->Peek() << endl;
-            SetError(_scanner->Peek(), "factor expected.");
-            break;
-    }
-    break;
-  case tNot:
-    // tNot
-    Consume(tNot, &t);
-    n = factor(s, m);
-    n = new CAstUnaryOp(t, opNot, n);
-    break;
-  default:
-    cout << "got " << _scanner->Peek() << endl;
-    SetError(_scanner->Peek(), "factor expected.");
-    break;
+  switch (tt) {
+      // factor ::= number
+      case tNumber:
+          n = number();
+          break;
+          // factor ::= "(" expression ")"
+      case tLParens:
+          Consume(tLParens);
+          n = expression(s, m);
+          Consume(tRParens);
+          break;
+      case tBoolConst:
+          n = constbool();
+          break;
+      case tCharConst:
+          n = constchar();
+          break;
+      case tString:
+          n = stringConstant(s);
+          break;
+      case tIdent:
+          // local variable
+          if(s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sLocal) != NULL && s -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sLocal) -> GetSymbolType() != stProcedure){
+              n = qualident(s, m);
+          }
+          // global variable
+          else if(m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) != NULL && m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) -> GetSymbolType() == stGlobal){
+              n = qualident(s, m);
+          }
+          // subroutine call
+          else if(m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) != NULL && m -> GetSymbolTable() -> FindSymbol(_scanner -> Peek().GetValue(), sGlobal) -> GetSymbolType() == stProcedure){
+              n = subroutineCall(s, m);
+          }
+          else {
+              SetError(_scanner -> Peek(), "undefined identifier");
+          }
+          break;
+      case tNot:
+      // tNot
+          Consume(tNot, &t);
+          n = factor(s, m);
+          n = new CAstUnaryOp(t, opNot, n);
+          break;
+      default:
+          cout << "got " << _scanner->Peek() << endl;
+          SetError(_scanner->Peek(), "factor expected.");
+          break;
   }
-
   return n;
 }
 

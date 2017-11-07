@@ -1023,14 +1023,13 @@ CAstExpression *CAstArrayDesignator::GetIndex(int index) const {
 bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const {
   bool result = true;
 
-  assert(_done);
+  // assert(_done);
 
   return result;
 }
 
 const CType *CAstArrayDesignator::GetType(void) const {
   const CType *t = GetSymbol()->GetDataType();
-  // cout << *type << endl;
 
   while (t->IsPointer())
     t = dynamic_cast<const CPointerType *>(t)->GetBaseType();
