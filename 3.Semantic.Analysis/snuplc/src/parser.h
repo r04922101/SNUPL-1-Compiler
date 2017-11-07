@@ -36,10 +36,9 @@
 #ifndef __SnuPL_PARSER_H__
 #define __SnuPL_PARSER_H__
 
+#include "ast.h"
 #include "scanner.h"
 #include "symtab.h"
-#include "ast.h"
-
 
 //------------------------------------------------------------------------------
 /// @brief parser
@@ -138,4 +137,4 @@ class CParser {
 
 };
 
-#endif // __SnuPL_PARSER_H__
+#endif  // __SnuPL_PARSER_H__
