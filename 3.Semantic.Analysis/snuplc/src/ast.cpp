@@ -54,7 +54,8 @@ CAstNode::CAstNode(CToken token) : _token(token), _addr(NULL) {
 }
 
 CAstNode::~CAstNode(void) {
-  if (_addr != NULL) delete _addr;
+  if (_addr != NULL)
+    delete _addr;
 }
 
 int CAstNode::GetID(void) const { return _id; }
@@ -89,13 +90,10 @@ ostream &operator<<(ostream &out, const CAstNode *t) { return t->print(out); }
 // CAstScope
 //
 CAstScope::CAstScope(CToken t, const string name, CAstScope *parent)
-    : CAstNode(t),
-      _name(name),
-      _symtab(NULL),
-      _parent(parent),
-      _statseq(NULL),
+    : CAstNode(t), _name(name), _symtab(NULL), _parent(parent), _statseq(NULL),
       _cb(NULL) {
-  if (_parent != NULL) _parent->AddChild(this);
+  if (_parent != NULL)
+    _parent->AddChild(this);
 }
 
 CAstScope::~CAstScope(void) {
@@ -134,7 +132,7 @@ bool CAstScope::TypeCheck(CToken *t, string *msg) const {
       result = s->TypeCheck(t, msg);
       s = s->GetNext();
     }
-    vector<CAstScope*>::const_iterator it = _children.begin();
+    vector<CAstScope *>::const_iterator it = _children.begin();
     while (result && (it != _children.end())) {
       result = (*it)->TypeCheck(t, msg);
       it++;
@@ -204,7 +202,8 @@ CTacAddr *CAstScope::ToTac(CCodeBlock *cb) { return NULL; }
 CCodeBlock *CAstScope::GetCodeBlock(void) const { return _cb; }
 
 void CAstScope::SetSymbolTable(CSymtab *st) {
-  if (_symtab != NULL) delete _symtab;
+  if (_symtab != NULL)
+    delete _symtab;
   _symtab = st;
 }
 
@@ -378,26 +377,32 @@ CAstScope *CAstStatReturn::GetScope(void) const { return _scope; }
 
 CAstExpression *CAstStatReturn::GetExpression(void) const { return _expr; }
 
-bool CAstStatReturn::TypeCheck(CToken *t, string *msg) const { 
+bool CAstStatReturn::TypeCheck(CToken *t, string *msg) const {
   const CType *st = GetScope()->GetType();
   CAstExpression *e = GetExpression();
   if (st->Match(CTypeManager::Get()->GetNull())) {
     if (e != NULL) {
-      if (t != NULL) *t = e->GetToken();
-      if (msg != NULL) *msg = "superfluous expression after return.";
+      if (t != NULL)
+        *t = e->GetToken();
+      if (msg != NULL)
+        *msg = "superfluous expression after return.";
       return false;
     }
-  } 
-  else {
+  } else {
     if (e == NULL) {
-      if (t != NULL) *t = GetToken();
-      if (msg != NULL) *msg = "expression expected after return.";
+      if (t != NULL)
+        *t = GetToken();
+      if (msg != NULL)
+        *msg = "expression expected after return.";
       return false;
     }
-    if (!e->TypeCheck(t, msg)) return false;
+    if (!e->TypeCheck(t, msg))
+      return false;
     if (!st->Match(e->GetType())) {
-      if (t != NULL) *t = e->GetToken();
-      if (msg != NULL) *msg = "return type mismatch.";
+      if (t != NULL)
+        *t = e->GetToken();
+      if (msg != NULL)
+        *msg = "return type mismatch.";
       return false;
     }
   }
@@ -430,7 +435,8 @@ ostream &CAstStatReturn::print(ostream &out, int indent) const {
 
   out << endl;
 
-  if (_expr != NULL) _expr->print(out, indent + 2);
+  if (_expr != NULL)
+    _expr->print(out, indent + 2);
 
   return out;
 }
@@ -715,11 +721,11 @@ CAstExpression *CAstUnaryOp::GetOperand(void) const { return _operand; }
 
 bool CAstUnaryOp::TypeCheck(CToken *t, string *msg) const { return true; }
 
-const CType* CAstUnaryOp::GetType(void) const
-{
-    if(GetOperation() || GetOperation() == opPos)
-        return CTypeManager::Get()->GetInt();
-    else return CTypeManager::Get()->GetBool();
+const CType *CAstUnaryOp::GetType(void) const {
+  if (GetOperation() || GetOperation() == opPos)
+    return CTypeManager::Get()->GetInt();
+  else
+    return CTypeManager::Get()->GetBool();
 }
 
 ostream &CAstUnaryOp::print(ostream &out, int indent) const {
@@ -727,10 +733,13 @@ ostream &CAstUnaryOp::print(ostream &out, int indent) const {
 
   out << ind << GetOperation() << " ";
 
-    const CType *t = GetType();
+  const CType *t = GetType();
 
-    if (t != NULL) out << t; else out << "<INVALID>";
-    out << endl;
+  if (t != NULL)
+    out << t;
+  else
+    out << "<INVALID>";
+  out << endl;
 
   _operand->print(out, indent + 2);
 
@@ -1041,15 +1050,13 @@ long long CAstConstant::GetValue(void) const { return _value; }
 string CAstConstant::GetValueStr(void) const {
   ostringstream out;
 
-    if (GetType() == CTypeManager::Get()->GetBool()) {
-        out << (_value == 0 ? "false" : "true");
-    } 
-    else if(GetType() == CTypeManager::Get()->GetChar()){
-        out << _value;
-    }
-    else {
-        out << dec << _value;
-    }
+  if (GetType() == CTypeManager::Get()->GetBool()) {
+    out << (_value == 0 ? "false" : "true");
+  } else if (GetType() == CTypeManager::Get()->GetChar()) {
+    out << _value;
+  } else {
+    out << dec << _value;
+  }
 
   return out.str();
 }
