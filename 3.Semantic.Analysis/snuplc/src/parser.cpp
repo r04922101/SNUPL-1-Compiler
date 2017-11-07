@@ -755,37 +755,6 @@ CAstStatWhile* CParser::whileStatement(CAstScope *s, CAstModule *m) {
     return new CAstStatWhile(t, cond, body);
 }
 
-CAstConstant *CParser::constbool(void) {
-  CToken t;
-  Consume(tBoolConst, &t);
-  errno = 0;
-  long long v = strtoll(t.GetValue().c_str(), NULL, 10);
-  if (errno != 0) SetError(t, "invalid number.");
-  return new CAstConstant(t, CTypeManager::Get()->GetBool(), v);
-}
-
-CAstStatWhile *CParser::whileStatement(CAstScope *s, CAstModule *m) {
-  //
-  // whileStatement ::= "while" "(" expression ")" "do" statSequence "end"
-  //
-  // FIRST(while) = { tWhile }
-  // FOLLOW(while) = { tEnd }
-  //
-  CToken t;
-  CAstExpression *cond = NULL;
-  CAstStatement *body = NULL;
-
-  Consume(tWhile, &t);
-  Consume(tLParens);
-  cond = expression(s, m);
-  Consume(tRParens);
-  Consume(tDo);
-  body = statSequence(s, m);
-  Consume(tEnd);
-
-  return new CAstStatWhile(t, cond, body);
-}
-
 CAstStatIf *CParser::ifStatement(CAstScope *s, CAstModule *m) {
   //
   // ifStatement ::= "if" "(" expression ")" "then" statSequence ["else"]
@@ -818,14 +787,12 @@ CAstStatIf *CParser::ifStatement(CAstScope *s, CAstModule *m) {
   return new CAstStatIf(t, cond, ifbody, elsebody);
 }
 
-CAstProcedure *CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
+CAstProcedure* CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
   // procedureDecl = "procedure" ident [ formalParam ] ";".
   // functionDecl = "function" ident [ formalParam ] ":" type ";".
   CToken pt;
-  if (_scanner->Peek().GetType() == tFunction)
-    Consume(tFunction);
-  else
-    Consume(tProcedure);
+  if(_scanner -> Peek().GetType() == tFunction) Consume(tFunction);
+  else Consume(tProcedure);
   Consume(tIdent, &pt);
 
   // formalParam ::= "(" [ varDeclSequence ] ")".
@@ -833,77 +800,89 @@ CAstProcedure *CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
   // => formalParam ::= "(" [ varDeclSequence ] ")" [":" type]
   vector<CToken> variables;
   vector<int> variable_count;
-  vector<CAstType *> types;
-  if (_scanner->Peek().GetType() == tLParens) {
-    Consume(tLParens);
-    if (_scanner->Peek().GetType() != tRParens) {
-      EToken peek_type = _scanner->Peek().GetType();
-      while (peek_type != tRParens) {
-        // at least one var
-        int count = 0;
-        CToken tmp;
-        Consume(tIdent, &tmp);
-        variables.push_back(tmp);
-        count++;
-        peek_type = _scanner->Peek().GetType();
-        while (peek_type != tColon) {
-          Consume(tComma);
-          Consume(tIdent, &tmp);
-          variables.push_back(tmp);
-          count++;
-          peek_type = _scanner->Peek().GetType();
-        }
-        Consume(tColon);
-        CAstType *return_type = type(true);
-        symbol = new CSymProc(pt.GetValue(), return_type -> GetType());
-    }
-    // procedure
-    else
-        symbol = new CSymProc(pt.GetValue(), CTypeManager::Get()->GetNull());
-    CAstProcedure *subroutine = new CAstProcedure(pt, pt.GetValue(), parent, symbol);
-    int index = 0;
-
-    while(variable_count.size() > 0){
-        // check duplicate variable declaration
-        int count = variable_count.front();
-        variable_count.erase(variable_count.begin());
-        while(count-- > 0){
-            vector<CSymbol*> symbols = subroutine -> GetSymbolTable() -> GetSymbols();
-            vector<string> symbols_string;
-            for(vector<CSymbol*>::iterator it = symbols.begin() ; it != symbols.end(); ++it){
-                symbols_string.push_back((*it) -> GetName());
-            }
-            if(find(symbols_string.begin(), symbols_string.end(), variables.front().GetValue()) !=  symbols_string.end()){
-                SetError(variables.front(), "duplicate variable declaration '" + variables.front().GetValue() + "'");
-            }
-            subroutine -> GetSymbolTable() -> AddSymbol(new CSymParam(index, variables.front().GetValue(), types.front() -> GetType()));
-            symbol -> AddParam(new CSymParam(index++, variables.front().GetValue(), types.front() -> GetType()));
-            variables.erase(variables.begin());
-        }
-        types.erase(types.begin());
-    }
-    Consume(tSemicolon);
-    parent -> GetSymbolTable() -> AddSymbol(symbol);
-
-        peek_type = _scanner->Peek().GetType();
-        if (peek_type == tSemicolon) Consume(tSemicolon);
+  vector<CAstType*> types;
+  if(_scanner -> Peek().GetType() == tLParens){
+      Consume(tLParens);
+      if(_scanner -> Peek().GetType() != tRParens){
+          EToken peek_type = _scanner->Peek().GetType();
+          while(peek_type != tRParens){
+              // at least one var
+              int count = 0;
+              CToken tmp;
+              Consume(tIdent, &tmp);
+              variables.push_back(tmp);
+              count++;
+              peek_type = _scanner->Peek().GetType();
+              while(peek_type != tColon){
+                  Consume(tComma);
+                  Consume(tIdent, &tmp);
+                  variables.push_back(tmp);
+                  count++;
+                  peek_type = _scanner->Peek().GetType();
+              }
+              Consume(tColon);
+              variable_count.push_back(count);
+              types.push_back(type(true));
+  
+              peek_type = _scanner->Peek().GetType();
+              if(peek_type == tSemicolon) Consume(tSemicolon);
+          }
       }
-    }
-    
-    Consume(tBegin);
+      Consume(tRParens);
+  }
 
-    // statSequence
-    CAstStatement *statseq = NULL;
-    statseq = statSequence(subroutine, m);
-    subroutine -> SetStatementSequence(statseq);
+  CSymProc *symbol;
+  if(_scanner->Peek().GetType() == tColon){
+      Consume(tColon);
+      CAstType *return_type = type(true);
+      symbol = new CSymProc(pt.GetValue(), return_type -> GetType());
+  }
+  // procedure
+  else
+      symbol = new CSymProc(pt.GetValue(), CTypeManager::Get()->GetNull());
+  CAstProcedure *subroutine = new CAstProcedure(pt, pt.GetValue(), parent, symbol);
+  int index = 0;
 
-    Consume(tEnd);
-    CToken check_subroutine_name;
-    Consume(tIdent, &check_subroutine_name);
-    if(check_subroutine_name.GetValue() != pt.GetValue())
-        SetError(check_subroutine_name, "procedure/function identifier mismatch ('" + pt.GetValue() + "' != '" + check_subroutine_name.GetValue() + "')");
-    Consume(tSemicolon);
-    return subroutine;
+  while(variable_count.size() > 0){
+      // check duplicate variable declaration
+      int count = variable_count.front();
+      variable_count.erase(variable_count.begin());
+      while(count-- > 0){
+          vector<CSymbol*> symbols = subroutine -> GetSymbolTable() -> GetSymbols();
+          vector<string> symbols_string;
+          for(vector<CSymbol*>::iterator it = symbols.begin() ; it != symbols.end(); ++it){
+              symbols_string.push_back((*it) -> GetName());
+          }
+          if(find(symbols_string.begin(), symbols_string.end(), variables.front().GetValue()) !=  symbols_string.end()){
+              SetError(variables.front(), "duplicate variable declaration '" + variables.front().GetValue() + "'");
+          }
+          subroutine -> GetSymbolTable() -> AddSymbol(new CSymParam(index, variables.front().GetValue(), types.front() -> GetType()));
+          symbol -> AddParam(new CSymParam(index++, variables.front().GetValue(), types.front() -> GetType()));
+          variables.erase(variables.begin());
+      }
+      types.erase(types.begin());
+  }
+  Consume(tSemicolon);
+  parent -> GetSymbolTable() -> AddSymbol(symbol);
+
+  if(_scanner->Peek().GetType() == tVarDecl){
+      variable_declaration(subroutine);
+  }
+  
+  Consume(tBegin);
+
+  // statSequence
+  CAstStatement *statseq = NULL;
+  statseq = statSequence(subroutine, m);
+  subroutine -> SetStatementSequence(statseq);
+
+  Consume(tEnd);
+  CToken check_subroutine_name;
+  Consume(tIdent, &check_subroutine_name);
+  if(check_subroutine_name.GetValue() != pt.GetValue())
+      SetError(check_subroutine_name, "procedure/function identifier mismatch ('" + pt.GetValue() + "' != '" + check_subroutine_name.GetValue() + "')");
+  Consume(tSemicolon);
+  return subroutine;
 }
 
 CAstFunctionCall *CParser::subroutineCall(CAstScope *s, CAstModule *m) {
