@@ -505,7 +505,7 @@ CAstExpression *CParser::expression(CAstScope *s, CAstModule *m) {
   // expression ::= simpleexpr [ relOp simpleexpr ].
   //
   CToken t;
-  EOperation relop;
+  EOperation relop = opEqual;
   CAstExpression *left = NULL, *right = NULL;
 
   left = simpleexpr(s, m);
