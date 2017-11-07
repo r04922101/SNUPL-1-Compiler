@@ -1136,8 +1136,7 @@ bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const {
     }
     const CType *paramType = symbol->GetParam(i)->GetDataType();
     const CType *argType = arg->GetType();
-    if (argType == NULL || paramType == NULL ||
-        !paramType->Match(arg->GetType())) {
+    if (argType == NULL || paramType == NULL ) {
       if (t != NULL) {
         *t = arg->GetToken();
       }
@@ -1145,6 +1144,34 @@ bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const {
         *msg = " mismatch of argument types";
       }
       return false;
+    }
+    else{
+      if(paramType -> IsPointer() && dynamic_cast<const CPointerType*>(paramType) -> GetBaseType() -> IsArray()){
+        const CArrayType *array_type = dynamic_cast<const CArrayType*>(dynamic_cast<const CPointerType*>(paramType) -> GetBaseType());
+        if(array_type -> GetNElem() == -1 && array_type -> GetBaseType() -> Match(CTypeManager::Get()->GetChar())){
+          if(argType -> IsArray() && dynamic_cast<const CArrayType*>(argType) -> GetBaseType() ->  Match(CTypeManager::Get()->GetChar()))
+            return true;
+          else if(argType -> IsPointer() && dynamic_cast<const CPointerType*>(argType) -> GetBaseType() -> IsArray()){
+            array_type = dynamic_cast<const CArrayType*>(dynamic_cast<const CPointerType*>(argType) -> GetBaseType());
+            if(array_type -> GetNElem() == -1 && array_type -> GetBaseType() -> Match(CTypeManager::Get()->GetChar()))
+              return true;
+          }
+          else return false;
+        }
+        else return false;
+      }
+      else{
+        if(!paramType->Match(arg->GetType())){
+          if (t != NULL) {
+            *t = arg->GetToken();
+          }
+          if (msg != NULL) {
+            *msg = " mismatch of argument types";
+          }
+          return false;
+        }
+        else return true;
+      }
     }
   }
   return true;
@@ -1406,7 +1433,8 @@ bool CAstConstant::TypeCheck(CToken *t, string *msg) const {
   } else if (_type->Match(CTypeManager::Get()->GetInt())) {
     long long v = GetValue();
 
-    if (v < INT32_MIN || v > INT32_MAX) {
+    // if (v < INT32_MIN || v > INT32_MAX) {
+    if (v > INT32_MAX) {
       if (t != NULL) {
         *t = GetToken();
       }

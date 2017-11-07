@@ -603,10 +603,10 @@ CAstExpression *CParser::simpleexpr(CAstScope *s, CAstModule *m) {
   if(unaryToken.GetValue() != "") {
     n = new CAstUnaryOp(unaryToken, unaryOperation, n);    
   }
-  if(constant != NULL && constant -> GetType() -> Match(CTypeManager::Get() -> GetInt()) && unaryToken.GetValue() == "-" ){
-      constant -> SetValue(-(constant -> GetValue()));
-      n = new CAstUnaryOp(unaryToken, unaryOperation, constant);
-  } 
+  // if(constant != NULL && constant -> GetType() -> Match(CTypeManager::Get() -> GetInt()) && unaryToken.GetValue() == "-" ){
+  //     constant -> SetValue(-(constant -> GetValue()));
+  //     n = new CAstUnaryOp(unaryToken, unaryOperation, constant);
+  // } 
 
   while (_scanner->Peek().GetType() == tPlusMinus ||
          _scanner->Peek().GetType() == tOr) {
