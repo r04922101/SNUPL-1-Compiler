@@ -35,13 +35,12 @@
 /// DAMAGE.
 //------------------------------------------------------------------------------
 
-#include <iomanip>
 #include <cassert>
+#include <iomanip>
 
-#include "ir.h"
 #include "ast.h"
+#include "ir.h"
 using namespace std;
-
 
 //------------------------------------------------------------------------------
 // operation names
@@ -49,55 +48,54 @@ using namespace std;
 #define OPERATION_STRLEN 8
 
 char EOperationName[][OPERATION_STRLEN] = {
-  // binary operators
-  // dst = src1 op src2
-  "add",                            ///< +  addition
-  "sub",                            ///< -  subtraction
-  "mul",                            ///< *  multiplication
-  "div",                            ///< /  division
-  "and",                            ///< && binary and
-  "or",                             ///< || binary or
+    // binary operators
+    // dst = src1 op src2
+    "add", ///< +  addition
+    "sub", ///< -  subtraction
+    "mul", ///< *  multiplication
+    "div", ///< /  division
+    "and", ///< && binary and
+    "or",  ///< || binary or
 
-  // unary operators
-  // dst = op src1
-  "neg",                            ///< -  negation
-  "pos",                            ///< +  unary +
-  "not",                            ///< !  binary not
+    // unary operators
+    // dst = op src1
+    "neg", ///< -  negation
+    "pos", ///< +  unary +
+    "not", ///< !  binary not
 
-  // memory operations
-  // dst = src1
-  "assign",                         ///< assignment
+    // memory operations
+    // dst = src1
+    "assign", ///< assignment
 
-  // special and pointer operations
-  "&()",                            ///< reference: dst = &src1
-  "*()",                            ///< dereference: dst = *src1
-  "cast",                           ///< type cast: dst = (type)src1
+    // special and pointer operations
+    "&()",  ///< reference: dst = &src1
+    "*()",  ///< dereference: dst = *src1
+    "cast", ///< type cast: dst = (type)src1
 
-  // unconditional branching
-  // goto dst
-  "goto",                           ///< dst = target
+    // unconditional branching
+    // goto dst
+    "goto", ///< dst = target
 
-  // conditional branching
-  // if src1 relOp src2 then goto dst
-  "=",                              ///< =  equal
-  "#",                              ///< #  not equal
-  "<",                              ///< <  less than
-  "<=",                             ///< <= less or equal
-  ">",                              ///< >  bigger than
-  ">=",                             ///< >= bigger or equal
+    // conditional branching
+    // if src1 relOp src2 then goto dst
+    "=",  ///< =  equal
+    "#",  ///< #  not equal
+    "<",  ///< <  less than
+    "<=", ///< <= less or equal
+    ">",  ///< >  bigger than
+    ">=", ///< >= bigger or equal
 
-  // function call-related operations
-  "call",                           ///< call:  dst = call src1
-  "return",                         ///< return: return optional src1
-  "param",                          ///< parameter: dst = index, src1 = parameter
+    // function call-related operations
+    "call",   ///< call:  dst = call src1
+    "return", ///< return: return optional src1
+    "param",  ///< parameter: dst = index, src1 = parameter
 
-  // special
-  "label",                          ///< jump label; no arguments
-  "nop",                            ///< no operation
+    // special
+    "label", ///< jump label; no arguments
+    "nop",   ///< no operation
 };
 
-ostream& operator<<(ostream &out, EOperation t)
-{
+ostream &operator<<(ostream &out, EOperation t) {
   out << EOperationName[t];
   return out;
 }

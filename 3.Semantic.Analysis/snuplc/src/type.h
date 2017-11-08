@@ -39,7 +39,6 @@
 #include <vector>
 using namespace std;
 
-
 //------------------------------------------------------------------------------
 /// @brief SnuPL base type
 ///
@@ -48,87 +47,87 @@ using namespace std;
 class CType {
   friend class CArrayType;
 
-  protected:
-    /// @brief constructor
-    CType(void);
-    virtual ~CType(void);
+protected:
+  /// @brief constructor
+  CType(void);
+  virtual ~CType(void);
 
-  public:
-    /// @name property querying
-    /// @{
+public:
+  /// @name property querying
+  /// @{
 
-    /// @brief return @a true for the NULL type, @a false otherwise
-    virtual bool IsNull(void) const { return false; };
+  /// @brief return @a true for the NULL type, @a false otherwise
+  virtual bool IsNull(void) const { return false; };
 
-    /// @brief return @a true for scalar types, @a false otherwise
-    virtual bool IsScalar(void) const { return false; };
+  /// @brief return @a true for scalar types, @a false otherwise
+  virtual bool IsScalar(void) const { return false; };
 
-    /// @brief return @a true for boolean types, @a false otherwise
-    virtual bool IsBoolean(void) const { return false; };
+  /// @brief return @a true for boolean types, @a false otherwise
+  virtual bool IsBoolean(void) const { return false; };
 
-    /// @brief return @a true for char types, @a false otherwise
-    virtual bool IsChar(void) const { return false; };
+  /// @brief return @a true for char types, @a false otherwise
+  virtual bool IsChar(void) const { return false; };
 
-    /// @brief return @a true for integer types, @a false otherwise
-    virtual bool IsInt(void) const { return false; };
+  /// @brief return @a true for integer types, @a false otherwise
+  virtual bool IsInt(void) const { return false; };
 
-    /// @brief return @a true for pointer types, @a false otherwise
-    virtual bool IsPointer(void) const { return false; };
+  /// @brief return @a true for pointer types, @a false otherwise
+  virtual bool IsPointer(void) const { return false; };
 
-    /// @brief return @a true for array types, @a false otherwise
-    virtual bool IsArray(void) const { return false; };
+  /// @brief return @a true for array types, @a false otherwise
+  virtual bool IsArray(void) const { return false; };
 
-    /// @brief return the storage size for this type
-    ///
-    /// GetSize() returns the number of bytes required to instantiate
-    /// this type. This includes potential overhead (i.e., for arrays)
-    ///
-    /// @retval int storage size in bytes
-    virtual unsigned int GetSize(void) const = 0;
+  /// @brief return the storage size for this type
+  ///
+  /// GetSize() returns the number of bytes required to instantiate
+  /// this type. This includes potential overhead (i.e., for arrays)
+  ///
+  /// @retval int storage size in bytes
+  virtual unsigned int GetSize(void) const = 0;
 
-    /// @brief return the actual data size for this type
-    ///
-    /// GetDataSize() returns the number of bytes required to store
-    /// the actual data of this type. For all types except arrays this
-    /// is equal to GetSize() (in SnuPL/1).
-    ///
-    /// @retval int data size in bytes
-    virtual unsigned int GetDataSize(void) const;
+  /// @brief return the actual data size for this type
+  ///
+  /// GetDataSize() returns the number of bytes required to store
+  /// the actual data of this type. For all types except arrays this
+  /// is equal to GetSize() (in SnuPL/1).
+  ///
+  /// @retval int data size in bytes
+  virtual unsigned int GetDataSize(void) const;
 
-    /// @brief return the alignment requirements for this type
-    /// @retval int aligmnent in bytes
-    virtual int GetAlign(void) const = 0;
+  /// @brief return the alignment requirements for this type
+  /// @retval int aligmnent in bytes
+  virtual int GetAlign(void) const = 0;
 
-    /// @}
+  /// @}
 
-    /// @name type comparisons
-    /// @{
+  /// @name type comparisons
+  /// @{
 
-    /// @brief match two types
-    ///
-    /// Match() and Compare() differ as follows: Match() returns true for
-    /// compatible types whereas Compare() only returns true for identical
-    /// types. Except for array and pointer types, Match() and Compare()
-    /// return the same result.
-    ///
-    /// @param t type to compare this type to
-    /// @retval true if the types match (are compatible)
-    /// @retval false if the types do not match (are not compatible)
-    virtual bool Match(const CType *t) const = 0;
+  /// @brief match two types
+  ///
+  /// Match() and Compare() differ as follows: Match() returns true for
+  /// compatible types whereas Compare() only returns true for identical
+  /// types. Except for array and pointer types, Match() and Compare()
+  /// return the same result.
+  ///
+  /// @param t type to compare this type to
+  /// @retval true if the types match (are compatible)
+  /// @retval false if the types do not match (are not compatible)
+  virtual bool Match(const CType *t) const = 0;
 
-    /// @brief compare two types. Returns true if the types are identical
-    /// @param t type to compare this type to
-    /// @retval true if the types are identical
-    /// @retval false if the types are not identical
-    virtual bool Compare(const CType *t) const;
+  /// @brief compare two types. Returns true if the types are identical
+  /// @param t type to compare this type to
+  /// @retval true if the types are identical
+  /// @retval false if the types are not identical
+  virtual bool Compare(const CType *t) const;
 
-    /// @}
+  /// @}
 
-    /// @brief print the type to an output stream
-    ///
-    /// @param out output stream
-    /// @param indent indentation
-    virtual ostream&  print(ostream &out, int indent=0) const = 0;
+  /// @brief print the type to an output stream
+  ///
+  /// @param out output stream
+  /// @param indent indentation
+  virtual ostream &print(ostream &out, int indent = 0) const = 0;
 };
 
 /// @name CType output operators
@@ -139,17 +138,16 @@ class CType {
 /// @param out output stream
 /// @param t reference to CType
 /// @retval output stream
-ostream& operator<<(ostream &out, const CType &t);
+ostream &operator<<(ostream &out, const CType &t);
 
 /// @brief CType output operator
 ///
 /// @param out output stream
 /// @param t reference to CType
 /// @retval output stream
-ostream& operator<<(ostream &out, const CType *t);
+ostream &operator<<(ostream &out, const CType *t);
 
 /// @}
-
 
 //------------------------------------------------------------------------------
 /// @brief abstract base class for scalar types
@@ -160,19 +158,18 @@ ostream& operator<<(ostream &out, const CType *t);
 class CScalarType : public CType {
   friend class CTypeManager;
 
-  public:
-    /// @name type comparisons
-    /// @{
+public:
+  /// @name type comparisons
+  /// @{
 
-    /// @brief compare two types
-    /// @param t type to compare this type to
-    /// @retval true if the types match (are compatible)
-    /// @retval false if the types do not match (are not compatible)
-    virtual bool Match(const CType *t) const;
+  /// @brief compare two types
+  /// @param t type to compare this type to
+  /// @retval true if the types match (are compatible)
+  /// @retval false if the types do not match (are not compatible)
+  virtual bool Match(const CType *t) const;
 
-    /// @}
+  /// @}
 };
-
 
 //------------------------------------------------------------------------------
 /// @brief NULL type
@@ -182,34 +179,33 @@ class CScalarType : public CType {
 class CNullType : public CScalarType {
   friend class CTypeManager;
 
-  protected:
-    /// @brief constructor
-    CNullType(void);
+protected:
+  /// @brief constructor
+  CNullType(void);
 
-  public:
-    /// @name property querying
-    /// @{
+public:
+  /// @name property querying
+  /// @{
 
-    /// @brief return @a true for the NULL type, @a false otherwise
-    virtual bool IsNull(void) const { return true; };
+  /// @brief return @a true for the NULL type, @a false otherwise
+  virtual bool IsNull(void) const { return true; };
 
-    /// @brief return the storage size for this type
-    /// @retval int storage size in bytes
-    virtual unsigned int GetSize(void) const { return 0; };
+  /// @brief return the storage size for this type
+  /// @retval int storage size in bytes
+  virtual unsigned int GetSize(void) const { return 0; };
 
-    /// @brief return the alignment requirements for this type
-    /// @retval int aligmnent in bytes
-    virtual int GetAlign(void) const { return 0; };
+  /// @brief return the alignment requirements for this type
+  /// @retval int aligmnent in bytes
+  virtual int GetAlign(void) const { return 0; };
 
-    /// @}
+  /// @}
 
-    /// @brief print the type to an output stream
-    ///
-    /// @param out output stream
-    /// @param indent indentation
-    virtual ostream&  print(ostream &out, int indent=0) const;
+  /// @brief print the type to an output stream
+  ///
+  /// @param out output stream
+  /// @param indent indentation
+  virtual ostream &print(ostream &out, int indent = 0) const;
 };
-
 
 //------------------------------------------------------------------------------
 /// @brief integer type
@@ -219,37 +215,36 @@ class CNullType : public CScalarType {
 class CIntType : public CScalarType {
   friend class CTypeManager;
 
-  protected:
-    /// @brief constructor
-    CIntType(void);
+protected:
+  /// @brief constructor
+  CIntType(void);
 
-  public:
-    /// @name property querying
-    /// @{
+public:
+  /// @name property querying
+  /// @{
 
-    /// @brief return @a true for scalar types, @a false otherwise
-    virtual bool IsScalar(void) const { return true; };
+  /// @brief return @a true for scalar types, @a false otherwise
+  virtual bool IsScalar(void) const { return true; };
 
-    /// @brief return @a true for integer types, @a false otherwise
-    virtual bool IsInt(void) const { return true; };
+  /// @brief return @a true for integer types, @a false otherwise
+  virtual bool IsInt(void) const { return true; };
 
-    /// @brief return the storage size for this type
-    /// @retval int storage size in bytes
-    virtual unsigned int GetSize(void) const { return 4; };
+  /// @brief return the storage size for this type
+  /// @retval int storage size in bytes
+  virtual unsigned int GetSize(void) const { return 4; };
 
-    /// @brief return the alignment requirements for this type
-    /// @retval int aligmnent in bytes
-    virtual int GetAlign(void) const { return 4; };
+  /// @brief return the alignment requirements for this type
+  /// @retval int aligmnent in bytes
+  virtual int GetAlign(void) const { return 4; };
 
-    /// @}
+  /// @}
 
-    /// @brief print the type to an output stream
-    ///
-    /// @param out output stream
-    /// @param indent indentation
-    virtual ostream&  print(ostream &out, int indent=0) const;
+  /// @brief print the type to an output stream
+  ///
+  /// @param out output stream
+  /// @param indent indentation
+  virtual ostream &print(ostream &out, int indent = 0) const;
 };
-
 
 //------------------------------------------------------------------------------
 /// @brief char type
@@ -259,37 +254,36 @@ class CIntType : public CScalarType {
 class CCharType : public CScalarType {
   friend class CTypeManager;
 
-  protected:
-    /// @brief constructor
-    CCharType(void);
+protected:
+  /// @brief constructor
+  CCharType(void);
 
-  public:
-    /// @name property querying
-    /// @{
+public:
+  /// @name property querying
+  /// @{
 
-    /// @brief return @a true for scalar types, @a false otherwise
-    virtual bool IsScalar(void) const { return true; };
+  /// @brief return @a true for scalar types, @a false otherwise
+  virtual bool IsScalar(void) const { return true; };
 
-    /// @brief return @a true for char types, @a false otherwise
-    virtual bool IsChar(void) const { return true; };
+  /// @brief return @a true for char types, @a false otherwise
+  virtual bool IsChar(void) const { return true; };
 
-    /// @brief return the storage size for this type
-    /// @retval int storage size in bytes
-    virtual unsigned int GetSize(void) const { return 1; };
+  /// @brief return the storage size for this type
+  /// @retval int storage size in bytes
+  virtual unsigned int GetSize(void) const { return 1; };
 
-    /// @brief return the alignment requirements for this type
-    /// @retval int aligmnent in bytes
-    virtual int GetAlign(void) const { return 1; };
+  /// @brief return the alignment requirements for this type
+  /// @retval int aligmnent in bytes
+  virtual int GetAlign(void) const { return 1; };
 
-    /// @}
+  /// @}
 
-    /// @brief print the type to an output stream
-    ///
-    /// @param out output stream
-    /// @param indent indentation
-    virtual ostream&  print(ostream &out, int indent=0) const;
+  /// @brief print the type to an output stream
+  ///
+  /// @param out output stream
+  /// @param indent indentation
+  virtual ostream &print(ostream &out, int indent = 0) const;
 };
-
 
 //------------------------------------------------------------------------------
 /// @brief boolean type
@@ -299,37 +293,36 @@ class CCharType : public CScalarType {
 class CBoolType : public CScalarType {
   friend class CTypeManager;
 
-  protected:
-    /// @brief constructor
-    CBoolType(void);
+protected:
+  /// @brief constructor
+  CBoolType(void);
 
-  public:
-    /// @name property querying
-    /// @{
+public:
+  /// @name property querying
+  /// @{
 
-    /// @brief return @a true for boolean types, @a false otherwise
-    virtual bool IsBoolean(void) const { return true; };
+  /// @brief return @a true for boolean types, @a false otherwise
+  virtual bool IsBoolean(void) const { return true; };
 
-    /// @brief return @a true for scalar types, @a false otherwise
-    virtual bool IsScalar(void) const { return true; };
+  /// @brief return @a true for scalar types, @a false otherwise
+  virtual bool IsScalar(void) const { return true; };
 
-    /// @brief return the storage size for this type
-    /// @retval int storage size in bytes
-    virtual unsigned int GetSize(void) const { return 1; };
+  /// @brief return the storage size for this type
+  /// @retval int storage size in bytes
+  virtual unsigned int GetSize(void) const { return 1; };
 
-    /// @brief return the alignment requirements for this type
-    /// @retval int aligmnent in bytes
-    virtual int GetAlign(void) const { return 1; };
+  /// @brief return the alignment requirements for this type
+  /// @retval int aligmnent in bytes
+  virtual int GetAlign(void) const { return 1; };
 
-    /// @}
+  /// @}
 
-    /// @brief print the type to an output stream
-    ///
-    /// @param out output stream
-    /// @param indent indentation
-    virtual ostream&  print(ostream &out, int indent=0) const;
+  /// @brief print the type to an output stream
+  ///
+  /// @param out output stream
+  /// @param indent indentation
+  virtual ostream &print(ostream &out, int indent = 0) const;
 };
-
 
 //------------------------------------------------------------------------------
 /// @brief pointer type
@@ -339,66 +332,64 @@ class CBoolType : public CScalarType {
 class CPointerType : public CScalarType {
   friend class CTypeManager;
 
-  protected:
-    /// @brief constructor
-    CPointerType(const CType *basetype);
+protected:
+  /// @brief constructor
+  CPointerType(const CType *basetype);
 
-  public:
-    /// @name property querying
-    /// @{
+public:
+  /// @name property querying
+  /// @{
 
-    /// @brief return @a true for scalar types, @a false otherwise
-    virtual bool IsScalar(void) const { return true; };
+  /// @brief return @a true for scalar types, @a false otherwise
+  virtual bool IsScalar(void) const { return true; };
 
-    /// @brief return @a true for pointer types, @a false otherwise
-    virtual bool IsPointer(void) const { return true; };
+  /// @brief return @a true for pointer types, @a false otherwise
+  virtual bool IsPointer(void) const { return true; };
 
-    /// @brief return the storage size for this type
-    /// @retval int storage size in bytes
-    virtual unsigned int GetSize(void) const { return 4; };
+  /// @brief return the storage size for this type
+  /// @retval int storage size in bytes
+  virtual unsigned int GetSize(void) const { return 4; };
 
-    /// @brief return the alignment requirements for this type
-    /// @retval int aligmnent in bytes
-    virtual int GetAlign(void) const { return 4; };
+  /// @brief return the alignment requirements for this type
+  /// @retval int aligmnent in bytes
+  virtual int GetAlign(void) const { return 4; };
 
-    /// @brief return the base type
-    /// @retval CType* base type
-    const CType* GetBaseType(void) const { return _basetype; };
+  /// @brief return the base type
+  /// @retval CType* base type
+  const CType *GetBaseType(void) const { return _basetype; };
 
-    /// @}
+  /// @}
 
-    /// @name type comparisons
-    /// @{
+  /// @name type comparisons
+  /// @{
 
-    /// @brief compare two types
-    /// @param t type to compare this type to
-    /// @retval true if the types match (are compatible)
-    /// @retval false if the types do not match (are not compatible)
-    virtual bool Match(const CType *t) const;
+  /// @brief compare two types
+  /// @param t type to compare this type to
+  /// @retval true if the types match (are compatible)
+  /// @retval false if the types do not match (are not compatible)
+  virtual bool Match(const CType *t) const;
 
-    /// @brief compare two pointer types
-    ///
-    /// CPointerType::Compare() is identical to Match() but does not support
-    /// pointers to open arrays.
-    ///
-    /// @param t type to compare this type to
-    /// @retval true if the types are equal
-    /// @retval false if the types are not equal
-    virtual bool Compare(const CType *t) const;
+  /// @brief compare two pointer types
+  ///
+  /// CPointerType::Compare() is identical to Match() but does not support
+  /// pointers to open arrays.
+  ///
+  /// @param t type to compare this type to
+  /// @retval true if the types are equal
+  /// @retval false if the types are not equal
+  virtual bool Compare(const CType *t) const;
 
-    /// @}
+  /// @}
 
-    /// @brief print the type to an output stream
-    ///
-    /// @param out output stream
-    /// @param indent indentation
-    virtual ostream&  print(ostream &out, int indent=0) const;
+  /// @brief print the type to an output stream
+  ///
+  /// @param out output stream
+  /// @param indent indentation
+  virtual ostream &print(ostream &out, int indent = 0) const;
 
-
-  private:
-    const CType   *_basetype;     ///< base type
+private:
+  const CType *_basetype; ///< base type
 };
-
 
 //------------------------------------------------------------------------------
 /// @brief array type
@@ -406,99 +397,98 @@ class CPointerType : public CScalarType {
 /// type for array types
 ///
 class CArrayType : public CType {
-  //friend class CTypeManager;
+  // friend class CTypeManager;
 
-  public: // other than scalar base types, CArrayTypes can be instantiated
-    /// @brief constructor
-    ///
-    /// @param nelem    element count
-    /// @param innertype inner type (element type)
-    CArrayType(int nelem, const CType *innertype);
-    virtual ~CArrayType(void);
+public: // other than scalar base types, CArrayTypes can be instantiated
+  /// @brief constructor
+  ///
+  /// @param nelem    element count
+  /// @param innertype inner type (element type)
+  CArrayType(int nelem, const CType *innertype);
+  virtual ~CArrayType(void);
 
-  public:
-    const static unsigned long long MAX_SIZE = INT_MAX; ///< max. size of array
-    const static int OPEN = -1;   ///< open array (dimensions unspecified)
+public:
+  const static unsigned long long MAX_SIZE = INT_MAX; ///< max. size of array
+  const static int OPEN = -1; ///< open array (dimensions unspecified)
 
-    /// @name property querying
-    /// @{
+  /// @name property querying
+  /// @{
 
-    /// @brief return @a true for array types, @a false otherwise
-    virtual bool IsArray(void) const { return true; };
+  /// @brief return @a true for array types, @a false otherwise
+  virtual bool IsArray(void) const { return true; };
 
-    /// @brief return the storage size for this type
-    /// @retval int storage size in bytes
-    virtual unsigned int GetSize(void) const;
+  /// @brief return the storage size for this type
+  /// @retval int storage size in bytes
+  virtual unsigned int GetSize(void) const;
 
-    /// @brief return the actual data size for this type
-    ///
-    /// Returns 0 for open arrays.
-    //
-    /// @retval int data size in bytes
-    virtual unsigned int GetDataSize(void) const;
+  /// @brief return the actual data size for this type
+  ///
+  /// Returns 0 for open arrays.
+  //
+  /// @retval int data size in bytes
+  virtual unsigned int GetDataSize(void) const;
 
-    /// @brief return the alignment requirements for this type
-    /// @retval int aligmnent in bytes
-    virtual int GetAlign(void) const;
+  /// @brief return the alignment requirements for this type
+  /// @retval int aligmnent in bytes
+  virtual int GetAlign(void) const;
 
-    /// @brief return the inner type
-    /// @retval CType* inner type
-    const CType* GetInnerType(void) const { return _innertype; };
+  /// @brief return the inner type
+  /// @retval CType* inner type
+  const CType *GetInnerType(void) const { return _innertype; };
 
-    /// @brief return the base type
-    /// @retval CType* base type
-    const CType* GetBaseType(void) const;
+  /// @brief return the base type
+  /// @retval CType* base type
+  const CType *GetBaseType(void) const;
 
-    /// @brief return the element count
-    /// @retval int element count
-    int GetNElem(void) const { return _nelem; };
+  /// @brief return the element count
+  /// @retval int element count
+  int GetNElem(void) const { return _nelem; };
 
-    /// @brief return the dimensions of this array
-    /// @retval int number of dimensions
-    int GetNDim(void) const;
+  /// @brief return the dimensions of this array
+  /// @retval int number of dimensions
+  int GetNDim(void) const;
 
-    /// @}
+  /// @}
 
-    /// @name type comparisons
-    /// @{
+  /// @name type comparisons
+  /// @{
 
-    /// @brief compare two types
-    ///
-    /// CArrayType::Match() matches this type with type @t. The matching is
-    /// performed recursively on each dimension down to the base type.
-    /// In each dimension, the number of elements must match or @t's dimension
-    /// be CArrayType::OPEN (but not vice-versa, i.e., when type matching array
-    /// function arguments with function parameters, the argument must call
-    /// Match() with the formal parameter as its argument.
-    ///
-    /// @param t type to compare this type to
-    /// @retval true if the types match (are compatible)
-    /// @retval false if the types do not match (are not compatible)
-    virtual bool Match(const CType *t) const;
+  /// @brief compare two types
+  ///
+  /// CArrayType::Match() matches this type with type @t. The matching is
+  /// performed recursively on each dimension down to the base type.
+  /// In each dimension, the number of elements must match or @t's dimension
+  /// be CArrayType::OPEN (but not vice-versa, i.e., when type matching array
+  /// function arguments with function parameters, the argument must call
+  /// Match() with the formal parameter as its argument.
+  ///
+  /// @param t type to compare this type to
+  /// @retval true if the types match (are compatible)
+  /// @retval false if the types do not match (are not compatible)
+  virtual bool Match(const CType *t) const;
 
-    /// @brief compare two array types
-    ///
-    /// CArrayType::Compare() is identical to Match() but does not support
-    /// open arrays.
-    ///
-    /// @param t type to compare this type to
-    /// @retval true if the types are equal
-    /// @retval false if the types are not equal
-    virtual bool Compare(const CType *t) const;
+  /// @brief compare two array types
+  ///
+  /// CArrayType::Compare() is identical to Match() but does not support
+  /// open arrays.
+  ///
+  /// @param t type to compare this type to
+  /// @retval true if the types are equal
+  /// @retval false if the types are not equal
+  virtual bool Compare(const CType *t) const;
 
-    /// @}
+  /// @}
 
-    /// @brief print the type to an output stream
-    ///
-    /// @param out output stream
-    /// @param indent indentation
-    virtual ostream&  print(ostream &out, int indent=0) const;
+  /// @brief print the type to an output stream
+  ///
+  /// @param out output stream
+  /// @param indent indentation
+  virtual ostream &print(ostream &out, int indent = 0) const;
 
-  private:
-    int            _nelem;        ///< element count
-    const CType   *_innertype;    ///< inner type
+private:
+  int _nelem;              ///< element count
+  const CType *_innertype; ///< inner type
 };
-
 
 //------------------------------------------------------------------------------
 /// @brief type manager
@@ -506,64 +496,62 @@ class CArrayType : public CType {
 /// manages all types in a module
 ///
 class CTypeManager {
-  public:
-    /// @brief return the global type manager
-    static CTypeManager* Get(void);
+public:
+  /// @brief return the global type manager
+  static CTypeManager *Get(void);
 
-    /// @name base types
-    /// @{
+  /// @name base types
+  /// @{
 
-    const CNullType*    GetNull(void) const;
-    const CIntType*     GetInt(void) const;
-    const CCharType*    GetChar(void) const;
-    const CBoolType*    GetBool(void) const;
-    const CPointerType* GetVoidPtr(void) const;
+  const CNullType *GetNull(void) const;
+  const CIntType *GetInt(void) const;
+  const CCharType *GetChar(void) const;
+  const CBoolType *GetBool(void) const;
+  const CPointerType *GetVoidPtr(void) const;
 
-    /// @}
+  /// @}
 
-    /// @name composite types
-    /// @{
+  /// @name composite types
+  /// @{
 
-    /// @brief get/create an pointer type
-    ///
-    /// @param basetype pointed-to data type
-    const CPointerType* GetPointer(const CType* basetype);
+  /// @brief get/create an pointer type
+  ///
+  /// @param basetype pointed-to data type
+  const CPointerType *GetPointer(const CType *basetype);
 
-    /// @brief get/create an array type
-    ///
-    /// @param nelem number of elements
-    /// @param innertype type of array elements
-    const CArrayType* GetArray(int nelem, const CType* innertype);
+  /// @brief get/create an array type
+  ///
+  /// @param nelem number of elements
+  /// @param innertype type of array elements
+  const CArrayType *GetArray(int nelem, const CType *innertype);
 
-    /// @}
+  /// @}
 
-    /// @brief print all types to an output stream
-    ///
-    /// @param out output stream
-    /// @param indent indentation
-    ostream& print(ostream &out, int indent=0) const;
+  /// @brief print all types to an output stream
+  ///
+  /// @param out output stream
+  /// @param indent indentation
+  ostream &print(ostream &out, int indent = 0) const;
 
-  private:
-    /// @name constructor/destructor
-    /// @{
+private:
+  /// @name constructor/destructor
+  /// @{
 
-    CTypeManager(void);
-    virtual ~CTypeManager(void);
+  CTypeManager(void);
+  virtual ~CTypeManager(void);
 
-    /// @}
+  /// @}
 
-    CNullType     *_null;         ///< null base type
-    CIntType      *_integer;      ///< integer base type
-    CCharType     *_char;         ///< char base type
-    CBoolType     *_boolean;      ///< boolean base type
-    CPointerType  *_voidptr;      ///< void pointer type
+  CNullType *_null;       ///< null base type
+  CIntType *_integer;     ///< integer base type
+  CCharType *_char;       ///< char base type
+  CBoolType *_boolean;    ///< boolean base type
+  CPointerType *_voidptr; ///< void pointer type
 
-    vector<CPointerType*> _ptr;   ///< pointer types
-    vector<CArrayType*> _array;   ///< array types
+  vector<CPointerType *> _ptr; ///< pointer types
+  vector<CArrayType *> _array; ///< array types
 
-    static CTypeManager *_global_tm; ///< global type manager instance
+  static CTypeManager *_global_tm; ///< global type manager instance
 };
-
-
 
 #endif // __SnuPL_TYPE_H__

@@ -1136,7 +1136,7 @@ bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const {
     }
     const CType *paramType = symbol->GetParam(i)->GetDataType();
     const CType *argType = arg->GetType();
-    if (argType == NULL || paramType == NULL ) {
+    if (argType == NULL || paramType == NULL) {
       if (t != NULL) {
         *t = arg->GetToken();
       }
@@ -1144,24 +1144,35 @@ bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const {
         *msg = " mismatch of argument types";
       }
       return false;
-    }
-    else{
-      if(paramType -> IsPointer() && dynamic_cast<const CPointerType*>(paramType) -> GetBaseType() -> IsArray()){
-        const CArrayType *array_type = dynamic_cast<const CArrayType*>(dynamic_cast<const CPointerType*>(paramType) -> GetBaseType());
-        if(array_type -> GetNElem() == -1 && array_type -> GetBaseType() -> Match(CTypeManager::Get()->GetChar())){
-          if(argType -> IsArray() && dynamic_cast<const CArrayType*>(argType) -> GetBaseType() ->  Match(CTypeManager::Get()->GetChar()))
+    } else {
+      if (paramType->IsPointer() &&
+          dynamic_cast<const CPointerType *>(paramType)
+              ->GetBaseType()
+              ->IsArray()) {
+        const CArrayType *array_type = dynamic_cast<const CArrayType *>(
+            dynamic_cast<const CPointerType *>(paramType)->GetBaseType());
+        if (array_type->GetNElem() == -1 &&
+            array_type->GetBaseType()->Match(CTypeManager::Get()->GetChar())) {
+          if (argType->IsArray() &&
+              dynamic_cast<const CArrayType *>(argType)->GetBaseType()->Match(
+                  CTypeManager::Get()->GetChar()))
             return true;
-          else if(argType -> IsPointer() && dynamic_cast<const CPointerType*>(argType) -> GetBaseType() -> IsArray()){
-            array_type = dynamic_cast<const CArrayType*>(dynamic_cast<const CPointerType*>(argType) -> GetBaseType());
-            if(array_type -> GetNElem() == -1 && array_type -> GetBaseType() -> Match(CTypeManager::Get()->GetChar()))
+          else if (argType->IsPointer() &&
+                   dynamic_cast<const CPointerType *>(argType)
+                       ->GetBaseType()
+                       ->IsArray()) {
+            array_type = dynamic_cast<const CArrayType *>(
+                dynamic_cast<const CPointerType *>(argType)->GetBaseType());
+            if (array_type->GetNElem() == -1 &&
+                array_type->GetBaseType()->Match(
+                    CTypeManager::Get()->GetChar()))
               return true;
-          }
-          else return false;
-        }
-        else return false;
-      }
-      else{
-        if(!paramType->Match(arg->GetType())){
+          } else
+            return false;
+        } else
+          return false;
+      } else {
+        if (!paramType->Match(arg->GetType())) {
           if (t != NULL) {
             *t = arg->GetToken();
           }
@@ -1169,8 +1180,8 @@ bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const {
             *msg = " mismatch of argument types";
           }
           return false;
-        }
-        else return true;
+        } else
+          return true;
       }
     }
   }
