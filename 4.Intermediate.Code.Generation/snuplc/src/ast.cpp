@@ -197,7 +197,18 @@ void CAstScope::toDot(ostream &out, int indent) const {
   }
 }
 
-CTacAddr *CAstScope::ToTac(CCodeBlock *cb) { return NULL; }
+CTacAddr *CAstScope::ToTac(CCodeBlock *cb) { 
+  assert(cb != NULL);
+  CAstStatement *s = GetStatementSequence();
+  while (s != NULL) {
+    CTacLabel *next = cb->CreateLabel();
+    s->ToTac(cb, next);
+    cb->AddInstr(next);
+    s = s->GetNext();
+  }
+  cb->CleanupControlFlow();
+  return NULL;
+ }
 
 CCodeBlock *CAstScope::GetCodeBlock(void) const { return _cb; }
 
@@ -715,6 +726,7 @@ CTacAddr *CAstExpression::ToTac(CCodeBlock *cb) { return NULL; }
 
 CTacAddr *CAstExpression::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                                 CTacLabel *lfalse) {
+  // for boolean expression
   return NULL;
 }
 
