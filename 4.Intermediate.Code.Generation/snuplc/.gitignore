@@ -1,5 +1,6 @@
 test_scanner
 test_parser
+test_ir
 doc/*
     *.pdf
     *.gz
