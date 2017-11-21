@@ -1618,7 +1618,10 @@ CTacAddr *CAstArrayDesignator::ToTac(CCodeBlock *cb) {
 
 CTacAddr *CAstArrayDesignator::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                                      CTacLabel *lfalse) {
-  return NULL;
+  CTacAddr *temp = ToTac(cb);
+  cb->AddInstr(new CTacInstr(opEqual, ltrue, temp, new CTacConst(1)));
+  cb->AddInstr(new CTacInstr(opGoto, lfalse));
+  return temp;
 }
 
 //------------------------------------------------------------------------------
