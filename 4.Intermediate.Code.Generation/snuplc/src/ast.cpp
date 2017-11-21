@@ -976,12 +976,11 @@ CTacAddr *CAstBinaryOp::ToTac(CCodeBlock *cb) {
     CTacLabel *ltrue = cb -> CreateLabel("if_true");
     CTacLabel *lfalse = cb -> CreateLabel("if_false");
     return ToTac(cb, ltrue, lfalse);
-  }
-  else{
-    CTacAddr *operand1 = _left -> ToTac(cb);
-    CTacAddr *operand2 = _right -> ToTac(cb);
-    CTacTemp* target = cb -> CreateTemp(GetType());
-    cb -> AddInstr(new CTacInstr(GetOperation(), target, operand1, operand2));
+  } else {
+    CTacAddr *operand1 = _left->ToTac(cb);
+    CTacAddr *operand2 = _right->ToTac(cb);
+    CTacTemp *target = cb->CreateTemp(GetType());
+    cb->AddInstr(new CTacInstr(GetOperation(), target, operand1, operand2));
     return target;
   }
 }
@@ -1252,7 +1251,17 @@ void CAstSpecialOp::toDot(ostream &out, int indent) const {
   out << ind << dotID() << "->" << _operand->dotID() << ";" << endl;
 }
 
-CTacAddr *CAstSpecialOp::ToTac(CCodeBlock *cb) { return NULL; }
+CTacAddr *CAstSpecialOp::ToTac(CCodeBlock *cb) {
+  CTacAddr *temp = cb->CreateTemp(GetType());
+  CTacAddr *op = GetOperand()->ToTac(cb);
+  cb->AddInstr(new CTacInstr(opAddress, temp, op));
+
+  if (_addr != NULL) {
+    delete _addr;
+    _addr = temp;
+  }
+  return temp;
+}
 
 //------------------------------------------------------------------------------
 // CAstFunctionCall
@@ -1313,22 +1322,25 @@ bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const {
             array_type->GetBaseType()->Match(CTypeManager::Get()->GetChar())) {
           if (argType->IsArray() &&
               dynamic_cast<const CArrayType *>(argType)->GetBaseType()->Match(
-                  CTypeManager::Get()->GetChar()))
+                  CTypeManager::Get()->GetChar())) {
             return true;
-          else if (argType->IsPointer() &&
-                   dynamic_cast<const CPointerType *>(argType)
-                       ->GetBaseType()
-                       ->IsArray()) {
+          } else if (argType->IsPointer() &&
+                     dynamic_cast<const CPointerType *>(argType)
+                         ->GetBaseType()
+                         ->IsArray()) {
             array_type = dynamic_cast<const CArrayType *>(
                 dynamic_cast<const CPointerType *>(argType)->GetBaseType());
             if (array_type->GetNElem() == -1 &&
                 array_type->GetBaseType()->Match(
-                    CTypeManager::Get()->GetChar()))
+                    CTypeManager::Get()->GetChar())) {
               return true;
-          } else
+            }
+          } else {
             return false;
-        } else
+          }
+        } else {
           return false;
+        }
       } else {
         if (!paramType->Match(arg->GetType())) {
           if (t != NULL) {
@@ -1338,8 +1350,8 @@ bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const {
             *msg = " mismatch of argument types";
           }
           return false;
-        } else
-          return true;
+        }
+        return true;
       }
     }
   }
@@ -1478,6 +1490,8 @@ CTacAddr *CAstDesignator::ToTac(CCodeBlock *cb) {
 
 CTacAddr *CAstDesignator::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                                 CTacLabel *lfalse) {
+  cb->AddInstr(new CTacInstr(opEqual, ltrue, ToTac(cb), new CTacConst(1)));
+  cb->AddInstr(new CTacInstr(opGoto, lfalse));
   return NULL;
 }
 
@@ -1581,49 +1595,57 @@ void CAstArrayDesignator::toDot(ostream &out, int indent) const {
 }
 
 CTacAddr *CAstArrayDesignator::ToTac(CCodeBlock *cb) {
-  const CType *t = GetSymbol() -> GetDataType();
+  const CType *t = GetSymbol()->GetDataType();
   CAstExpression *arrayPointer = NULL;
   CToken token;
 
   arrayPointer = new CAstArrayDesignator(token, GetSymbol());
   while (t->IsPointer())
-    t = dynamic_cast<const CPointerType *>(t) -> GetBaseType();
+    t = dynamic_cast<const CPointerType *>(t)->GetBaseType();
 
   const CArrayType *array = dynamic_cast<const CArrayType *>(t);
 
-  int size = array -> GetBaseType() -> GetSize();
+  int size = array->GetBaseType()->GetSize();
 
-	CAstExpression *offset;
-	const CSymProc *dim = dynamic_cast<const CSymProc*>(cb -> GetOwner() -> GetSymbolTable() -> FindSymbol("DIM"));
-	
-	for (int i = 0; i < _idx.size(); i++) {
-		if (i == 0)
-			offset = _idx[i];
-		else
-			offset = new CAstBinaryOp(token, opAdd, offset, _idx[i]);
+  CAstExpression *offset;
+  const CSymProc *dim = dynamic_cast<const CSymProc *>(
+      cb->GetOwner()->GetSymbolTable()->FindSymbol("DIM"));
 
-		if (i == _idx.size() - 1)
-			offset = new CAstBinaryOp(token, opMul, offset, new CAstConstant(token, CTypeManager::Get() -> GetInt(), size));
-		else {
-			CAstFunctionCall* dimCall = new CAstFunctionCall(token, dim);
-			dimCall->AddArg(arrayPointer);
-			dimCall->AddArg(new CAstConstant(token,  CTypeManager::Get() -> GetInt(), i));
-			offset = new CAstBinaryOp(token, opMul, offset, dimCall);
-		}
-	}
+  for (int i = 0; i < _idx.size(); i++) {
+    if (i == 0)
+      offset = _idx[i];
+    else
+      offset = new CAstBinaryOp(token, opAdd, offset, _idx[i]);
 
-  const CSymProc *dofs = dynamic_cast<const CSymProc*>(cb -> GetOwner() -> GetSymbolTable() -> FindSymbol("DOFS"));
-	CAstFunctionCall *dofsCall = new CAstFunctionCall(token, dofs);
-	dofsCall -> AddArg(arrayPointer);
-	CAstExpression *address = new CAstBinaryOp(token, opAdd, offset, dofsCall);
-	address = new CAstBinaryOp(token, opAdd, arrayPointer, address);
+    if (i == _idx.size() - 1)
+      offset = new CAstBinaryOp(
+          token, opMul, offset,
+          new CAstConstant(token, CTypeManager::Get()->GetInt(), size));
+    else {
+      CAstFunctionCall *dimCall = new CAstFunctionCall(token, dim);
+      dimCall->AddArg(arrayPointer);
+      dimCall->AddArg(
+          new CAstConstant(token, CTypeManager::Get()->GetInt(), i));
+      offset = new CAstBinaryOp(token, opMul, offset, dimCall);
+    }
+  }
 
-	return dynamic_cast<CTacReference*>(address -> ToTac(cb));
+  const CSymProc *dofs = dynamic_cast<const CSymProc *>(
+      cb->GetOwner()->GetSymbolTable()->FindSymbol("DOFS"));
+  CAstFunctionCall *dofsCall = new CAstFunctionCall(token, dofs);
+  dofsCall->AddArg(arrayPointer);
+  CAstExpression *address = new CAstBinaryOp(token, opAdd, offset, dofsCall);
+  address = new CAstBinaryOp(token, opAdd, arrayPointer, address);
+
+  return dynamic_cast<CTacReference *>(address->ToTac(cb));
 }
 
 CTacAddr *CAstArrayDesignator::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                                      CTacLabel *lfalse) {
-  return NULL;
+  CTacAddr *temp = ToTac(cb);
+  cb->AddInstr(new CTacInstr(opEqual, ltrue, temp, new CTacConst(1)));
+  cb->AddInstr(new CTacInstr(opGoto, lfalse));
+  return temp;
 }
 
 //------------------------------------------------------------------------------
@@ -1634,9 +1656,9 @@ CAstConstant::CAstConstant(CToken t, const CType *type, long long value)
 
 void CAstConstant::SetValue(long long value) { _value = value; }
 
-long long CAstConstant::GetValue(void) const { return _value; }
+long long CAstConstant::GetValue() const { return _value; }
 
-string CAstConstant::GetValueStr(void) const {
+string CAstConstant::GetValueStr() const {
   ostringstream out;
 
   if (GetType() == CTypeManager::Get()->GetBool()) {
@@ -1728,10 +1750,23 @@ string CAstConstant::dotAttr(void) const {
   return out.str();
 }
 
-CTacAddr *CAstConstant::ToTac(CCodeBlock *cb) { return new CTacConst((int)GetValue());}
+CTacAddr *CAstConstant::ToTac(CCodeBlock *cb) {
+  delete _addr;
+  _addr = new CTacConst(GetValue());
+  return _addr;
+}
 
 CTacAddr *CAstConstant::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                               CTacLabel *lfalse) {
+  if (!GetType()->IsBoolean()) {
+    ostringstream out;
+    out << "value must be boolean to be called.\n";
+    return NULL;
+  }
+
+  CTacAddr *value = new CTacConst(GetValue());
+  cb->AddInstr(new CTacInstr(opEqual, ltrue, value, new CTacConst(1)));
+  cb->AddInstr(new CTacInstr(opGoto, lfalse));
   return NULL;
 }
 
@@ -1810,7 +1845,9 @@ string CAstStringConstant::dotAttr(void) const {
   return out.str();
 }
 
-CTacAddr *CAstStringConstant::ToTac(CCodeBlock *cb) { return new CTacName(_sym); }
+CTacAddr *CAstStringConstant::ToTac(CCodeBlock *cb) {
+  return new CTacName(_sym);
+}
 
 CTacAddr *CAstStringConstant::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                                     CTacLabel *lfalse) {
