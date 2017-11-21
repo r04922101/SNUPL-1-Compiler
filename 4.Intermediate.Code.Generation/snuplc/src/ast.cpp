@@ -970,10 +970,11 @@ void CAstBinaryOp::toDot(ostream &out, int indent) const {
 
 CTacAddr *CAstBinaryOp::ToTac(CCodeBlock *cb) {
   CTacLabel *next = cb -> CreateLabel();
-  if(CTypeManager::Get() -> GetBool() -> Match(GetType()))
+  if(CTypeManager::Get() -> GetBool() -> Match(GetType())){
     CTacLabel *ltrue = cb -> CreateLabel();
     CTacLabel *lfalse = cb -> CreateLabel();
     return ToTac(cb, ltrue, lfalse);
+  }
   else{
     CTacAddr *operand1 = _left -> ToTac(cb);
     CTacAddr *operand2 = _right -> ToTac(cb);
@@ -991,6 +992,7 @@ CTacAddr *CAstBinaryOp::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
 
   cb -> AddInstr(new CTacInstr(GetOperation(), ltrue, operand1, operand2));
 
+  CTacLabel *next = cb -> CreateLabel();
   cb -> AddInstr(ltrue);
   cb -> AddInstr(new CTacInstr(opGoto, next));
 
@@ -1105,19 +1107,19 @@ void CAstUnaryOp::toDot(ostream &out, int indent) const {
 
 CTacAddr *CAstUnaryOp::ToTac(CCodeBlock *cb) {
   // pos, neg, not
-	switch (GetOperation()) {
+	switch(GetOperation()){
 		case opPos:
-		case opNeg:
-      CTacAddr *operand = _operand -> ToTac(cb);
+		case opNeg:{
       CTacTemp *target = cb -> CreateTemp(GetType());
+      CTacAddr *operand = _operand -> ToTac(cb);
       cb->AddInstr(new CTacInstr(GetOperation(), target, operand));
       return target;
-
-		case opNot: // opNot
-      CTacAddr *ret = cb -> CreateTemp(CTypeManager::Get() -> GetBool());
+    }
+		case opNot:{
       CTacLabel *ltrue = cb -> CreateLabel();
       CTacLabel *lfalse = cb -> CreateLabel();
-      return ToTac(cb, ltrue, lfalse);;
+      return ToTac(cb, ltrue, lfalse);
+    }
 	}
 }
 
@@ -1374,7 +1376,7 @@ CTacAddr *CAstFunctionCall::ToTac(CCodeBlock *cb) {
 
 CTacAddr *CAstFunctionCall::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                                   CTacLabel *lfalse) {
-	CTacAddr *result; = cb -> CreateTemp(GetType());
+	CTacAddr *result = cb -> CreateTemp(GetType());
 	for (int i = GetNArgs() - 1; i >= 0; i--)
 		cb -> AddInstr(new CTacInstr(opParam, new CTacConst(i), GetArg(i) -> ToTac(cb)));
 
