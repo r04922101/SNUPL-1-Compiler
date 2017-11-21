@@ -419,9 +419,16 @@ CAstDesignator *CParser::qualident(CAstScope *s, CAstModule *m) {
       SetError(_scanner->Peek(), "undefined identifier");
   } else {
     if (s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) != NULL) {
+      if(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType() -> IsArray()){
+        return new CAstArrayDesignator(
+          t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
+      }
       return new CAstDesignator(
           t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
     } else if (m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) != NULL) {
+      if(m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal))
+        return new CAstArrayDesignator(
+          t, m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal));
       return new CAstDesignator(
           t, m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal));
     } else
@@ -663,10 +670,11 @@ CAstExpression *CParser::simpleexpr(CAstScope *s, CAstModule *m) {
       unaryOperation = opNeg;
   }
   n = term(s, m);
-  CAstConstant *constant = dynamic_cast<CAstConstant *>(n);
   if (unaryToken.GetValue() != "") {
     n = new CAstUnaryOp(unaryToken, unaryOperation, n);
   }
+
+  // CAstConstant *constant = dynamic_cast<CAstConstant *>(n);
   // if(constant != NULL && constant -> GetType() -> Match(CTypeManager::Get()
   // -> GetInt()) && unaryToken.GetValue() == "-" ){
   //     constant -> SetValue(-(constant -> GetValue()));
