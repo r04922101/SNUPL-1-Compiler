@@ -561,7 +561,15 @@ CAstStatement *CParser::statSequence(CAstScope *s, CAstModule *m) {
                            ->FindSymbol(_scanner->Peek().GetValue(), sGlobal)
                            ->GetSymbolType() == stProcedure) {
           st = new CAstStatCall(_scanner->Peek(), subroutineCall(s, m));
-        } else {
+        } 
+        else if(m->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(),
+                                                   sGlobal) != NULL &&
+                   m->GetSymbolTable()
+                           ->FindSymbol(_scanner->Peek().GetValue(), sGlobal)
+                           ->GetSymbolType() != stProcedure){
+          st = assignment(s, m);
+        }
+        else {
           SetError(_scanner->Peek(), "undefined identifier");
         }
         break;
