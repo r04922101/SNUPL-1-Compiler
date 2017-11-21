@@ -381,6 +381,10 @@ void CAstStatAssign::toDot(ostream &out, int indent) const {
 }
 
 CTacAddr *CAstStatAssign::ToTac(CCodeBlock *cb, CTacLabel *next) {
+  CTacAddr *dst = _lhs -> ToTac(cb);
+  CTacAddr *src1 = _rhs -> ToTac(cb);
+  cb -> AddInstr(new CTacInstr(opAssign, dst, src1));
+  cb -> AddInstr(new CTacInstr(opGoto, next));
   return NULL;
 }
 
@@ -412,7 +416,11 @@ void CAstStatCall::toDot(ostream &out, int indent) const {
   _call->toDot(out, indent);
 }
 
-CTacAddr *CAstStatCall::ToTac(CCodeBlock *cb, CTacLabel *next) { return NULL; }
+CTacAddr *CAstStatCall::ToTac(CCodeBlock *cb, CTacLabel *next) { 
+  _call -> ToTac(cb);
+  cb -> AddInstr(new CTacInstr(opGoto, next));
+  return NULL; 
+}
 
 //------------------------------------------------------------------------------
 // CAstStatReturn
@@ -506,6 +514,14 @@ void CAstStatReturn::toDot(ostream &out, int indent) const {
 }
 
 CTacAddr *CAstStatReturn::ToTac(CCodeBlock *cb, CTacLabel *next) {
+  if (_expr != NULL) {
+    CTacAddr *src1 = _expr -> ToTac(cb);
+    cb -> AddInstr(new CTacInstr(opReturn, NULL, src1));
+  } 
+  else {
+    cb -> AddInstr(new CTacInstr(opReturn, NULL));
+  }
+  cb -> AddInstr(new CTacInstr(opGoto, next));
   return NULL;
 }
 
