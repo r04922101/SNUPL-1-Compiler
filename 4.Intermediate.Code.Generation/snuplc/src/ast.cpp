@@ -1632,9 +1632,9 @@ CAstConstant::CAstConstant(CToken t, const CType *type, long long value)
 
 void CAstConstant::SetValue(long long value) { _value = value; }
 
-long long CAstConstant::GetValue(void) const { return _value; }
+long long CAstConstant::GetValue() const { return _value; }
 
-string CAstConstant::GetValueStr(void) const {
+string CAstConstant::GetValueStr() const {
   ostringstream out;
 
   if (GetType() == CTypeManager::Get()->GetBool()) {
