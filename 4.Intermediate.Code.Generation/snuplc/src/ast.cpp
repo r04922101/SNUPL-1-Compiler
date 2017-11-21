@@ -289,7 +289,7 @@ CAstStatement *CAstStatement::GetNext(void) const { return _next; }
 
 CTacAddr *CAstStatement::ToTac(CCodeBlock *cb, CTacLabel *next) {
   // GoTo next
-  cb->AddInstr(new CTacInstr(opGoto, next));
+  cb -> AddInstr(next);
   return NULL;
 }
 
@@ -385,10 +385,10 @@ void CAstStatAssign::toDot(ostream &out, int indent) const {
 }
 
 CTacAddr *CAstStatAssign::ToTac(CCodeBlock *cb, CTacLabel *next) {
-  CTacAddr *lhs = _lhs->ToTac(cb);
-  CTacAddr *rhs = _rhs->ToTac(cb);
-  cb->AddInstr(new CTacInstr(opAssign, lhs, rhs));
-  cb->AddInstr(new CTacInstr(opGoto, next));
+  CTacAddr *lhs = _lhs -> ToTac(cb);
+  CTacAddr *rhs = _rhs -> ToTac(cb);
+  cb -> AddInstr(new CTacInstr(opAssign, lhs, rhs));
+  cb -> AddInstr(next);
   return NULL;
 }
 
@@ -421,8 +421,8 @@ void CAstStatCall::toDot(ostream &out, int indent) const {
 }
 
 CTacAddr *CAstStatCall::ToTac(CCodeBlock *cb, CTacLabel *next) {
-  _call->ToTac(cb);
-  cb->AddInstr(new CTacInstr(opGoto, next));
+  _call -> ToTac(cb);
+  cb -> AddInstr(next);
   return NULL;
 }
 
@@ -518,13 +518,11 @@ void CAstStatReturn::toDot(ostream &out, int indent) const {
 }
 
 CTacAddr *CAstStatReturn::ToTac(CCodeBlock *cb, CTacLabel *next) {
-  if (_expr != NULL) {
-    CTacAddr *operand = _expr->ToTac(cb);
-    cb->AddInstr(new CTacInstr(opReturn, NULL, operand));
-  } else {
-    cb->AddInstr(new CTacInstr(opReturn, NULL));
-  }
-  cb->AddInstr(new CTacInstr(opGoto, next));
+  if (_expr != NULL)
+    cb -> AddInstr(new CTacInstr(opReturn, NULL,  _expr -> ToTac(cb)));
+  else
+    cb -> AddInstr(new CTacInstr(opReturn, NULL));
+  cb -> AddInstr(next);
   return NULL;
 }
 
@@ -642,31 +640,31 @@ void CAstStatIf::toDot(ostream &out, int indent) const {
 }
 
 CTacAddr *CAstStatIf::ToTac(CCodeBlock *cb, CTacLabel *next) {
-  CTacLabel *ltrue = cb->CreateLabel();
-  CTacLabel *lfalse = cb->CreateLabel();
-  CTacLabel *end = cb->CreateLabel();
+  CTacLabel *ltrue = cb -> CreateLabel("if_true");
+  CTacLabel *lfalse = cb -> CreateLabel("if_false");
+  CTacLabel *end = cb -> CreateLabel();
   // boolean expression condition
-  _cond->ToTac(cb, ltrue, lfalse);
-  cb->AddInstr(ltrue);
+  _cond -> ToTac(cb, ltrue, lfalse);
 
+  cb -> AddInstr(ltrue);
   // statSequence
-  CAstStatement *ifBody = GetIfBody();
-  while (ifBody != NULL) {
-    CTacLabel *next = cb->CreateLabel();
-    ifBody->ToTac(cb, next);
-    cb->AddInstr(next);
-    ifBody = ifBody->GetNext();
+  CAstStatement *ifStatSequence = GetIfBody();
+  while (ifStatSequence != NULL) {
+    CTacLabel *nextInIf = cb -> CreateLabel();
+    ifStatSequence -> ToTac(cb, nextInIf);
+    cb -> AddInstr(nextInIf);
+    ifStatSequence = ifStatSequence -> GetNext();
   }
-  cb->AddInstr(new CTacInstr(opGoto, end));
-  cb->AddInstr(lfalse);
+  cb -> AddInstr(new CTacInstr(opGoto, end));
 
+  cb -> AddInstr(lfalse);
   // statSequence
-  CAstStatement *elseBody = GetElseBody();
-  while (elseBody != NULL) {
-    CTacLabel *next = cb->CreateLabel();
-    elseBody->ToTac(cb, next);
-    cb->AddInstr(next);
-    elseBody = elseBody->GetNext();
+  CAstStatement *elseStatSequence = GetElseBody();
+  while (elseStatSequence != NULL) {
+    CTacLabel *nextInElse = cb -> CreateLabel();
+    elseStatSequence -> ToTac(cb, nextInElse);
+    cb -> AddInstr(nextInElse);
+    elseStatSequence = elseStatSequence -> GetNext();
   }
   cb->AddInstr(end);
   cb->AddInstr(new CTacInstr(opGoto, next));
@@ -795,7 +793,9 @@ void CAstExpression::SetParenthesized(bool parenthesized) {
 
 bool CAstExpression::GetParenthesized(void) const { return _parenthesized; }
 
-CTacAddr *CAstExpression::ToTac(CCodeBlock *cb) { return NULL; }
+CTacAddr *CAstExpression::ToTac(CCodeBlock *cb) { 
+  return NULL; 
+}
 
 CTacAddr *CAstExpression::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                                 CTacLabel *lfalse) {
@@ -973,8 +973,8 @@ void CAstBinaryOp::toDot(ostream &out, int indent) const {
 
 CTacAddr *CAstBinaryOp::ToTac(CCodeBlock *cb) {
   if(CTypeManager::Get() -> GetBool() -> Match(GetType())){
-    CTacLabel *ltrue = cb -> CreateLabel();
-    CTacLabel *lfalse = cb -> CreateLabel();
+    CTacLabel *ltrue = cb -> CreateLabel("if_true");
+    CTacLabel *lfalse = cb -> CreateLabel("if_false");
     return ToTac(cb, ltrue, lfalse);
   }
   else{
@@ -988,18 +988,42 @@ CTacAddr *CAstBinaryOp::ToTac(CCodeBlock *cb) {
 
 CTacAddr *CAstBinaryOp::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                               CTacLabel *lfalse) {
-  CTacAddr *operand1 = _left->ToTac(cb);
-  CTacAddr *operand2 = _right->ToTac(cb);
+  CTacAddr *operand1 = _left -> ToTac(cb);
+  CTacAddr *operand2 = _right -> ToTac(cb);
+  CTacAddr *result = cb -> CreateTemp(CTypeManager::Get() -> GetBool());
 
-  cb->AddInstr(new CTacInstr(GetOperation(), ltrue, operand1, operand2));
+  EOperation operation = GetOperation();
+	switch(operation){
+		case opAnd:
+		case opOr:{
+				CTacLabel* shortCircuit = cb -> CreateLabel();
+				if (operation == opAnd)
+					_left -> ToTac(cb, shortCircuit, lfalse);
+				else
+					_left -> ToTac(cb, ltrue, shortCircuit);
+
+				cb -> AddInstr(shortCircuit);
+				_right -> ToTac(cb, ltrue, lfalse);
+				break;
+		}
+		default:{
+				CTacAddr *lhs = _left -> ToTac(cb);
+				CTacAddr *rhs = _right -> ToTac(cb);
+				cb -> AddInstr(new CTacInstr(operation, ltrue, lhs, rhs));
+				cb -> AddInstr(new CTacInstr(opGoto, lfalse));
+				break;
+		}
+	}
 
   CTacLabel *next = cb->CreateLabel();
-  cb->AddInstr(ltrue);
-  cb->AddInstr(new CTacInstr(opGoto, next));
+  cb -> AddInstr(ltrue);
+  cb -> AddInstr(new CTacInstr(opAssign, result, new CTacConst(1)));
+  cb -> AddInstr(new CTacInstr(opGoto, next));
 
   cb->AddInstr(lfalse);
+  cb -> AddInstr(new CTacInstr(opAssign, result, new CTacConst(0)));
   cb->AddInstr(new CTacInstr(opGoto, next));
-  return cb->CreateTemp(CTypeManager::Get()->GetBool());
+  return result;
 }
 
 //------------------------------------------------------------------------------
