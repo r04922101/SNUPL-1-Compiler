@@ -1727,11 +1727,22 @@ string CAstConstant::dotAttr(void) const {
 }
 
 CTacAddr *CAstConstant::ToTac(CCodeBlock *cb) {
-  return new CTacConst((int)GetValue());
+  delete _addr;
+  _addr = new CTacConst(GetValue());
+  return _addr;
 }
 
 CTacAddr *CAstConstant::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                               CTacLabel *lfalse) {
+  if (!GetType()->IsBoolean()) {
+    ostringstream out;
+    out << "value must be boolean to be called.\n";
+    return NULL;
+  }
+
+  CTacAddr *value = new CTacConst(GetValue());
+  cb->AddInstr(new CTacInstr(opEqual, ltrue, value, new CTacConst(1)));
+  cb->AddInstr(new CTacInstr(opGoto, lfalse));
   return NULL;
 }
 
