@@ -288,7 +288,6 @@ void CAstStatement::SetNext(CAstStatement *next) { _next = next; }
 CAstStatement *CAstStatement::GetNext(void) const { return _next; }
 
 CTacAddr *CAstStatement::ToTac(CCodeBlock *cb, CTacLabel *next) {
-  // GoTo next
   cb->AddInstr(new CTacInstr(opGoto, next));
   return NULL;
 }
