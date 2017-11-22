@@ -289,7 +289,7 @@ CAstStatement *CAstStatement::GetNext(void) const { return _next; }
 
 CTacAddr *CAstStatement::ToTac(CCodeBlock *cb, CTacLabel *next) {
   // GoTo next
-  cb -> AddInstr(new CTacInstr(opGoto, next));
+  cb->AddInstr(new CTacInstr(opGoto, next));
   return NULL;
 }
 
@@ -385,10 +385,10 @@ void CAstStatAssign::toDot(ostream &out, int indent) const {
 }
 
 CTacAddr *CAstStatAssign::ToTac(CCodeBlock *cb, CTacLabel *next) {
-  CTacAddr *lhs = _lhs -> ToTac(cb);
-  CTacAddr *rhs = _rhs -> ToTac(cb);
-  cb -> AddInstr(new CTacInstr(opAssign, lhs, rhs));
-  cb -> AddInstr(new CTacInstr(opGoto, next));
+  CTacAddr *lhs = _lhs->ToTac(cb);
+  CTacAddr *rhs = _rhs->ToTac(cb);
+  cb->AddInstr(new CTacInstr(opAssign, lhs, rhs));
+  cb->AddInstr(new CTacInstr(opGoto, next));
   return NULL;
 }
 
@@ -421,8 +421,8 @@ void CAstStatCall::toDot(ostream &out, int indent) const {
 }
 
 CTacAddr *CAstStatCall::ToTac(CCodeBlock *cb, CTacLabel *next) {
-  _call -> ToTac(cb);
-  cb -> AddInstr(new CTacInstr(opGoto, next));
+  _call->ToTac(cb);
+  cb->AddInstr(new CTacInstr(opGoto, next));
   return NULL;
 }
 
@@ -519,10 +519,10 @@ void CAstStatReturn::toDot(ostream &out, int indent) const {
 
 CTacAddr *CAstStatReturn::ToTac(CCodeBlock *cb, CTacLabel *next) {
   if (_expr != NULL)
-    cb -> AddInstr(new CTacInstr(opReturn, NULL,  _expr -> ToTac(cb)));
+    cb->AddInstr(new CTacInstr(opReturn, NULL, _expr->ToTac(cb)));
   else
-    cb -> AddInstr(new CTacInstr(opReturn, NULL));
-  cb -> AddInstr(new CTacInstr(opGoto, next));
+    cb->AddInstr(new CTacInstr(opReturn, NULL));
+  cb->AddInstr(new CTacInstr(opGoto, next));
   return NULL;
 }
 
@@ -640,33 +640,33 @@ void CAstStatIf::toDot(ostream &out, int indent) const {
 }
 
 CTacAddr *CAstStatIf::ToTac(CCodeBlock *cb, CTacLabel *next) {
-  CTacLabel *ltrue = cb -> CreateLabel("if_true");
-  CTacLabel *lfalse = cb -> CreateLabel("if_false");
-  CTacLabel *end = cb -> CreateLabel();
+  CTacLabel *ltrue = cb->CreateLabel("if_true");
+  CTacLabel *lfalse = cb->CreateLabel("if_false");
+  CTacLabel *end = cb->CreateLabel();
   // boolean expression condition
-  _cond -> ToTac(cb, ltrue, lfalse);
+  _cond->ToTac(cb, ltrue, lfalse);
 
-  cb -> AddInstr(ltrue);
+  cb->AddInstr(ltrue);
   // statSequence
   CAstStatement *ifStatSequence = GetIfBody();
   while (ifStatSequence != NULL) {
-    CTacLabel *nextInIf = cb -> CreateLabel();
-    ifStatSequence -> ToTac(cb, nextInIf);
-    cb -> AddInstr(nextInIf);
-    ifStatSequence = ifStatSequence -> GetNext();
+    CTacLabel *nextInIf = cb->CreateLabel();
+    ifStatSequence->ToTac(cb, nextInIf);
+    cb->AddInstr(nextInIf);
+    ifStatSequence = ifStatSequence->GetNext();
   }
-  cb -> AddInstr(new CTacInstr(opGoto, end));
+  cb->AddInstr(new CTacInstr(opGoto, end));
 
-  cb -> AddInstr(lfalse);
+  cb->AddInstr(lfalse);
   // statSequence
   CAstStatement *elseStatSequence = GetElseBody();
   while (elseStatSequence != NULL) {
-    CTacLabel *nextInElse = cb -> CreateLabel();
-    elseStatSequence -> ToTac(cb, nextInElse);
-    cb -> AddInstr(nextInElse);
-    elseStatSequence = elseStatSequence -> GetNext();
+    CTacLabel *nextInElse = cb->CreateLabel();
+    elseStatSequence->ToTac(cb, nextInElse);
+    cb->AddInstr(nextInElse);
+    elseStatSequence = elseStatSequence->GetNext();
   }
-  cb -> AddInstr(end);
+  cb->AddInstr(end);
   cb->AddInstr(new CTacInstr(opGoto, next));
 
   return NULL;
@@ -791,9 +791,7 @@ void CAstExpression::SetParenthesized(bool parenthesized) {
 
 bool CAstExpression::GetParenthesized(void) const { return _parenthesized; }
 
-CTacAddr *CAstExpression::ToTac(CCodeBlock *cb) { 
-  return NULL; 
-}
+CTacAddr *CAstExpression::ToTac(CCodeBlock *cb) { return NULL; }
 
 CTacAddr *CAstExpression::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                                 CTacLabel *lfalse) {
@@ -970,9 +968,9 @@ void CAstBinaryOp::toDot(ostream &out, int indent) const {
 }
 
 CTacAddr *CAstBinaryOp::ToTac(CCodeBlock *cb) {
-  if(CTypeManager::Get() -> GetBool() -> Match(GetType())){
-    CTacLabel *ltrue = cb -> CreateLabel("if_true");
-    CTacLabel *lfalse = cb -> CreateLabel("if_false");
+  if (CTypeManager::Get()->GetBool()->Match(GetType())) {
+    CTacLabel *ltrue = cb->CreateLabel("if_true");
+    CTacLabel *lfalse = cb->CreateLabel("if_false");
     return ToTac(cb, ltrue, lfalse);
   } else {
     CTacAddr *operand1 = _left -> ToTac(cb);
@@ -989,27 +987,27 @@ CTacAddr *CAstBinaryOp::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
   CTacLabel *next = cb -> CreateLabel();
   
   EOperation operation = GetOperation();
-	switch(operation){
-		case opAnd:
-		case opOr:{
-				CTacLabel* shortCircuit = cb -> CreateLabel();
-				if (operation == opAnd)
-					_left -> ToTac(cb, shortCircuit, lfalse);
-				else
-					_left -> ToTac(cb, ltrue, shortCircuit);
+  switch (operation) {
+  case opAnd:
+  case opOr: {
+    CTacLabel *shortCircuit = cb->CreateLabel();
+    if (operation == opAnd)
+      _left->ToTac(cb, shortCircuit, lfalse);
+    else
+      _left->ToTac(cb, ltrue, shortCircuit);
 
-				cb -> AddInstr(shortCircuit);
-				_right -> ToTac(cb, ltrue, lfalse);
-				break;
-		}
-		default:{
-				CTacAddr *lhs = _left -> ToTac(cb);
-				CTacAddr *rhs = _right -> ToTac(cb);
-				cb -> AddInstr(new CTacInstr(operation, ltrue, lhs, rhs));
-				cb -> AddInstr(new CTacInstr(opGoto, lfalse));
-				break;
-		}
-	}
+    cb->AddInstr(shortCircuit);
+    _right->ToTac(cb, ltrue, lfalse);
+    break;
+  }
+  default: {
+    CTacAddr *lhs = _left->ToTac(cb);
+    CTacAddr *rhs = _right->ToTac(cb);
+    cb->AddInstr(new CTacInstr(operation, ltrue, lhs, rhs));
+    cb->AddInstr(new CTacInstr(opGoto, lfalse));
+    break;
+  }
+  }
 
   cb -> AddInstr(ltrue);
   cb -> AddInstr(new CTacInstr(opAssign, result, new CTacConst(1)));
@@ -1304,15 +1302,16 @@ bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const {
     }
     const CType *paramType = symbol->GetParam(i)->GetDataType();
     const CType *argType;
-    if(paramType->IsPointer() && dynamic_cast<const CPointerType *>(paramType)->GetBaseType()->IsArray()){
+    if (paramType->IsPointer() && dynamic_cast<const CPointerType *>(paramType)
+                                      ->GetBaseType()
+                                      ->IsArray()) {
       CAstArrayDesignator *arg_tmp = dynamic_cast<CAstArrayDesignator *>(arg);
-      if(arg_tmp == NULL){
+      if (arg_tmp == NULL) {
         *msg = " mismatch of argument types";
         return false;
       }
       argType = arg_tmp->GetSymbol()->GetDataType();
-    }
-    else{
+    } else {
       argType = arg->GetType();
     }
     if (argType == NULL || paramType == NULL) {
@@ -1323,114 +1322,131 @@ bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const {
         *msg = " mismatch of argument types";
       }
       return false;
-    } 
-    else {
+    } else {
       if (paramType->IsPointer() &&
           dynamic_cast<const CPointerType *>(paramType)
               ->GetBaseType()
               ->IsArray()) {
-        // array_type: parameter 
+        // array_type: parameter
         const CArrayType *array_type = dynamic_cast<const CArrayType *>(
             dynamic_cast<const CPointerType *>(paramType)->GetBaseType());
-        // for string, arbitrary length 
-        if (array_type -> GetNDim() == 1 &&
-            array_type->GetNElem() == -1 &&
+        // for string, arbitrary length
+        if (array_type->GetNDim() == 1 && array_type->GetNElem() == -1 &&
             array_type->GetBaseType()->Match(CTypeManager::Get()->GetChar())) {
           const CArrayType *arg_array_type;
-          if (argType->IsArray()) { 
+          if (argType->IsArray()) {
             arg_array_type = dynamic_cast<const CArrayType *>(argType);
-            if(arg_array_type -> GetNDim() == 1 && arg_array_type ->GetBaseType()->Match(CTypeManager::Get()->GetChar()))
+            if (arg_array_type->GetNDim() == 1 &&
+                arg_array_type->GetBaseType()->Match(
+                    CTypeManager::Get()->GetChar()))
               return true;
             return false;
-          }
-          else if (argType->IsPointer() &&
+          } else if (argType->IsPointer() &&
                      dynamic_cast<const CPointerType *>(argType)
                          ->GetBaseType()
                          ->IsArray()) {
             arg_array_type = dynamic_cast<const CArrayType *>(
                 dynamic_cast<const CPointerType *>(argType)->GetBaseType());
-            if(arg_array_type -> GetNDim() == 1 && arg_array_type ->GetBaseType()->Match(CTypeManager::Get()->GetChar()))
+            if (arg_array_type->GetNDim() == 1 &&
+                arg_array_type->GetBaseType()->Match(
+                    CTypeManager::Get()->GetChar()))
               return true;
             return false;
-          } 
-          else {
+          } else {
             return false;
           }
-        } 
-        else {
+        } else {
           bool all_open = true;
           const CArrayType *tmp = dynamic_cast<const CArrayType *>(
-            dynamic_cast<const CPointerType *>(paramType)->GetBaseType());
-          if(tmp ->GetNElem() == -1){
-            while (tmp->GetInnerType()->IsArray()){
+              dynamic_cast<const CPointerType *>(paramType)->GetBaseType());
+          if (tmp->GetNElem() == -1) {
+            while (tmp->GetInnerType()->IsArray()) {
               tmp = dynamic_cast<const CArrayType *>(tmp->GetInnerType());
-              if(tmp ->GetNElem() != -1){
+              if (tmp->GetNElem() != -1) {
                 all_open = false;
                 break;
               }
             }
           }
-          if(all_open){
+          if (all_open) {
             if (argType->IsArray()) {
-              const CArrayType *arg_array_type = dynamic_cast<const CArrayType *>(argType);
-              if(arg_array_type -> GetNDim() == array_type -> GetNDim() && arg_array_type ->GetBaseType()->Match(array_type ->GetBaseType()))
+              const CArrayType *arg_array_type =
+                  dynamic_cast<const CArrayType *>(argType);
+              if (arg_array_type->GetNDim() == array_type->GetNDim() &&
+                  arg_array_type->GetBaseType()->Match(
+                      array_type->GetBaseType()))
                 return true;
               return false;
-            } 
-            else if (argType->IsPointer() &&
-                     dynamic_cast<const CPointerType *>(argType)
-                         ->GetBaseType()
-                         ->IsArray()) {
-              const CArrayType *arg_array_type = dynamic_cast<const CArrayType *>(
-                dynamic_cast<const CPointerType *>(argType)->GetBaseType());
-              if(arg_array_type -> GetNDim() == array_type -> GetNDim() && arg_array_type ->GetBaseType()->Match(array_type ->GetBaseType()))
+            } else if (argType->IsPointer() &&
+                       dynamic_cast<const CPointerType *>(argType)
+                           ->GetBaseType()
+                           ->IsArray()) {
+              const CArrayType *arg_array_type =
+                  dynamic_cast<const CArrayType *>(
+                      dynamic_cast<const CPointerType *>(argType)
+                          ->GetBaseType());
+              if (arg_array_type->GetNDim() == array_type->GetNDim() &&
+                  arg_array_type->GetBaseType()->Match(
+                      array_type->GetBaseType()))
                 return true;
               return false;
-            }
-            else {
+            } else {
               return false;
             }
-          }
-          else{
+          } else {
             bool first;
             bool others = true;
             if (argType->IsArray()) {
-              const CArrayType *arg_array_type = dynamic_cast<const CArrayType *>(argType);
-              if(array_type -> GetNDim() == -1) first = true;
-              else first = array_type -> GetNElem() == arg_array_type -> GetNElem();
-              while(array_type -> GetInnerType() -> IsArray() && arg_array_type -> GetInnerType() -> IsArray()){
+              const CArrayType *arg_array_type =
+                  dynamic_cast<const CArrayType *>(argType);
+              if (array_type->GetNDim() == -1)
+                first = true;
+              else
+                first = array_type->GetNElem() == arg_array_type->GetNElem();
+              while (array_type->GetInnerType()->IsArray() &&
+                     arg_array_type->GetInnerType()->IsArray()) {
 
-                array_type = dynamic_cast<const CArrayType *>(array_type -> GetInnerType());
-                arg_array_type = dynamic_cast<const CArrayType *>(arg_array_type -> GetInnerType());
-                others = others && array_type -> GetNElem() == arg_array_type -> GetNElem();
+                array_type = dynamic_cast<const CArrayType *>(
+                    array_type->GetInnerType());
+                arg_array_type = dynamic_cast<const CArrayType *>(
+                    arg_array_type->GetInnerType());
+                others = others &&
+                         array_type->GetNElem() == arg_array_type->GetNElem();
               }
-              others = others && array_type -> GetBaseType() == arg_array_type -> GetBaseType();
+              others = others && array_type->GetBaseType() ==
+                                     arg_array_type->GetBaseType();
               return first && others;
-            } 
-            else if (argType->IsPointer() &&
+            } else if (argType->IsPointer() &&
+                       dynamic_cast<const CPointerType *>(argType)
+                           ->GetBaseType()
+                           ->IsArray()) {
+              const CArrayType *arg_array_type =
+                  dynamic_cast<const CArrayType *>(
                       dynamic_cast<const CPointerType *>(argType)
-                          ->GetBaseType()
-                          ->IsArray()) {
-              const CArrayType *arg_array_type = dynamic_cast<const CArrayType *>(
-                  dynamic_cast<const CPointerType *>(argType)->GetBaseType());
-              if(array_type -> GetNDim() == -1) first = true;
-              else first = array_type -> GetNElem() == arg_array_type -> GetNElem();
-              while(array_type -> GetInnerType() -> IsArray() && arg_array_type -> GetInnerType() -> IsArray()){
+                          ->GetBaseType());
+              if (array_type->GetNDim() == -1)
+                first = true;
+              else
+                first = array_type->GetNElem() == arg_array_type->GetNElem();
+              while (array_type->GetInnerType()->IsArray() &&
+                     arg_array_type->GetInnerType()->IsArray()) {
 
-                array_type = dynamic_cast<const CArrayType *>(array_type -> GetInnerType());
-                arg_array_type = dynamic_cast<const CArrayType *>(arg_array_type -> GetInnerType());
-                others = others && array_type -> GetNElem() == arg_array_type -> GetNElem();
+                array_type = dynamic_cast<const CArrayType *>(
+                    array_type->GetInnerType());
+                arg_array_type = dynamic_cast<const CArrayType *>(
+                    arg_array_type->GetInnerType());
+                others = others &&
+                         array_type->GetNElem() == arg_array_type->GetNElem();
               }
-              others = others && array_type -> GetBaseType() == arg_array_type -> GetBaseType();
+              others = others && array_type->GetBaseType() ==
+                                     arg_array_type->GetBaseType();
               return first && others;
-            } 
-            else {
+            } else {
               return false;
             }
           }
         }
-      } 
-      else {
+      } else {
         if (!paramType->Match(arg->GetType())) {
           if (t != NULL) {
             *t = arg->GetToken();
@@ -1946,5 +1962,5 @@ CTacAddr *CAstStringConstant::ToTac(CCodeBlock *cb) {
 
 CTacAddr *CAstStringConstant::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                                     CTacLabel *lfalse) {
-  return NULL;
+  return new CTacName(_sym);
 }
