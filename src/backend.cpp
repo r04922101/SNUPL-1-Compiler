@@ -276,36 +276,65 @@ void CBackendx86::EmitInstruction(CTacInstr *i) {
   EOperation op = i->GetOperation();
 
   switch (op) {
-  // binary operators
-  // dst = src1 op src2
-  // TODO
-  // unary operators
-  // dst = op src1
-  // TODO
-
+    // binary operators
+    // dst = src1 op src2
+    // TODO
+  case opAdd:
+  case opSub:
+  case opMul:
+  case opDiv:
+  case opAnd:
+  case opOr:
+    break;
+    // unary operators
+    // dst = op src1
+    // TODO
+  case opNeg:
+  case opPos:
+  case opNot:
+    break;
   // memory operations
   // dst = src1
   // TODO
+  case opAssign:
+    break;
 
   // pointer operations
   // dst = &src1
   // TODO
-  // dst = *src1
+  case opAddress:
+    break;
+
+    // dst = *src1
   case opDeref:
     // opDeref not generated for now
     EmitInstruction("# opDeref", "not implemented", cmt.str());
     break;
 
-  // unconditional branching
-  // goto dst
-  // TODO
+    // unconditional branching
+    // goto dst
+    // TODO
+  case opGoto:
+    break;
 
-  // conditional branching
-  // if src1 relOp src2 then goto dst
-  // TODO
+    // conditional branching
+    // if src1 relOp src2 then goto dst
+    // TODO
+  case opEqual:
+  case opNotEqual:
+  case opLessThan:
+  case opLessEqual:
+  case opBiggerThan:
+  case opBiggerEqual:
+    break;
 
-  // function call-related operations
-  // TODO
+    // function call-related operations
+    // TODO
+
+  case opCall:
+  case opReturn:
+  case opParam:
+    break;
 
   // special
   case opLabel:
