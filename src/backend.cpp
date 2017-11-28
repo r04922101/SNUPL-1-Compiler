@@ -154,26 +154,39 @@ void CBackendx86::EmitScope(CScope *scope) {
   assert(scope != NULL);
 
   string label;
-
-  if (scope->GetParent() == NULL)
+  if (scope->GetParent() == NULL) {
     label = "main";
-  else
+  } else {
     label = scope->GetName();
+  }
 
-  // label
+  // Label
   _out << _ind << "# scope " << scope->GetName() << endl
        << label << ":" << endl;
 
-  // TODO
-  // ComputeStackOffsets(scope)
-  //
-  // emit function prologue
-  //
-  // forall i in instructions do
-  //   EmitInstruction(i)
-  //
-  // emit function epilogue
+  SetScope(scope);
 
+  // Local Size
+  CSymtab *symbolTable = scope->GetSymbolTable();
+  assert(symbolTable != NULL);
+
+  auto size = ComputeStackOffsets(symbolTable, 8, -12);
+  // Prologue
+  _out << endl << _ind << "# prologue" << endl;
+  EmitLocalData(scope);
+
+  // Fuction Body
+  _out << endl << _ind << "# function body" << endl;
+  EmitCodeBlock(_curr_scope->GetCodeBlock());
+
+  // Epilogue
+  _out << endl << Label("exit") << ":" << endl << _ind << "# epilogue" << endl;
+  EmitInstruction("addl", Imm(size) + ", %esp", "remove locals");
+  EmitInstruction("popl", "%edi");
+  EmitInstruction("popl", "%esi");
+  EmitInstruction("popl", "%ebx");
+  EmitInstruction("popl", "%ebp");
+  EmitInstruction("ret");
   _out << endl;
 }
 
@@ -257,7 +270,60 @@ void CBackendx86::EmitGlobalData(CScope *scope) {
 void CBackendx86::EmitLocalData(CScope *scope) {
   assert(scope != NULL);
 
-  // TODO TODO!
+  SetScope(scope);
+  auto size = ComputeStackOffsets(_curr_scope->GetSymbolTable(), 8, -12);
+  // callee saves and stack pointer setting
+  EmitInstruction("pushl", "%ebp");
+  EmitInstruction("movl", "%esp, %ebp");
+  EmitInstruction("pushl", "%ebx", "save callee saved registers");
+  EmitInstruction("pushl", "%esi");
+  EmitInstruction("pushl", "%edi");
+  EmitInstruction("subl", Imm(size) + ", %esp", "make room for locals");
+
+  // set local variables to 0
+  if (0 < size && size <= 16) {
+    _out << endl;
+    EmitInstruction("xorl", "%eax, %eax", "memset local stack area to 0");
+    while (size > 0) {
+      size -= 4;
+      EmitInstruction("movl", "%eax, " + to_string(size) + "(%esp)");
+    }
+  } else if (size > 16) {
+    _out << endl;
+    EmitInstruction("cld", "", "memset local stack area to 0");
+    EmitInstruction("xorl", "%eax, %eax");
+    EmitInstruction("movl", Imm(size / 4) + ", %ecx");
+    EmitInstruction("mov", "%esp, %edi");
+    EmitInstruction("rep", "stosl");
+  }
+
+  // initialize array locals
+  vector<CSymbol *> slist = scope->GetSymbolTable()->GetSymbols();
+  auto it = slist.begin();
+
+  while (it != slist.end()) {
+    if ((*it)->GetSymbolType() == stLocal && (*it)->GetDataType()->IsArray()) {
+      const CArrayType *typ =
+          dynamic_cast<const CArrayType *>((*it)->GetDataType());
+      int ndim = typ->GetNDim();
+      int offset = (*it)->GetOffset();
+
+      EmitInstruction("movl", Imm(ndim) + ", " + to_string(size) + "(%ebp)",
+                      "local array '" + (*it)->GetName() +
+                          "': " + to_string(ndim) + " dimensions");
+
+      for (int i = 0; typ != NULL;) {
+        size += 4;
+        i++;
+        EmitInstruction(
+            "movl", Imm(typ->GetNElem()) + ", " + to_string(size) + "(%ebp)",
+            "  dimension " + to_string(i) + ": " + to_string(typ->GetNElem()) +
+                " elements");
+        typ = dynamic_cast<const CArrayType *>(typ->GetInnerType());
+      }
+    }
+    it++;
+  }
 }
 
 void CBackendx86::EmitCodeBlock(CCodeBlock *cb) {
