@@ -112,10 +112,14 @@ void CBackendx86::EmitCode(void) {
        << _ind << ".extern WriteLn" << endl
        << endl;
 
-  // TODO
-  // forall s in subscopes do
-  //   EmitScope(s)
-  // EmitScope(program)
+  // For all subscopes, emit codes for the scope
+  CModule *module = _m;
+  for (CScope *subscopes : module->GetSubscopes()) {
+    EmitScope(subscopes);
+  }
+
+  // then emit actual main function
+  EmitScope(module);
 
   _out << _ind << "# end of text section" << endl
        << _ind << "#-----------------------------------------" << endl
