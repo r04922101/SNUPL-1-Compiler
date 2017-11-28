@@ -205,11 +205,10 @@ void CBackendx86::EmitGlobalData(CScope *scope) {
 
   size_t size = 0;
 
-  for (size_t i = 0; i < slist.size(); i++) {
-    CSymbol *s = slist[i];
-    const CType *t = s->GetDataType();
+  for (auto i : slist) {
+    const CType *t = i->GetDataType();
 
-    if (s->GetSymbolType() == stGlobal) {
+    if (i->GetSymbolType() == stGlobal) {
       if (!header) {
         _out << _ind << "# scope: " << scope->GetName() << endl;
         header = true;
@@ -222,11 +221,11 @@ void CBackendx86::EmitGlobalData(CScope *scope) {
              << ".align " << right << setw(3) << t->GetAlign() << endl;
       }
 
-      _out << left << setw(36) << s->GetName() + ":"
+      _out << left << setw(36) << i->GetName() + ":"
            << "# " << t << endl;
 
       if (t->IsArray()) {
-        const CArrayType *a = dynamic_cast<const CArrayType *>(t);
+        auto a = dynamic_cast<const CArrayType *>(t);
         assert(a != NULL);
         int dim = a->GetNDim();
 
@@ -243,9 +242,9 @@ void CBackendx86::EmitGlobalData(CScope *scope) {
         }
       }
 
-      const CDataInitializer *di = s->GetData();
+      const CDataInitializer *di = i->GetData();
       if (di != NULL) {
-        const CDataInitString *sdi = dynamic_cast<const CDataInitString *>(di);
+        auto sdi = dynamic_cast<const CDataInitString *>(di);
         assert(sdi != NULL); // only support string data initializers for now
 
         _out << left << setw(4) << " "
@@ -261,7 +260,8 @@ void CBackendx86::EmitGlobalData(CScope *scope) {
 
   _out << endl;
 
-  // emit globals in subscopes (necessary if we support static local variables)
+  // emit globals in subscopes (necessary if we support static local
+  // variables)
   vector<CScope *>::const_iterator sit = scope->GetSubscopes().begin();
   while (sit != scope->GetSubscopes().end())
     EmitGlobalData(*sit++);
