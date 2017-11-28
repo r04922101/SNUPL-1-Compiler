@@ -51,8 +51,9 @@ bool CBackend::Emit(CModule *m) {
   assert(m != NULL);
   _m = m;
 
-  if (!_out.good())
+  if (!_out.good()) {
     return false;
+  }
 
   bool res = true;
 
@@ -114,7 +115,7 @@ void CBackendx86::EmitCode(void) {
 
   // For all subscopes, emit codes for the scope
   CModule *module = _m;
-  for (CScope *subscopes : module->GetSubscopes()) {
+  for (auto subscopes : module->GetSubscopes()) {
     EmitScope(subscopes);
   }
 
@@ -262,9 +263,9 @@ void CBackendx86::EmitGlobalData(CScope *scope) {
 
   // emit globals in subscopes (necessary if we support static local
   // variables)
-  vector<CScope *>::const_iterator sit = scope->GetSubscopes().begin();
-  while (sit != scope->GetSubscopes().end())
-    EmitGlobalData(*sit++);
+  for (auto sit : scope->GetSubscopes()) {
+    EmitGlobalData(sit);
+  }
 }
 
 void CBackendx86::EmitLocalData(CScope *scope) {
