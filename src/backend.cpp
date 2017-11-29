@@ -383,46 +383,102 @@ void CBackendx86::EmitInstruction(CTacInstr *i) {
     }
     Store(i->GetDest(), 'a');
     break;
-  case opAssign:
-    // memory operations
-    // dst = src1
-    break;
+  case opAssign: {
+    auto src1 = i->GetSrc(1);
+    auto name = dynamic_cast<CTacName *>(src1);
+    if (name != NULL) {
+      auto type = name->GetSymbol()->GetDataType();
+      auto dest = static_cast<CTacName *>(i->GetDest());
+      if (type->IsPointer() || type->IsArray()) {
+        EmitInstruction("cld", "", "array assign");
 
-  // pointer operations
-  // dst = &src1
-  // TODO
-  case opAddress:
-    break;
+        if (name->GetSymbol()->GetDataType()->IsArray()) {
+          EmitInstruction("leal", Operand(name) + ", %esi", "ptr of src array");
+        } else {
+          Load(name, "%esi", "ptr of src array");
+        }
+        if (dest->GetSymbol()->GetDataType()->IsArray()) {
+          EmitInstruction("leal", Operand(dest) + ", %edi", "ptr of dst array");
+        } else {
+          Load(dest, "%edi", "ptr of dst array");
+        }
 
+        auto type = name->GetSymbol()->GetDataType();
+        if (type->IsPointer()) {
+          type = static_cast<const CPointerType *>(type)->GetBaseType();
+        }
+
+        int csize = type->GetSize();
+        EmitInstruction("movl", "$" + to_string(csize) + ", %ecx",
+                        "size of array = " + to_string(csize));
+        EmitInstruction("rep", "movsb");
+        break;
+      }
+    }
+    Load(i->GetSrc(1), "%eax", cmt.str());
+    Store(i->GetDest(), 'a');
+    break;
+  }
+  case opAddress: {
+    // pointer operations
+    // dst = &src1
+    EmitInstruction("leal", Operand(i->GetSrc(1)) + ", %eax", cmt.str());
+    Store(i->GetDest(), 'a');
+    break;
+  }
+  case opDeref: {
     // dst = *src1
-  case opDeref:
     // opDeref not generated for now
     EmitInstruction("# opDeref", "not implemented", cmt.str());
     break;
-
+  }
+  case opGoto: {
     // unconditional branching
     // goto dst
-    // TODO
-  case opGoto:
+    auto tgt = static_cast<const CTacLabel *>(i->GetDest());
+    EmitInstruction("jmp", Label(tgt), cmt.str());
     break;
-
-    // conditional branching
-    // if src1 relOp src2 then goto dst
-    // TODO
+  }
   case opEqual:
   case opNotEqual:
   case opLessThan:
   case opLessEqual:
   case opBiggerThan:
-  case opBiggerEqual:
+  case opBiggerEqual: {
+    // conditional branching
+    // if src1 relOp src2 then goto dst
+    Load(i->GetSrc(1), "%eax", cmt.str());
+    Load(i->GetSrc(2), "%ebx");
+    EmitInstruction("cmpl", "%ebx, %eax");
+    inst << "j" << Condition(op);
+    auto tgt = dynamic_cast<const CTacLabel *>(i->GetDest());
+    EmitInstruction(inst.str(), Label(tgt));
     break;
+  }
 
     // function call-related operations
-    // TODO
+  case opCall: {
+    auto func = static_cast<const CTacName *>(i->GetSrc(1));
+    auto proc = static_cast<const CSymProc *>(func->GetSymbol());
+    EmitInstruction("call", proc->GetName(), cmt.str());
+    if (i->GetDest() != NULL) {
+      Store(i->GetDest(), 'a');
+    }
+    EmitInstruction("addl", Imm(proc->GetNParams() * 4) + ", %esp");
+    break;
+  }
 
-  case opCall:
   case opReturn:
+    if (i->GetSrc(1)) {
+      Load(i->GetSrc(1), "%eax", cmt.str());
+      EmitInstruction("jmp", Label("exit"));
+    } else {
+      EmitInstruction("jmp", Label("exit"), cmt.str());
+    }
+    break;
   case opParam:
+    Load(i->GetSrc(1), "%eax", cmt.str());
+    EmitInstruction("pushl", "%eax");
     break;
 
   // special
