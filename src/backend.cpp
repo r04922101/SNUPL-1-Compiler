@@ -343,31 +343,49 @@ void CBackendx86::EmitInstruction(CTacInstr *i) {
   ostringstream cmt;
   string mnm;
   cmt << i;
+  ostringstream inst;
 
   EOperation op = i->GetOperation();
 
   switch (op) {
-    // binary operators
-    // dst = src1 op src2
-    // TODO
   case opAdd:
   case opSub:
   case opMul:
   case opDiv:
   case opAnd:
   case opOr:
+    // binary operators
+    // dst = src1 op src2
+
+    Load(i->GetSrc(1), "%eax", cmt.str());
+    Load(i->GetSrc(2), "%ebx");
+    if (op == opDiv) {
+      EmitInstruction("cdq");
+    }
+    if (op == opMul || op == opDiv) {
+      inst << "i" << op << "l";
+      EmitInstruction(inst.str(), "%ebx");
+    } else {
+      inst << op << "l";
+      EmitInstruction(inst.str(), "%ebx, %eax");
+    }
+    Store(i->GetDest(), 'a');
     break;
-    // unary operators
-    // dst = op src1
-    // TODO
   case opNeg:
   case opPos:
   case opNot:
+    Load(i->GetSrc(1), "%eax", cmt.str());
+    if (op == opNeg) {
+      inst << op << "l";
+      EmitInstruction(inst.str(), "%eax");
+    } else if (op == opNot) {
+      EmitInstruction("xorl", Imm(1) + ", %eax");
+    }
+    Store(i->GetDest(), 'a');
     break;
-  // memory operations
-  // dst = src1
-  // TODO
   case opAssign:
+    // memory operations
+    // dst = src1
     break;
 
   // pointer operations
