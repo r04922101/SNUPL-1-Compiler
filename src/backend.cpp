@@ -559,15 +559,43 @@ string CBackendx86::Condition(EOperation cond) const {
   }
 }
 
+// compute the size for operand t of type CTacName
 int CBackendx86::OperandSize(CTac *t) const {
   int size = 4;
 
-  // TODO
-  // compute the size for operand t of type CTacName
-  // Hint: you need to take special care of references (incl. references to
-  // pointers!)
-  //       and arrays. Compare your output to that of the reference
-  //       implementation if you are not sure.
+  const CType *type = NULL;
+  if (dynamic_cast<CTacName *>(t) != NULL) {
+    if (dynamic_cast<CTacReference *>(t) != NULL) {
+      // if it is CTacReference, unwrap the pointer in case the type is pointer
+      const CSymbol *deref_symbol =
+          dynamic_cast<CTacReference *>(t)->GetDerefSymbol();
+      if (deref_symbol->GetDataType()->IsPointer()) {
+        auto pointer_type =
+            dynamic_cast<const CPointerType *>(deref_symbol->GetDataType());
+        type = dynamic_cast<const CArrayType *>(pointer_type->GetBaseType());
+      } else {
+        type = dynamic_cast<const CArrayType *>(deref_symbol->GetDataType());
+      }
+      assert(type != NULL);
+      // also if it is array, get the inner type until it is not array
+      while (type->IsArray()) {
+        type = dynamic_cast<const CArrayType *>(type)->GetInnerType();
+      }
+    } else {
+      // if is is CTacName but not reference, get the symbol's data type
+      const CSymbol *symbol = dynamic_cast<CTacName *>(t)->GetSymbol();
+      type = symbol->GetDataType();
+    }
+  }
+  CTypeManager *tm = CTypeManager::Get();
+  // if it is boolean or character, return 1
+  // else, return 4
+  if (type != NULL &&
+      (type->Match(tm->GetBool()) || type->Match(tm->GetChar()))) {
+    size = 1;
+  } else {
+    size = 4;
+  }
 
   return size;
 }
