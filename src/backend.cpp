@@ -479,12 +479,39 @@ void CBackendx86::Store(CTac *dst, char src_base, string comment) {
   EmitInstruction(mnm + mod, src + ", " + Operand(dst), comment);
 }
 
+// return a string representing op
 string CBackendx86::Operand(const CTac *op) {
   string operand;
 
-  // TODO
-  // return a string representing op
-  // hint: take special care of references (op of type CTacReference)
+  auto constant = dynamic_cast<const CTacConst *>(op);
+  if (constant != NULL) {
+    return Imm(constant->GetValue());
+  }
+
+  auto reference = dynamic_cast<const CTacReference *>(op);
+  if (reference != NULL) {
+    const CSymbol *symbol = reference->GetSymbol();
+    EmitInstruction("movl", to_string(symbol->GetOffset()) + "(" +
+                                symbol->GetBaseRegister() + "), %edi");
+    return "(%edi)";
+  }
+
+  auto name = dynamic_cast<const CTacName *>(op);
+  if (name != NULL) {
+    const CSymbol *symbol = name->GetSymbol();
+    switch (symbol->GetSymbolType()) {
+    case stGlobal:
+    case stProcedure:
+      return symbol->GetName();
+    case stLocal:
+    case stParam:
+      return to_string(symbol->GetOffset()) + "(" + symbol->GetBaseRegister() +
+             ")";
+    default:
+      break;
+    }
+  }
+  return "";
 
   return operand;
 }
