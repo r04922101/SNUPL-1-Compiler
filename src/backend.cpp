@@ -550,19 +550,35 @@ size_t CBackendx86::ComputeStackOffsets(CSymtab *symtab, int param_ofs,
   assert(symtab != NULL);
   vector<CSymbol *> slist = symtab->GetSymbols();
 
-  // TODO
-  // foreach local symbol l in slist do
-  //   compute aligned offset on stack and store in symbol l
-  //   set base register to %ebp
-  //
-  // foreach parameter p in slist do
-  //   compute offset on stack and store in symbol p
-  //   set base register to %ebp
-  //
-  // align size
-  //
-  // dump stack frame to assembly file
+  for (auto sym : slist) {
+    int size = sym->GetDataType()->GetSize();
+    int align = sym->GetDataType()->GetAlign();
+    sym->SetBaseRegister("%ebp");
 
-  /* return size; */
-  return 0;
+    if (sym->GetSymbolType() == stLocal) {
+      local_ofs -= size;
+      if (local_ofs % align != 0) {
+        local_ofs -= 4 + local_ofs % align;
+      }
+
+      sym->SetOffset(local_ofs);
+      _out << _ind << "#" << right << setw(7) << local_ofs << "(%ebp)"
+           << setw(4) << size << setw(3) << "[ " << left << setw(10)
+           << "$" + sym->GetName() << sym->GetDataType() << " %ebp" << local_ofs
+           << " ]" << endl;
+    } else if (sym->GetSymbolType() == stParam) {
+      auto param = dynamic_cast<CSymParam *>(sym);
+      sym->SetOffset(param_ofs + 4 * param->GetIndex());
+
+      _out << _ind << "#" << right << setw(7) << sym->GetOffset() << "(%ebp)"
+           << setw(4) << size << setw(3) << "[ " << left << setw(10)
+           << "%" + sym->GetName() << sym->GetDataType() << " %ebp+"
+           << sym->GetOffset() << " ]" << endl;
+    }
+  }
+  // Globals and Procedures are ignored
+  if (0 != local_ofs % 4) {
+    local_ofs -= 4 + local_ofs % 4;
+  }
+  return -12 - local_ofs;
 }
