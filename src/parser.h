@@ -93,7 +93,7 @@ private:
 
   void variable_declaration(CAstScope *s);
 
-  CAstType *type(bool open);
+  CAstType *type();
 
   /// @name methods for recursive-descent parsing
   /// @{
