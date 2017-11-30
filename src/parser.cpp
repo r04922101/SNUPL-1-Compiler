@@ -120,7 +120,6 @@ bool CParser::Consume(EToken type, CToken *token) {
 void CParser::InitSymbolTable(CSymtab *s) {
   CTypeManager *tm = CTypeManager::Get();
 
-  // TODO: add predefined functions here
   CSymProc *dim = new CSymProc("DIM", tm->GetInt());
   dim->AddParam(new CSymParam(0, "array", tm->GetVoidPtr()));
   dim->AddParam(new CSymParam(1, "dim", tm->GetInt()));
@@ -133,8 +132,8 @@ void CParser::InitSymbolTable(CSymtab *s) {
   // function ReadInt(): integer;read and return an integer value from stdin.
   // –procedure WriteInt(i: integer);print integer value ‘i’ to stdout.
   // –procedure WriteChar(c: char);write a single character to stdout.
-  // –procedure WriteStr(string: char[]);write string ‘string’ to stdout. No newline is added.
-  // –procedure WriteLn();write a newline sequence to stdout.
+  // –procedure WriteStr(string: char[]);write string ‘string’ to stdout. No
+  // newline is added. –procedure WriteLn();write a newline sequence to stdout.
   CSymProc *read_int = new CSymProc("ReadInt", tm->GetInt());
   s->AddSymbol(read_int);
 
@@ -148,7 +147,8 @@ void CParser::InitSymbolTable(CSymtab *s) {
 
   CSymProc *write_str = new CSymProc("WriteStr", tm->GetNull());
   write_str->AddParam(new CSymParam(
-      0, "string", tm->GetPointer((tm->GetArray(CArrayType::OPEN, tm->GetChar())))));
+      0, "string",
+      tm->GetPointer((tm->GetArray(CArrayType::OPEN, tm->GetChar())))));
   s->AddSymbol(write_str);
 
   CSymProc *write_ln = new CSymProc("WriteLn", tm->GetNull());
@@ -208,13 +208,16 @@ CAstType *CParser::type() {
 
   CTypeManager *tm = CTypeManager::Get();
   const CType *returnType = NULL;
-  if (baseTypeToken.GetValue() == "char") returnType = tm->GetChar();
-  else if (baseTypeToken.GetValue() == "boolean") returnType = tm->GetBool();
-  else if (baseTypeToken.GetValue() == "integer") returnType = tm->GetInt();
+  if (baseTypeToken.GetValue() == "char")
+    returnType = tm->GetChar();
+  else if (baseTypeToken.GetValue() == "boolean")
+    returnType = tm->GetBool();
+  else if (baseTypeToken.GetValue() == "integer")
+    returnType = tm->GetInt();
 
   vector<int> dimension;
   // if not tLBrak, then base type
-  while(_scanner->Peek().GetType() == tLBrak) {
+  while (_scanner->Peek().GetType() == tLBrak) {
     Consume(tLBrak);
     if (_scanner->Peek().GetType() == tNumber) {
       CAstConstant *num = number();
@@ -222,13 +225,12 @@ CAstType *CParser::type() {
         SetError(num->GetToken(), "array dimension must >= zero or open");
       }
       dimension.push_back(num->GetValue());
-    } 
-    else {
+    } else {
       dimension.push_back((int)CArrayType::OPEN);
     }
     Consume(tRBrak);
   }
-  for(int i = dimension.size() - 1; i >= 0; i--) {
+  for (int i = dimension.size() - 1; i >= 0; i--) {
     returnType = tm->GetArray(dimension[i], returnType);
   }
   return new CAstType(baseTypeToken, returnType);
@@ -241,23 +243,23 @@ CAstDesignator *CParser::qualident(CAstScope *s) {
   CToken t;
   Consume(tIdent, &t);
   // default global
-  const CSymbol *symbol = s -> GetSymbolTable() -> FindSymbol(t.GetValue());
-  if(symbol == NULL) SetError(t, "undefined identifier");
+  const CSymbol *symbol = s->GetSymbolTable()->FindSymbol(t.GetValue());
+  if (symbol == NULL)
+    SetError(t, "undefined identifier");
   EToken tt = _scanner->Peek().GetType();
   vector<CAstExpression *> indices;
-  if(tt == tLBrak){
-    while(tt = tLBrak){
+  if (tt == tLBrak) {
+    while (tt = tLBrak) {
       Consume(tLBrak);
       indices.push_back(expression(s));
       Consume(tRBrak);
     }
     CAstArrayDesignator *array = new CAstArrayDesignator(t, symbol);
-    for(int i = 0; i < indices.size(); i++){
+    for (int i = 0; i < indices.size(); i++) {
       array->AddIndex(indices[i]);
     }
     array->IndicesComplete();
-  }
-  else{
+  } else {
     return new CAstDesignator(t, symbol);
   }
 }
@@ -394,15 +396,13 @@ CAstStatement *CParser::statSequence(CAstScope *s) {
                            ->FindSymbol(_scanner->Peek().GetValue(), sGlobal)
                            ->GetSymbolType() == stProcedure) {
           st = new CAstStatCall(_scanner->Peek(), subroutineCall(s));
-        } 
-        else if(s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(),
+        } else if (s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(),
                                                    sGlobal) != NULL &&
                    s->GetSymbolTable()
                            ->FindSymbol(_scanner->Peek().GetValue(), sGlobal)
-                           ->GetSymbolType() != stProcedure){
+                           ->GetSymbolType() != stProcedure) {
           st = assignment(s);
-        }
-        else {
+        } else {
           SetError(_scanner->Peek(), "undefined identifier");
         }
         break;
@@ -848,8 +848,7 @@ CAstProcedure *CParser::subroutineDecl(CAstScope *s) {
   // procedure
   else
     symbol = new CSymProc(pt.GetValue(), CTypeManager::Get()->GetNull());
-  CAstProcedure *subroutine =
-      new CAstProcedure(pt, pt.GetValue(), s, symbol);
+  CAstProcedure *subroutine = new CAstProcedure(pt, pt.GetValue(), s, symbol);
   int index = 0;
 
   while (variable_count.size() > 0) {
