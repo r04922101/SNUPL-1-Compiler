@@ -381,31 +381,23 @@ CAstStatement *CParser::statSequence(CAstScope *s) {
       case tReturn:
         st = returnStatement(s);
         break;
-      case tIdent:
-        if (s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(),
-                                            sLocal) != NULL &&
-            s->GetSymbolTable()
-                    ->FindSymbol(_scanner->Peek().GetValue(), sLocal)
-                    ->GetSymbolType() != stProcedure) {
+      case tIdent:{
+        const CSymbol *local = s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(), sLocal);
+        const CSymbol *global = s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue());
+        if (local != NULL && local->GetSymbolType() != stProcedure) {
           st = assignment(s);
-        } else if (s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(),
-                                                   sGlobal) != NULL &&
-                   s->GetSymbolTable()
-                           ->FindSymbol(_scanner->Peek().GetValue(), sGlobal)
-                           ->GetSymbolType() == stProcedure) {
+        } 
+        else if (global != NULL && global->GetSymbolType() == stProcedure) {
           st = new CAstStatCall(_scanner->Peek(), subroutineCall(s));
         } 
-        else if(s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(),
-                                                   sGlobal) != NULL &&
-                   s->GetSymbolTable()
-                           ->FindSymbol(_scanner->Peek().GetValue(), sGlobal)
-                           ->GetSymbolType() != stProcedure){
+        else if(global != NULL && global->GetSymbolType() != stProcedure){
           st = assignment(s);
         }
         else {
           SetError(_scanner->Peek(), "undefined identifier");
         }
         break;
+      }
       default:
         SetError(_scanner->Peek(), "statement expected.");
         break;
@@ -424,10 +416,8 @@ CAstStatement *CParser::statSequence(CAstScope *s) {
       } else {
         break;
       }
-
     } while (!_abort);
   }
-
   return head;
 }
 
