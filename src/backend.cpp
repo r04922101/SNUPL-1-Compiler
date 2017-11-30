@@ -328,8 +328,6 @@ void CBackendx86::EmitLocalData(CScope *scope) {
 }
 
 void CBackendx86::EmitCodeBlock(CCodeBlock *cb) {
-  assert(cb != NULL);
-
   for (auto it : cb->GetInstr()) {
     EmitInstruction(it);
   }
@@ -496,7 +494,7 @@ void CBackendx86::EmitInstruction(CTacInstr *i) {
 void CBackendx86::EmitInstruction(string mnemonic, string args,
                                   string comment) {
   _out << left << _ind << setw(7) << mnemonic << " " << setw(23) << args;
-  if (comment != "")
+  if (!comment.empty())
     _out << " # " << comment;
   _out << endl;
 }
