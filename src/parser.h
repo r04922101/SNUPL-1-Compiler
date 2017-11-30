@@ -99,26 +99,26 @@ private:
   /// @{
 
   CAstModule *module(void);
-  CAstStatement *statSequence(CAstScope *s, CAstModule *m);
+  CAstStatement *statSequence(CAstScope *s);
 
-  CAstStatIf *ifStatement(CAstScope *s, CAstModule *m);
-  CAstStatAssign *assignment(CAstScope *s, CAstModule *m);
-  CAstStatWhile *whileStatement(CAstScope *s, CAstModule *m);
-  CAstStatReturn *returnStatement(CAstScope *s, CAstModule *m);
+  CAstStatIf *ifStatement(CAstScope *s);
+  CAstStatAssign *assignment(CAstScope *s);
+  CAstStatWhile *whileStatement(CAstScope *s);
+  CAstStatReturn *returnStatement(CAstScope *s);
 
-  CAstExpression *expression(CAstScope *s, CAstModule *m);
-  CAstExpression *simpleexpr(CAstScope *s, CAstModule *m);
-  CAstExpression *term(CAstScope *s, CAstModule *m);
-  CAstExpression *factor(CAstScope *s, CAstModule *m);
+  CAstExpression *expression(CAstScope *s);
+  CAstExpression *simpleexpr(CAstScope *s);
+  CAstExpression *term(CAstScope *s);
+  CAstExpression *factor(CAstScope *s);
 
   CAstStringConstant *stringConstant(CAstScope *s);
   CAstConstant *number(void);
   CAstConstant *constchar(void);
   CAstConstant *constbool(void);
 
-  CAstDesignator *qualident(CAstScope *s, CAstModule *m);
-  CAstProcedure *subroutineDecl(CAstScope *parent, CAstModule *m);
-  CAstFunctionCall *subroutineCall(CAstScope *s, CAstModule *m);
+  CAstDesignator *qualident(CAstScope *s);
+  CAstProcedure *subroutineDecl(CAstScope *parent);
+  CAstFunctionCall *subroutineCall(CAstScope *s);
   /// @}
 
   CScanner *_scanner;  ///< CScanner instance

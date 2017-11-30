@@ -234,146 +234,31 @@ CAstType *CParser::type() {
   return new CAstType(baseTypeToken, returnType);
 }
 
-CAstDesignator *CParser::qualident(CAstScope *s, CAstModule *m) {
+CAstDesignator *CParser::qualident(CAstScope *s) {
   //
   // qualident ::= ident { "[" expression "]" }.
   //
-  CAstExpression *head = NULL;
   CToken t;
-
   Consume(tIdent, &t);
+  // default global
+  const CSymbol *symbol = s -> GetSymbolTable() -> FindSymbol(t.GetValue());
+  if(symbol == NULL) SetError(t, "undefined identifier");
   EToken tt = _scanner->Peek().GetType();
-  if (tt == tLBrak) {
-    if (s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) != NULL) {
-      if (!s->GetSymbolTable()
-               ->FindSymbol(t.GetValue(), sLocal)
-               ->GetDataType()
-               ->IsArray() &&
-          !s->GetSymbolTable()
-               ->FindSymbol(t.GetValue(), sLocal)
-               ->GetDataType()
-               ->IsPointer()) {
-        SetError(_scanner->Peek(), "not an array");
-      }
-      if (s->GetSymbolTable()
-              ->FindSymbol(t.GetValue(), sLocal)
-              ->GetDataType()
-              ->IsPointer() &&
-          !dynamic_cast<const CPointerType *>(
-               s->GetSymbolTable()
-                   ->FindSymbol(t.GetValue(), sLocal)
-                   ->GetDataType())
-               ->GetBaseType()
-               ->IsArray()) {
-        SetError(_scanner->Peek(), "not an array");
-      }
-      // local variable
-      int dimension;
-      if (s->GetSymbolTable()
-              ->FindSymbol(t.GetValue(), sLocal)
-              ->GetDataType()
-              ->IsPointer()) {
-        dimension = dynamic_cast<const CArrayType *>(
-                        dynamic_cast<const CPointerType *>(
-                            s->GetSymbolTable()
-                                ->FindSymbol(t.GetValue(), sLocal)
-                                ->GetDataType())
-                            ->GetBaseType())
-                        ->GetNDim();
-      } else {
-        dimension = dynamic_cast<const CArrayType *>(
-                        s->GetSymbolTable()
-                            ->FindSymbol(t.GetValue(), sLocal)
-                            ->GetDataType())
-                        ->GetNDim();
-      }
-      CAstArrayDesignator *cad = new CAstArrayDesignator(
-          t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
-      while (tt == tLBrak) {
-        Consume(tLBrak);
-        head = expression(s, m);
-        cad->AddIndex(head);
-        Consume(tRBrak);
-        dimension--;
-        tt = _scanner->Peek().GetType();
-      }
-      if (dimension != 0)
-        SetError(t, "dimension not matched");
-      return cad;
-    } else if (m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) != NULL) {
-      if (!m->GetSymbolTable()
-               ->FindSymbol(t.GetValue(), sGlobal)
-               ->GetDataType()
-               ->IsArray() &&
-          !m->GetSymbolTable()
-               ->FindSymbol(t.GetValue(), sGlobal)
-               ->GetDataType()
-               ->IsPointer()) {
-        SetError(_scanner->Peek(), "not an array");
-      }
-      if (m->GetSymbolTable()
-              ->FindSymbol(t.GetValue(), sGlobal)
-              ->GetDataType()
-              ->IsPointer() &&
-          !dynamic_cast<const CPointerType *>(
-               m->GetSymbolTable()
-                   ->FindSymbol(t.GetValue(), sGlobal)
-                   ->GetDataType())
-               ->GetBaseType()
-               ->IsArray()) {
-        SetError(_scanner->Peek(), "not an array");
-      }
-      // global variable
-      int dimension;
-      if (m->GetSymbolTable()
-              ->FindSymbol(t.GetValue(), sGlobal)
-              ->GetDataType()
-              ->IsPointer()) {
-        dimension = dynamic_cast<const CArrayType *>(
-                        dynamic_cast<const CPointerType *>(
-                            m->GetSymbolTable()
-                                ->FindSymbol(t.GetValue(), sGlobal)
-                                ->GetDataType())
-                            ->GetBaseType())
-                        ->GetNDim();
-      } else {
-        dimension = dynamic_cast<const CArrayType *>(
-                        m->GetSymbolTable()
-                            ->FindSymbol(t.GetValue(), sGlobal)
-                            ->GetDataType())
-                        ->GetNDim();
-      }
-      CAstArrayDesignator *cad = new CAstArrayDesignator(
-          t, m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal));
-      while (tt == tLBrak) {
-        Consume(tLBrak);
-        head = expression(s, m);
-        cad->AddIndex(head);
-        Consume(tRBrak);
-        dimension--;
-        tt = _scanner->Peek().GetType();
-      }
-      if (dimension != 0)
-        SetError(t, "dimension not matched");
-      return cad;
-    } else
-      SetError(_scanner->Peek(), "undefined identifier");
-  } else {
-    if (s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) != NULL) {
-      if(s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal) -> GetDataType() -> IsArray()){
-        return new CAstArrayDesignator(
-          t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
-      }
-      return new CAstDesignator(
-          t, s->GetSymbolTable()->FindSymbol(t.GetValue(), sLocal));
-    } else if (m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal) != NULL) {
-      if(m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal))
-        return new CAstArrayDesignator(
-          t, m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal));
-      return new CAstDesignator(
-          t, m->GetSymbolTable()->FindSymbol(t.GetValue(), sGlobal));
-    } else
-      SetError(_scanner->Peek(), "undefined identifier");
+  vector<CAstExpression *> indices;
+  if(tt == tLBrak){
+    while(tt = tLBrak){
+      Consume(tLBrak);
+      indices.push_back(expression(s));
+      Consume(tRBrak);
+    }
+    CAstArrayDesignator *array = new CAstArrayDesignator(t, symbol);
+    for(int i = 0; i < indices.size(); i++){
+      array->AddIndex(indices[i]);
+    }
+    array->IndicesComplete();
+  }
+  else{
+    return new CAstDesignator(t, symbol);
   }
 }
 
@@ -440,11 +325,11 @@ CAstModule *CParser::module(void) {
   // subroutine declaration
   while (_scanner->Peek().GetType() == tProcedure ||
          _scanner->Peek().GetType() == tFunction)
-    subroutineDecl(m, m);
+    subroutineDecl(m);
 
   Consume(tBegin);
   CAstStatement *statseq = NULL;
-  statseq = statSequence(m, m);
+  statseq = statSequence(m);
   m->SetStatementSequence(statseq);
 
   CToken check_module_name;
@@ -459,17 +344,17 @@ CAstModule *CParser::module(void) {
   return m;
 }
 
-CAstStatReturn *CParser::returnStatement(CAstScope *s, CAstModule *m) {
+CAstStatReturn *CParser::returnStatement(CAstScope *s) {
   CToken t;
 
   Consume(tReturn, &t);
 
-  CAstExpression *rhs = expression(s, m);
+  CAstExpression *rhs = expression(s);
 
   return new CAstStatReturn(t, s, rhs);
 }
 
-CAstStatement *CParser::statSequence(CAstScope *s, CAstModule *m) {
+CAstStatement *CParser::statSequence(CAstScope *s) {
   // statSequence ::= [ statement { ";" statement } ].
   // statement ::= assignment | subroutineCall | ifStatement |
   // whileStatement | returnStatement.
@@ -488,13 +373,13 @@ CAstStatement *CParser::statSequence(CAstScope *s, CAstModule *m) {
       switch (tt) {
       // statement ::= assignment
       case tIf:
-        st = ifStatement(s, m);
+        st = ifStatement(s);
         break;
       case tWhile:
-        st = whileStatement(s, m);
+        st = whileStatement(s);
         break;
       case tReturn:
-        st = returnStatement(s, m);
+        st = returnStatement(s);
         break;
       case tIdent:
         if (s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(),
@@ -502,20 +387,20 @@ CAstStatement *CParser::statSequence(CAstScope *s, CAstModule *m) {
             s->GetSymbolTable()
                     ->FindSymbol(_scanner->Peek().GetValue(), sLocal)
                     ->GetSymbolType() != stProcedure) {
-          st = assignment(s, m);
-        } else if (m->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(),
+          st = assignment(s);
+        } else if (s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(),
                                                    sGlobal) != NULL &&
-                   m->GetSymbolTable()
+                   s->GetSymbolTable()
                            ->FindSymbol(_scanner->Peek().GetValue(), sGlobal)
                            ->GetSymbolType() == stProcedure) {
-          st = new CAstStatCall(_scanner->Peek(), subroutineCall(s, m));
+          st = new CAstStatCall(_scanner->Peek(), subroutineCall(s));
         } 
-        else if(m->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(),
+        else if(s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(),
                                                    sGlobal) != NULL &&
-                   m->GetSymbolTable()
+                   s->GetSymbolTable()
                            ->FindSymbol(_scanner->Peek().GetValue(), sGlobal)
                            ->GetSymbolType() != stProcedure){
-          st = assignment(s, m);
+          st = assignment(s);
         }
         else {
           SetError(_scanner->Peek(), "undefined identifier");
@@ -546,20 +431,20 @@ CAstStatement *CParser::statSequence(CAstScope *s, CAstModule *m) {
   return head;
 }
 
-CAstStatAssign *CParser::assignment(CAstScope *s, CAstModule *m) {
+CAstStatAssign *CParser::assignment(CAstScope *s) {
   //
   // assignment ::= number ":=" expression.
   //
   CToken t;
 
-  CAstDesignator *lhs = qualident(s, m);
+  CAstDesignator *lhs = qualident(s);
   Consume(tAssign, &t);
 
-  CAstExpression *rhs = expression(s, m);
+  CAstExpression *rhs = expression(s);
   return new CAstStatAssign(t, lhs, rhs);
 }
 
-CAstExpression *CParser::expression(CAstScope *s, CAstModule *m) {
+CAstExpression *CParser::expression(CAstScope *s) {
   //
   // expression ::= simpleexpr [ relOp simpleexpr ].
   //
@@ -567,11 +452,11 @@ CAstExpression *CParser::expression(CAstScope *s, CAstModule *m) {
   EOperation relop = opEqual;
   CAstExpression *left = NULL, *right = NULL;
 
-  left = simpleexpr(s, m);
+  left = simpleexpr(s);
 
   if (_scanner->Peek().GetType() == tRelOp) {
     Consume(tRelOp, &t);
-    right = simpleexpr(s, m);
+    right = simpleexpr(s);
 
     if (t.GetValue() == "=")
       relop = opEqual;
@@ -596,7 +481,7 @@ CAstExpression *CParser::expression(CAstScope *s, CAstModule *m) {
   }
 }
 
-CAstExpression *CParser::simpleexpr(CAstScope *s, CAstModule *m) {
+CAstExpression *CParser::simpleexpr(CAstScope *s) {
   //
   // simpleexpr ::= ["+"|"-"] term { termOp term }.
   //
@@ -610,7 +495,7 @@ CAstExpression *CParser::simpleexpr(CAstScope *s, CAstModule *m) {
     else
       unaryOperation = opNeg;
   }
-  n = term(s, m);
+  n = term(s);
   if (unaryToken.GetValue() != "") {
     n = new CAstUnaryOp(unaryToken, unaryOperation, n);
   }
@@ -629,25 +514,25 @@ CAstExpression *CParser::simpleexpr(CAstScope *s, CAstModule *m) {
 
     if (_scanner->Peek().GetType() == tPlusMinus) {
       Consume(tPlusMinus, &t);
-      r = term(s, m);
+      r = term(s);
       n = new CAstBinaryOp(t, t.GetValue() == "+" ? opAdd : opSub, l, r);
 
     } else if (_scanner->Peek().GetType() == tOr) {
       Consume(tOr, &t);
-      r = term(s, m);
+      r = term(s);
       n = new CAstBinaryOp(t, opOr, l, r);
     }
   }
   return n;
 }
 
-CAstExpression *CParser::term(CAstScope *s, CAstModule *m) {
+CAstExpression *CParser::term(CAstScope *s) {
   //
   // term ::= factor { ("*"|"/") factor }.
   //
   CAstExpression *n = NULL;
 
-  n = factor(s, m);
+  n = factor(s);
 
   EToken tt = _scanner->Peek().GetType();
 
@@ -659,7 +544,7 @@ CAstExpression *CParser::term(CAstScope *s, CAstModule *m) {
     else
       Consume(tAnd, &t);
 
-    r = factor(s, m);
+    r = factor(s);
 
     if (tt == tMulDiv)
       n = new CAstBinaryOp(t, t.GetValue() == "*" ? opMul : opDiv, l, r);
@@ -672,7 +557,7 @@ CAstExpression *CParser::term(CAstScope *s, CAstModule *m) {
   return n;
 }
 
-CAstExpression *CParser::factor(CAstScope *s, CAstModule *m) {
+CAstExpression *CParser::factor(CAstScope *s) {
   //
   // factor ::= number | "(" expression ")"
   //
@@ -692,7 +577,7 @@ CAstExpression *CParser::factor(CAstScope *s, CAstModule *m) {
   // factor ::= "(" expression ")"
   case tLParens:
     Consume(tLParens);
-    n = expression(s, m);
+    n = expression(s);
     Consume(tRParens);
     break;
   case tBoolConst:
@@ -711,23 +596,23 @@ CAstExpression *CParser::factor(CAstScope *s, CAstModule *m) {
         s->GetSymbolTable()
                 ->FindSymbol(_scanner->Peek().GetValue(), sLocal)
                 ->GetSymbolType() != stProcedure) {
-      n = qualident(s, m);
+      n = qualident(s);
     }
     // global variable
-    else if (m->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(),
+    else if (s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(),
                                              sGlobal) != NULL &&
-             m->GetSymbolTable()
+             s->GetSymbolTable()
                      ->FindSymbol(_scanner->Peek().GetValue(), sGlobal)
                      ->GetSymbolType() == stGlobal) {
-      n = qualident(s, m);
+      n = qualident(s);
     }
     // subroutine call
-    else if (m->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(),
+    else if (s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(),
                                              sGlobal) != NULL &&
-             m->GetSymbolTable()
+             s->GetSymbolTable()
                      ->FindSymbol(_scanner->Peek().GetValue(), sGlobal)
                      ->GetSymbolType() == stProcedure) {
-      n = subroutineCall(s, m);
+      n = subroutineCall(s);
     } else {
       SetError(_scanner->Peek(), "undefined identifier");
     }
@@ -735,7 +620,7 @@ CAstExpression *CParser::factor(CAstScope *s, CAstModule *m) {
   case tNot:
     // tNot
     Consume(tNot, &t);
-    n = factor(s, m);
+    n = factor(s);
     n = new CAstUnaryOp(t, opNot, n);
     break;
   default:
@@ -827,7 +712,7 @@ CAstConstant *CParser::constbool(void) {
   return new CAstConstant(t, CTypeManager::Get()->GetBool(), v);
 }
 
-CAstStatWhile *CParser::whileStatement(CAstScope *s, CAstModule *m) {
+CAstStatWhile *CParser::whileStatement(CAstScope *s) {
   //
   // whileStatement ::= "while" "(" expression ")" "do" statSequence "end"
   //
@@ -840,16 +725,16 @@ CAstStatWhile *CParser::whileStatement(CAstScope *s, CAstModule *m) {
 
   Consume(tWhile, &t);
   Consume(tLParens);
-  cond = expression(s, m);
+  cond = expression(s);
   Consume(tRParens);
   Consume(tDo);
-  body = statSequence(s, m);
+  body = statSequence(s);
   Consume(tEnd);
 
   return new CAstStatWhile(t, cond, body);
 }
 
-CAstStatIf *CParser::ifStatement(CAstScope *s, CAstModule *m) {
+CAstStatIf *CParser::ifStatement(CAstScope *s) {
   //
   // ifStatement ::= "if" "(" expression ")" "then" statSequence ["else"]
   // statSequence "end"
@@ -865,23 +750,23 @@ CAstStatIf *CParser::ifStatement(CAstScope *s, CAstModule *m) {
 
   Consume(tIf, &t);
   Consume(tLParens);
-  cond = expression(s, m);
+  cond = expression(s);
   Consume(tRParens);
   Consume(tThen);
-  ifbody = statSequence(s, m);
+  ifbody = statSequence(s);
 
   EToken tt = _scanner->Peek().GetType();
 
   if (tt == tElse) {
     Consume(tElse);
-    elsebody = statSequence(s, m);
+    elsebody = statSequence(s);
   }
 
   Consume(tEnd);
   return new CAstStatIf(t, cond, ifbody, elsebody);
 }
 
-CAstProcedure *CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
+CAstProcedure *CParser::subroutineDecl(CAstScope *s) {
   // procedureDecl = "procedure" ident [ formalParam ] ";".
   // functionDecl = "function" ident [ formalParam ] ":" type ";".
   CToken pt;
@@ -892,8 +777,8 @@ CAstProcedure *CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
   Consume(tIdent, &pt);
 
   // check duplicate subroutine declaration
-  if (m->GetSymbolTable()->FindSymbol(pt.GetValue(), sGlobal) != NULL &&
-      m->GetSymbolTable()
+  if (s->GetSymbolTable()->FindSymbol(pt.GetValue(), sGlobal) != NULL &&
+      s->GetSymbolTable()
               ->FindSymbol(pt.GetValue(), sGlobal)
               ->GetSymbolType() == stProcedure) {
 
@@ -964,7 +849,7 @@ CAstProcedure *CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
   else
     symbol = new CSymProc(pt.GetValue(), CTypeManager::Get()->GetNull());
   CAstProcedure *subroutine =
-      new CAstProcedure(pt, pt.GetValue(), parent, symbol);
+      new CAstProcedure(pt, pt.GetValue(), s, symbol);
   int index = 0;
 
   while (variable_count.size() > 0) {
@@ -992,7 +877,7 @@ CAstProcedure *CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
     types.erase(types.begin());
   }
   Consume(tSemicolon);
-  parent->GetSymbolTable()->AddSymbol(symbol);
+  s->GetSymbolTable()->AddSymbol(symbol);
 
   if (_scanner->Peek().GetType() == tVarDecl) {
     variable_declaration(subroutine);
@@ -1002,7 +887,7 @@ CAstProcedure *CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
 
   // statSequence
   CAstStatement *statseq = NULL;
-  statseq = statSequence(subroutine, m);
+  statseq = statSequence(subroutine);
   subroutine->SetStatementSequence(statseq);
 
   Consume(tEnd);
@@ -1016,12 +901,12 @@ CAstProcedure *CParser::subroutineDecl(CAstScope *parent, CAstModule *m) {
   return subroutine;
 }
 
-CAstFunctionCall *CParser::subroutineCall(CAstScope *s, CAstModule *m) {
+CAstFunctionCall *CParser::subroutineCall(CAstScope *s) {
   CToken ident;
   Consume(tIdent, &ident);
 
   const CSymProc *symbol = dynamic_cast<const CSymProc *>(
-      m->GetSymbolTable()->FindSymbol(ident.GetValue(), sGlobal));
+      s->GetSymbolTable()->FindSymbol(ident.GetValue(), sGlobal));
   if (symbol == NULL) {
     SetError(ident, "undefined identifier.");
     return NULL;
@@ -1033,10 +918,10 @@ CAstFunctionCall *CParser::subroutineCall(CAstScope *s, CAstModule *m) {
   CAstFunctionCall *functionCall = new CAstFunctionCall(ident, symbol);
 
   if (_scanner->Peek().GetType() != tRParens) {
-    functionCall->AddArg(expression(s, m));
+    functionCall->AddArg(expression(s));
     while (_scanner->Peek().GetType() == tComma) {
       Consume(tComma);
-      functionCall->AddArg(expression(s, m));
+      functionCall->AddArg(expression(s));
     }
   }
   Consume(tRParens);
