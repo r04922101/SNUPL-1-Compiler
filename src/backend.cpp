@@ -330,11 +330,9 @@ void CBackendx86::EmitLocalData(CScope *scope) {
 void CBackendx86::EmitCodeBlock(CCodeBlock *cb) {
   assert(cb != NULL);
 
-  const list<CTacInstr *> &instr = cb->GetInstr();
-  list<CTacInstr *>::const_iterator it = instr.begin();
-
-  while (it != instr.end())
-    EmitInstruction(*it++);
+  for (auto it : cb->GetInstr()) {
+    EmitInstruction(it);
+  }
 }
 
 void CBackendx86::EmitInstruction(CTacInstr *i) {
