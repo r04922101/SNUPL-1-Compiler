@@ -130,11 +130,11 @@ void CParser::InitSymbolTable(CSymtab *s) {
   dofs->AddParam(new CSymParam(0, "array", tm->GetVoidPtr()));
   s->AddSymbol(dofs);
 
-  // function ReadInt(): integerread and return an integer value from stdin.
+  // function ReadInt(): integer;read and return an integer value from stdin.
   // –procedure WriteInt(i: integer);print integer value ‘i’ to stdout.
   // –procedure WriteChar(c: char);write a single character to stdout.
-  // –procedure WriteStr(string: char[]);write string ‘string’ to stdout. No
-  // newline is added. –procedure WriteLn()write a newline sequence to stdout.
+  // –procedure WriteStr(string: char[]);write string ‘string’ to stdout. No newline is added.
+  // –procedure WriteLn();write a newline sequence to stdout.
   CSymProc *read_int = new CSymProc("ReadInt", tm->GetInt());
   s->AddSymbol(read_int);
 
@@ -148,15 +148,43 @@ void CParser::InitSymbolTable(CSymtab *s) {
 
   CSymProc *write_str = new CSymProc("WriteStr", tm->GetNull());
   write_str->AddParam(new CSymParam(
-      0, "string", tm->GetPointer((tm->GetArray(-1, tm->GetChar())))));
+      0, "string", tm->GetPointer((tm->GetArray(OPEN, tm->GetChar())))));
   s->AddSymbol(write_str);
 
   CSymProc *write_ln = new CSymProc("WriteLn", tm->GetNull());
   s->AddSymbol(write_ln);
 
   // ‘main’ is used to denote the module body in the generated assembly file
-  CSymbol *main_keyword = new CSymbol("main", stReserved, tm->GetNull());
-  s->AddSymbol(main_keyword);
+  CSymbol *keyword = new CSymbol("main", stReserved, tm->GetNull());
+  s->AddSymbol(keyword);
+  keyword = new CSymbol("begin", stReserved, tm->GetNull());
+  s->AddSymbol(keyword);
+  keyword = new CSymbol("end", stReserved, tm->GetNull());
+  s->AddSymbol(keyword);
+  keyword = new CSymbol("boolean", stReserved, tm->GetNull());
+  s->AddSymbol(keyword);
+  keyword = new CSymbol("char", stReserved, tm->GetNull());
+  s->AddSymbol(keyword);
+  keyword = new CSymbol("integer", stReserved, tm->GetNull());
+  s->AddSymbol(keyword);
+  keyword = new CSymbol("if", stReserved, tm->GetNull());
+  s->AddSymbol(keyword);
+  keyword = new CSymbol("then", stReserved, tm->GetNull());
+  s->AddSymbol(keyword);
+  keyword = new CSymbol("else", stReserved, tm->GetNull());
+  s->AddSymbol(keyword);
+  keyword = new CSymbol("while", stReserved, tm->GetNull());
+  s->AddSymbol(keyword);
+  keyword = new CSymbol("do", stReserved, tm->GetNull());
+  s->AddSymbol(keyword);
+  keyword = new CSymbol("return", stReserved, tm->GetNull());
+  s->AddSymbol(keyword);
+  keyword = new CSymbol("var", stReserved, tm->GetNull());
+  s->AddSymbol(keyword);
+  keyword = new CSymbol("procedure", stReserved, tm->GetNull());
+  s->AddSymbol(keyword);
+  keyword = new CSymbol("function", stReserved, tm->GetNull());
+  s->AddSymbol(keyword);
 }
 
 CAstType *CParser::type(bool open) {
