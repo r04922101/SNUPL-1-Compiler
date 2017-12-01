@@ -91,7 +91,9 @@ private:
   /// @name methods for recursive-descent parsing
   /// @{
 
-  void variable_declaration(CAstScope *s);
+  void varDeclaration(CAstScope *s);
+  void varDeclSequence(CAstScope *s);
+  void varDecl(CAstScope *s);
 
   CAstType *type();
 
@@ -118,6 +120,9 @@ private:
 
   CAstDesignator *qualident(CAstScope *s);
   CAstProcedure *subroutineDecl(CAstScope *parent);
+  CAstProcedure *procedureDecl(CAstScope *s);
+  CAstProcedure *functionDecl(CAstScope *s);
+  CAstProcedure *subroutineBody(CAstProcedure *subroutine);
   CAstFunctionCall *subroutineCall(CAstScope *s);
   /// @}
 
