@@ -1215,7 +1215,22 @@ bool CAstSpecialOp::TypeCheck(CToken *t, string *msg) const {
   }
 }
 
-const CType *CAstSpecialOp::GetType(void) const { return NULL; }
+const CType *CAstSpecialOp::GetType(void) const {
+  CTypeManager* tm = CTypeManager::Get();
+  switch (GetOperation()) {
+    case opAddress:
+      return tm->GetPointer(_operand->GetType());
+    case opDeref:
+      const CPointerType* pointer;
+      pointer = dynamic_cast<const CPointerType*>(_operand->GetType());
+      if (pointer == NULL) return NULL;
+      return pointer->GetBaseType();
+    case opCast:
+      return _type; // change the type to specific type
+    default:
+      return NULL;
+  }
+}
 
 ostream &CAstSpecialOp::print(ostream &out, int indent) const {
   string ind(indent, ' ');

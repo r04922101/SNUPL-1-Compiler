@@ -260,6 +260,7 @@ CAstDesignator *CParser::qualident(CAstScope *s) {
       array->AddIndex(indices[i]);
     }
     array->IndicesComplete();
+    return array;
   } else {
     return new CAstDesignator(t, symbol);
   }
@@ -309,7 +310,15 @@ void CParser::varDecl(CAstScope *s, bool param){
       SetError(variables.front(), "duplicate variable declaration '" +
                                       variables.front().GetValue() + "'");
     if(param){
-      CSymParam *symParam = new CSymParam(index++, variables.front().GetValue(), variable_type->GetType());
+      const CPointerType *pointer = NULL;
+      CSymParam *symParam = NULL;
+      if(variable_type->GetType()->IsArray()){
+        pointer = CTypeManager::Get()->GetPointer(variable_type->GetType());
+        symParam = new CSymParam(index++, variables.front().GetValue(), pointer);
+      }
+      else{
+        symParam = new CSymParam(index++, variables.front().GetValue(), variable_type->GetType());
+      }
       s->GetSymbolTable()->AddSymbol(symParam);
     }
     else{
@@ -403,15 +412,16 @@ CAstStatement *CParser::statSequence(CAstScope *s) {
       case tIdent:{
         const CSymbol *local = s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(), sLocal);
         const CSymbol *global = s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue());
-        if (local != NULL) {
+        if (local != NULL && local->GetSymbolType() != stProcedure) {
           st = assignment(s);
-        } 
-        else if (global != NULL && global->GetSymbolType() == stProcedure) {
-          st = new CAstStatCall(_scanner->Peek(), subroutineCall(s));
         } 
         else if(global != NULL && global->GetSymbolType() != stProcedure){
           st = assignment(s);
-        } else {
+        }
+        else if (global != NULL && global->GetSymbolType() == stProcedure) {
+          st = new CAstStatCall(_scanner->Peek(), subroutineCall(s));
+        }  
+        else {
           SetError(_scanner->Peek(), "undefined identifier");
         }
         break;
@@ -593,11 +603,11 @@ CAstExpression *CParser::factor(CAstScope *s) {
     // local variable
     const CSymbol *local = s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue(), sLocal);
     const CSymbol *global = s->GetSymbolTable()->FindSymbol(_scanner->Peek().GetValue());
-    if (local != NULL) {
+    if (local != NULL && local->GetSymbolType() != stProcedure) {
       n = qualident(s);
     }
     // global variable
-    else if (global != NULL && global->GetSymbolType() == stGlobal) {
+    else if (global != NULL && global->GetSymbolType() != stProcedure) {
       n = qualident(s);
     }
     // subroutine call
@@ -784,13 +794,15 @@ CAstProcedure *CParser::procedureDecl(CAstScope *s){
   Consume(tProcedure);
   CToken ident;
   Consume(tIdent, &ident);
-  Consume(tLParens);
   CSymProc *symproc = new CSymProc(ident.GetValue(), CTypeManager::Get()->GetNull());
   CAstProcedure *procedure = new CAstProcedure(ident, ident.GetValue(), s, symproc);
-  if(_scanner->Peek().GetType() == tIdent){
-    varDeclSequence(procedure, true);
+  if(_scanner->Peek().GetType() == tLParens){
+    Consume(tLParens);
+    if(_scanner->Peek().GetType() == tIdent){
+      varDeclSequence(procedure, true);
+    }
+    Consume(tRParens);
   }
-  Consume(tRParens);
   Consume(tSemicolon);
   vector<CSymbol *> symbols = procedure->GetSymbolTable()->GetSymbols();
   for(int i = 0; i < symbols.size(); i++){
@@ -807,13 +819,15 @@ CAstProcedure *CParser::functionDecl(CAstScope *s) {
   Consume(tFunction);
   CToken ident;
   Consume(tIdent, &ident);
-  Consume(tLParens);
   CSymProc *symproc = new CSymProc(ident.GetValue(), type() -> GetType());
   CAstProcedure *function = new CAstProcedure(ident, ident.GetValue(), s, symproc);
-  if(_scanner->Peek().GetType() == tIdent){
-    varDeclSequence(function, true);
+  if(_scanner->Peek().GetType() == tLParens){
+    Consume(tLParens);
+    if(_scanner->Peek().GetType() == tIdent){
+      varDeclSequence(function, true);
+    }
+    Consume(tRParens);
   }
-  Consume(tRParens);
   Consume(tColon);
   CAstType *returnType = type();
   Consume(tSemicolon);
@@ -838,6 +852,7 @@ CAstProcedure *CParser::subroutineBody(CAstProcedure *subroutine){
 }
 
 CAstFunctionCall *CParser::subroutineCall(CAstScope *s) {
+  // subroutineCall = ident "(" [ expression {"," expression} ] ")".
   CToken ident;
   Consume(tIdent, &ident);
 
@@ -854,10 +869,19 @@ CAstFunctionCall *CParser::subroutineCall(CAstScope *s) {
   CAstFunctionCall *functionCall = new CAstFunctionCall(ident, symbol);
 
   if (_scanner->Peek().GetType() != tRParens) {
-    functionCall->AddArg(expression(s));
+    CAstExpression *ex = expression(s);
+    if(ex->GetType()->IsArray()){
+      ex = new CAstSpecialOp(ident, opAddress, ex);
+    }
+    functionCall->AddArg(ex);
+    
     while (_scanner->Peek().GetType() == tComma) {
       Consume(tComma);
-      functionCall->AddArg(expression(s));
+      ex = expression(s);
+      if(ex->GetType()->IsArray()){
+        ex = new CAstSpecialOp(_scanner->Peek(), opAddress, ex);
+      }
+      functionCall->AddArg(ex);
     }
   }
   Consume(tRParens);
