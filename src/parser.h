@@ -91,9 +91,9 @@ private:
   /// @name methods for recursive-descent parsing
   /// @{
 
-  void varDeclaration(CAstScope *s);
-  void varDeclSequence(CAstScope *s);
-  void varDecl(CAstScope *s);
+  void varDeclaration(CAstScope *s, bool param);
+  void varDeclSequence(CAstScope *s, bool param);
+  void varDecl(CAstScope *s, bool param);
 
   CAstType *type();
 

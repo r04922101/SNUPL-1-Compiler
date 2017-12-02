@@ -156,34 +156,34 @@ void CParser::InitSymbolTable(CSymtab *s) {
   // ‘main’ is used to denote the module body in the generated assembly file
   CSymbol *keyword = new CSymbol("main", stReserved, tm->GetNull());
   s->AddSymbol(keyword);
-  keyword = new CSymbol("begin", stReserved, tm->GetNull());
-  s->AddSymbol(keyword);
-  keyword = new CSymbol("end", stReserved, tm->GetNull());
-  s->AddSymbol(keyword);
-  keyword = new CSymbol("boolean", stReserved, tm->GetNull());
-  s->AddSymbol(keyword);
-  keyword = new CSymbol("char", stReserved, tm->GetNull());
-  s->AddSymbol(keyword);
-  keyword = new CSymbol("integer", stReserved, tm->GetNull());
-  s->AddSymbol(keyword);
-  keyword = new CSymbol("if", stReserved, tm->GetNull());
-  s->AddSymbol(keyword);
-  keyword = new CSymbol("then", stReserved, tm->GetNull());
-  s->AddSymbol(keyword);
-  keyword = new CSymbol("else", stReserved, tm->GetNull());
-  s->AddSymbol(keyword);
-  keyword = new CSymbol("while", stReserved, tm->GetNull());
-  s->AddSymbol(keyword);
-  keyword = new CSymbol("do", stReserved, tm->GetNull());
-  s->AddSymbol(keyword);
-  keyword = new CSymbol("return", stReserved, tm->GetNull());
-  s->AddSymbol(keyword);
-  keyword = new CSymbol("var", stReserved, tm->GetNull());
-  s->AddSymbol(keyword);
-  keyword = new CSymbol("procedure", stReserved, tm->GetNull());
-  s->AddSymbol(keyword);
-  keyword = new CSymbol("function", stReserved, tm->GetNull());
-  s->AddSymbol(keyword);
+  // keyword = new CSymbol("begin", stReserved, tm->GetNull());
+  // s->AddSymbol(keyword);
+  // keyword = new CSymbol("end", stReserved, tm->GetNull());
+  // s->AddSymbol(keyword);
+  // keyword = new CSymbol("boolean", stReserved, tm->GetNull());
+  // s->AddSymbol(keyword);
+  // keyword = new CSymbol("char", stReserved, tm->GetNull());
+  // s->AddSymbol(keyword);
+  // keyword = new CSymbol("integer", stReserved, tm->GetNull());
+  // s->AddSymbol(keyword);
+  // keyword = new CSymbol("if", stReserved, tm->GetNull());
+  // s->AddSymbol(keyword);
+  // keyword = new CSymbol("then", stReserved, tm->GetNull());
+  // s->AddSymbol(keyword);
+  // keyword = new CSymbol("else", stReserved, tm->GetNull());
+  // s->AddSymbol(keyword);
+  // keyword = new CSymbol("while", stReserved, tm->GetNull());
+  // s->AddSymbol(keyword);
+  // keyword = new CSymbol("do", stReserved, tm->GetNull());
+  // s->AddSymbol(keyword);
+  // keyword = new CSymbol("return", stReserved, tm->GetNull());
+  // s->AddSymbol(keyword);
+  // keyword = new CSymbol("var", stReserved, tm->GetNull());
+  // s->AddSymbol(keyword);
+  // keyword = new CSymbol("procedure", stReserved, tm->GetNull());
+  // s->AddSymbol(keyword);
+  // keyword = new CSymbol("function", stReserved, tm->GetNull());
+  // s->AddSymbol(keyword);
 }
 
 CAstType *CParser::type() {
@@ -249,10 +249,11 @@ CAstDesignator *CParser::qualident(CAstScope *s) {
   EToken tt = _scanner->Peek().GetType();
   vector<CAstExpression *> indices;
   if (tt == tLBrak) {
-    while (tt = tLBrak) {
+    while (tt == tLBrak) {
       Consume(tLBrak);
       indices.push_back(expression(s));
       Consume(tRBrak);
+      tt = _scanner->Peek().GetType();
     }
     CAstArrayDesignator *array = new CAstArrayDesignator(t, symbol);
     for (int i = 0; i < indices.size(); i++) {
@@ -264,28 +265,30 @@ CAstDesignator *CParser::qualident(CAstScope *s) {
   }
 }
 
-void CParser::varDeclaration(CAstScope *s){
+void CParser::varDeclaration(CAstScope *s, bool param){
   // varDeclaration ::= [ "var" varDeclSequence ";" ].
   if(_scanner->Peek().GetType() == tVarDecl){
     Consume(tVarDecl);
-    varDeclSequence(s);
-    Consume(tSemicolon);
+    varDeclSequence(s, param);
+    // Consume(tSemicolon);
   }
 }
 
-void CParser::varDeclSequence(CAstScope *s) {
+void CParser::varDeclSequence(CAstScope *s, bool param) {
   // varDeclSequence ::= varDecl { ";" varDecl }.
-  while(true) {
-    // at least one var
-    varDecl(s);
-    if(_scanner->Peek().GetType() == tSemicolon)
+  while(true){
+    varDecl(s, param);
+    if(_scanner->Peek().GetType() == tSemicolon){
       Consume(tSemicolon);
+      if(_scanner->Peek().GetType() != tIdent) return;
+    }
     else return;
   }
 }
 
-void CParser::varDecl(CAstScope *s){
+void CParser::varDecl(CAstScope *s, bool param){
   // varDecl ::= ident { "," ident } ":" type.
+  CSymProc *symproc = NULL;
   CToken tmp;
   vector<CToken> variables;
   Consume(tIdent, &tmp);
@@ -298,14 +301,21 @@ void CParser::varDecl(CAstScope *s){
   Consume(tColon);
 
   CAstType *variable_type = type();
+  int index = 0;
   while (variables.size() != 0) {
     // check duplicate variable declaration
     if (s->GetSymbolTable()->FindSymbol(variables.front().GetValue(),
                                         sLocal) != NULL)
       SetError(variables.front(), "duplicate variable declaration '" +
                                       variables.front().GetValue() + "'");
-    s->GetSymbolTable()->AddSymbol(
-        s->CreateVar(variables.front().GetValue(), variable_type->GetType()));
+    if(param){
+      CSymParam *symParam = new CSymParam(index++, variables.front().GetValue(), variable_type->GetType());
+      s->GetSymbolTable()->AddSymbol(symParam);
+    }
+    else{
+      s->GetSymbolTable()->AddSymbol(
+          s->CreateVar(variables.front().GetValue(), variable_type->GetType()));
+    }
     variables.erase(variables.begin());
   }
 }
@@ -328,13 +338,13 @@ CAstModule *CParser::module(void) {
 
   // variable declaration
   if (_scanner->Peek().GetType() == tVarDecl) {
-    varDeclaration(m);
+    varDeclaration(m, false);
   }
 
   // subroutine declaration
   while (_scanner->Peek().GetType() == tProcedure ||
          _scanner->Peek().GetType() == tFunction)
-    subroutineDecl(m);
+    m->GetSymbolTable()->AddSymbol(subroutineDecl(m)->GetSymbol());
 
   Consume(tBegin);
   CAstStatement *statseq = NULL;
@@ -775,13 +785,19 @@ CAstProcedure *CParser::procedureDecl(CAstScope *s){
   CToken ident;
   Consume(tIdent, &ident);
   Consume(tLParens);
+  CSymProc *symproc = new CSymProc(ident.GetValue(), CTypeManager::Get()->GetNull());
+  CAstProcedure *procedure = new CAstProcedure(ident, ident.GetValue(), s, symproc);
   if(_scanner->Peek().GetType() == tIdent){
-    varDeclSequence(s);
+    varDeclSequence(procedure, true);
   }
   Consume(tRParens);
   Consume(tSemicolon);
-  CSymProc *symproc = new CSymProc(ident.GetValue(), CTypeManager::Get()->GetNull());
-  CAstProcedure *procedure = new CAstProcedure(ident, ident.GetValue(), s, symproc);
+  vector<CSymbol *> symbols = procedure->GetSymbolTable()->GetSymbols();
+  for(int i = 0; i < symbols.size(); i++){
+    if(symbols[i]->GetSymbolType() == stParam){
+      symproc->AddParam(dynamic_cast<CSymParam *>(symbols[i]));
+    }
+  }
   return procedure;
 }
 
@@ -792,22 +808,28 @@ CAstProcedure *CParser::functionDecl(CAstScope *s) {
   CToken ident;
   Consume(tIdent, &ident);
   Consume(tLParens);
+  CSymProc *symproc = new CSymProc(ident.GetValue(), type() -> GetType());
+  CAstProcedure *function = new CAstProcedure(ident, ident.GetValue(), s, symproc);
   if(_scanner->Peek().GetType() == tIdent){
-    varDeclSequence(s);
+    varDeclSequence(function, true);
   }
   Consume(tRParens);
   Consume(tColon);
   CAstType *returnType = type();
   Consume(tSemicolon);
-  CSymProc *symproc = new CSymProc(ident.GetValue(), type() -> GetType());
-  CAstProcedure *function = new CAstProcedure(ident, ident.GetValue(), s, symproc);
+  vector<CSymbol *> symbols = function->GetSymbolTable()->GetSymbols();
+  for(int i = 0; i < symbols.size(); i++){
+    if(symbols[i]->GetSymbolType() == stParam){
+      symproc->AddParam(dynamic_cast<CSymParam *>(symbols[i]));
+    }
+  }
   return function;
 }
 
 CAstProcedure *CParser::subroutineBody(CAstProcedure *subroutine){
   // subroutineBody
   // varDeclaration "begin" statSequence "end".
-  varDeclaration(subroutine);
+  varDeclaration(subroutine, false);
   Consume(tBegin);
   CAstStatement *statseq = statSequence(subroutine);
   subroutine->SetStatementSequence(statseq);
