@@ -353,7 +353,7 @@ CAstModule *CParser::module(void) {
   // subroutine declaration
   while (_scanner->Peek().GetType() == tProcedure ||
          _scanner->Peek().GetType() == tFunction)
-    m->GetSymbolTable()->AddSymbol(subroutineDecl(m)->GetSymbol());
+    subroutineDecl(m);
 
   Consume(tBegin);
   CAstStatement *statseq = NULL;
@@ -810,6 +810,7 @@ CAstProcedure *CParser::procedureDecl(CAstScope *s){
       symproc->AddParam(dynamic_cast<CSymParam *>(symbols[i]));
     }
   }
+  s->GetSymbolTable()->AddSymbol(symproc);
   return procedure;
 }
 
@@ -837,6 +838,7 @@ CAstProcedure *CParser::functionDecl(CAstScope *s) {
       symproc->AddParam(dynamic_cast<CSymParam *>(symbols[i]));
     }
   }
+  s->GetSymbolTable()->AddSymbol(symproc);
   return function;
 }
 
