@@ -1216,7 +1216,7 @@ bool CAstSpecialOp::TypeCheck(CToken *t, string *msg) const {
 }
 
 const CType *CAstSpecialOp::GetType(void) const {
-  CTypeManager* tm = CTypeManager::Get();
+  CTypeManager *tm = CTypeManager::Get();
   switch (GetOperation()) {
     case opAddress:
       return tm->GetPointer(_operand->GetType());
