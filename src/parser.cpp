@@ -68,8 +68,8 @@ CAstNode *CParser::Parse(void) {
     if (_module != NULL) {
       CToken t;
       string msg;
-      if (!_module->TypeCheck(&t, &msg))
-        SetError(t, msg);
+      // if (!_module->TypeCheck(&t, &msg))
+      //   SetError(t, msg);
     }
   } catch (...) {
     _module = NULL;
@@ -820,7 +820,7 @@ CAstProcedure *CParser::functionDecl(CAstScope *s) {
   Consume(tFunction);
   CToken ident;
   Consume(tIdent, &ident);
-  CSymProc *symproc = new CSymProc(ident.GetValue(), type() -> GetType());
+  CSymProc *symproc = new CSymProc(ident.GetValue(), CTypeManager::Get()->GetNull());
   CAstProcedure *function = new CAstProcedure(ident, ident.GetValue(), s, symproc);
   if(_scanner->Peek().GetType() == tLParens){
     Consume(tLParens);
@@ -831,6 +831,7 @@ CAstProcedure *CParser::functionDecl(CAstScope *s) {
   }
   Consume(tColon);
   CAstType *returnType = type();
+  symproc->SetDataType(returnType->GetType());
   Consume(tSemicolon);
   vector<CSymbol *> symbols = function->GetSymbolTable()->GetSymbols();
   for(int i = 0; i < symbols.size(); i++){
