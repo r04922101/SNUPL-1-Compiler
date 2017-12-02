@@ -68,8 +68,8 @@ CAstNode *CParser::Parse(void) {
     if (_module != NULL) {
       CToken t;
       string msg;
-      // if (!_module->TypeCheck(&t, &msg))
-      //   SetError(t, msg);
+      if (!_module->TypeCheck(&t, &msg))
+        SetError(t, msg);
     }
   } catch (...) {
     _module = NULL;

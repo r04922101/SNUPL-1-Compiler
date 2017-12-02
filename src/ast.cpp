@@ -1226,7 +1226,7 @@ const CType *CAstSpecialOp::GetType(void) const {
       if (pointer == NULL) return NULL;
       return pointer->GetBaseType();
     case opCast:
-      return _type; // change the type to specific type
+      return _type;
     default:
       return NULL;
   }
@@ -1645,7 +1645,7 @@ CAstExpression *CAstArrayDesignator::GetIndex(int index) const {
 }
 
 bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const {
-  assert(!_done);
+  assert(_done);
   for (int i = 0; i < GetNIndices(); i++) {
     CAstExpression *exp = GetIndex(i);
     if (!exp->TypeCheck(t, msg)) {
