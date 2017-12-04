@@ -186,7 +186,7 @@ void CParser::InitSymbolTable(CSymtab *s) {
   // s->AddSymbol(keyword);
 }
 
-CAstType *CParser::type() {
+CAstType *CParser::type(bool param) {
   // type ::= basetype | type "[" [ number ] "]".
   // basetype ::= "boolean" | "char" | "integer".
   // left recursive, change it to the following
@@ -225,6 +225,9 @@ CAstType *CParser::type() {
       }
       dimension.push_back(num->GetValue());
     } else {
+      if(!param){
+        SetError(_scanner->Peek(), "expected 'tNumber', got 'tRBrak'");
+      }
       dimension.push_back((int)CArrayType::OPEN);
     }
     Consume(tRBrak);
@@ -301,7 +304,7 @@ void CParser::varDecl(CAstScope *s, bool param){
   }
   Consume(tColon);
 
-  CAstType *variable_type = type();
+  CAstType *variable_type = type(param);
   int index = 0;
   while (variables.size() != 0) {
     // check duplicate variable declaration
@@ -830,7 +833,7 @@ CAstProcedure *CParser::functionDecl(CAstScope *s) {
     Consume(tRParens);
   }
   Consume(tColon);
-  CAstType *returnType = type();
+  CAstType *returnType = type(false);
   symproc->SetDataType(returnType->GetType());
   Consume(tSemicolon);
   vector<CSymbol *> symbols = function->GetSymbolTable()->GetSymbols();
