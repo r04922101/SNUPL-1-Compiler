@@ -1522,20 +1522,21 @@ bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const {
     type = dynamic_cast<const CArrayType *>(symbolType);
   }
   if(type == NULL || !type->IsArray()){
-      if (t != NULL) {
-        *t = GetToken();
-      }
-      if (msg != NULL) {
-        *msg = " not an array type";
-      }
+    if (t != NULL) {
+      *t = GetToken();
+    }
+    if (msg != NULL) {
+      *msg = " not an array type";
+    }
+    return false;
   }
   if(type->GetNDim() != GetNIndices()){
-      if (t != NULL) {
-        *t = GetToken();
-      }
-      if (msg != NULL) {
-        *msg = " dimension not matched";
-      }
+    if (t != NULL) {
+      *t = GetToken();
+    }
+    if (msg != NULL) {
+      *msg = " dimension not matched";
+    }
     return false;
   }
   for (int i = 0; i < GetNIndices(); i++) {
