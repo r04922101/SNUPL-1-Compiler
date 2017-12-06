@@ -834,6 +834,9 @@ CAstProcedure *CParser::functionDecl(CAstScope *s) {
   }
   Consume(tColon);
   CAstType *returnType = type(false);
+  if(returnType->GetType()->IsArray() || returnType->GetType()->IsChar()){
+    SetError(ident, "function return type shall be integer or boolean");
+  }
   symproc->SetDataType(returnType->GetType());
   Consume(tSemicolon);
   vector<CSymbol *> symbols = function->GetSymbolTable()->GetSymbols();

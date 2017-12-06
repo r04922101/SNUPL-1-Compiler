@@ -1313,166 +1313,31 @@ bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const {
     CAstExpression *arg = GetArg(i);
     if (!arg->TypeCheck(t, msg)) {
       return false;
-    }
+    }    
     const CType *paramType = symbol->GetParam(i)->GetDataType();
-    const CType *argType;
-    if (paramType->IsPointer() && dynamic_cast<const CPointerType *>(paramType)
-                                      ->GetBaseType()
-                                      ->IsArray()) {
-      CAstArrayDesignator *arg_tmp = dynamic_cast<CAstArrayDesignator *>(arg);
-      if (arg_tmp == NULL) {
-        *msg = " mismatch of argument types";
+    const CType *argType = arg->GetType();
+    if(paramType->IsPointer() && argType->IsPointer()){
+      const CArrayType *paramArray = dynamic_cast<const CArrayType *>(dynamic_cast<const CPointerType *>(paramType)->GetBaseType());
+      const CArrayType *argArray = dynamic_cast<const CArrayType *>(dynamic_cast<const CPointerType *>(argType)->GetBaseType());
+      if(paramArray == NULL || argArray == NULL || !paramArray->Match(argArray)){
+        if (t != NULL) {
+          *t = arg->GetToken();
+        }
+        if (msg != NULL) {
+          *msg = "array type not match";
+        }
         return false;
       }
-      argType = arg_tmp->GetSymbol()->GetDataType();
-    } else {
-      argType = arg->GetType();
     }
-    if (argType == NULL || paramType == NULL) {
-      if (t != NULL) {
-        *t = arg->GetToken();
+		if (!paramType->Match(argType) || argType == NULL) {
+			if (t != NULL) {
+        *t = GetToken();
       }
-      if (msg != NULL) {
-        *msg = " mismatch of argument types";
+			if (msg != NULL) {
+        *msg = "argument type does not match parameter type";
       }
-      return false;
-    } else {
-      if (paramType->IsPointer() &&
-          dynamic_cast<const CPointerType *>(paramType)
-              ->GetBaseType()
-              ->IsArray()) {
-        // array_type: parameter
-        const CArrayType *array_type = dynamic_cast<const CArrayType *>(
-            dynamic_cast<const CPointerType *>(paramType)->GetBaseType());
-        // for string, arbitrary length
-        if (array_type->GetNDim() == 1 && array_type->GetNElem() == -1 &&
-            array_type->GetBaseType()->Match(CTypeManager::Get()->GetChar())) {
-          const CArrayType *arg_array_type;
-          if (argType->IsArray()) {
-            arg_array_type = dynamic_cast<const CArrayType *>(argType);
-            if (arg_array_type->GetNDim() == 1 &&
-                arg_array_type->GetBaseType()->Match(
-                    CTypeManager::Get()->GetChar()))
-              return true;
-            return false;
-          } else if (argType->IsPointer() &&
-                     dynamic_cast<const CPointerType *>(argType)
-                         ->GetBaseType()
-                         ->IsArray()) {
-            arg_array_type = dynamic_cast<const CArrayType *>(
-                dynamic_cast<const CPointerType *>(argType)->GetBaseType());
-            if (arg_array_type->GetNDim() == 1 &&
-                arg_array_type->GetBaseType()->Match(
-                    CTypeManager::Get()->GetChar()))
-              return true;
-            return false;
-          } else {
-            return false;
-          }
-        } else {
-          bool all_open = true;
-          const CArrayType *tmp = dynamic_cast<const CArrayType *>(
-              dynamic_cast<const CPointerType *>(paramType)->GetBaseType());
-          if (tmp->GetNElem() == -1) {
-            while (tmp->GetInnerType()->IsArray()) {
-              tmp = dynamic_cast<const CArrayType *>(tmp->GetInnerType());
-              if (tmp->GetNElem() != -1) {
-                all_open = false;
-                break;
-              }
-            }
-          }
-          if (all_open) {
-            if (argType->IsArray()) {
-              const CArrayType *arg_array_type =
-                  dynamic_cast<const CArrayType *>(argType);
-              if (arg_array_type->GetNDim() == array_type->GetNDim() &&
-                  arg_array_type->GetBaseType()->Match(
-                      array_type->GetBaseType()))
-                return true;
-              return false;
-            } else if (argType->IsPointer() &&
-                       dynamic_cast<const CPointerType *>(argType)
-                           ->GetBaseType()
-                           ->IsArray()) {
-              const CArrayType *arg_array_type =
-                  dynamic_cast<const CArrayType *>(
-                      dynamic_cast<const CPointerType *>(argType)
-                          ->GetBaseType());
-              if (arg_array_type->GetNDim() == array_type->GetNDim() &&
-                  arg_array_type->GetBaseType()->Match(
-                      array_type->GetBaseType()))
-                return true;
-              return false;
-            } else {
-              return false;
-            }
-          } else {
-            bool first;
-            bool others = true;
-            if (argType->IsArray()) {
-              const CArrayType *arg_array_type =
-                  dynamic_cast<const CArrayType *>(argType);
-              if (array_type->GetNDim() == -1)
-                first = true;
-              else
-                first = array_type->GetNElem() == arg_array_type->GetNElem();
-              while (array_type->GetInnerType()->IsArray() &&
-                     arg_array_type->GetInnerType()->IsArray()) {
-
-                array_type = dynamic_cast<const CArrayType *>(
-                    array_type->GetInnerType());
-                arg_array_type = dynamic_cast<const CArrayType *>(
-                    arg_array_type->GetInnerType());
-                others = others &&
-                         array_type->GetNElem() == arg_array_type->GetNElem();
-              }
-              others = others && array_type->GetBaseType() ==
-                                     arg_array_type->GetBaseType();
-              return first && others;
-            } else if (argType->IsPointer() &&
-                       dynamic_cast<const CPointerType *>(argType)
-                           ->GetBaseType()
-                           ->IsArray()) {
-              const CArrayType *arg_array_type =
-                  dynamic_cast<const CArrayType *>(
-                      dynamic_cast<const CPointerType *>(argType)
-                          ->GetBaseType());
-              if (array_type->GetNDim() == -1)
-                first = true;
-              else
-                first = array_type->GetNElem() == arg_array_type->GetNElem();
-              while (array_type->GetInnerType()->IsArray() &&
-                     arg_array_type->GetInnerType()->IsArray()) {
-
-                array_type = dynamic_cast<const CArrayType *>(
-                    array_type->GetInnerType());
-                arg_array_type = dynamic_cast<const CArrayType *>(
-                    arg_array_type->GetInnerType());
-                others = others &&
-                         array_type->GetNElem() == arg_array_type->GetNElem();
-              }
-              others = others && array_type->GetBaseType() ==
-                                     arg_array_type->GetBaseType();
-              return first && others;
-            } else {
-              return false;
-            }
-          }
-        }
-      } else {
-        if (!paramType->Match(arg->GetType())) {
-          if (t != NULL) {
-            *t = arg->GetToken();
-          }
-          if (msg != NULL) {
-            *msg = " mismatch of argument types";
-          }
-          return false;
-        }
-        return true;
-      }
-    }
+			return false;
+		}
   }
   return true;
 }
@@ -1646,6 +1511,33 @@ CAstExpression *CAstArrayDesignator::GetIndex(int index) const {
 
 bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const {
   assert(_done);
+  // get type is array or pointer
+  // check dimension
+  const CType *symbolType = GetSymbol()->GetDataType();
+  const CArrayType *type = NULL;
+  if(symbolType->IsPointer()) {
+    type = dynamic_cast<const CArrayType *>(dynamic_cast<const CPointerType *>(symbolType)->GetBaseType());
+  }
+  else{
+    type = dynamic_cast<const CArrayType *>(symbolType);
+  }
+  if(type == NULL || !type->IsArray()){
+      if (t != NULL) {
+        *t = GetToken();
+      }
+      if (msg != NULL) {
+        *msg = " not an array type";
+      }
+  }
+  if(type->GetNDim() != GetNIndices()){
+      if (t != NULL) {
+        *t = GetToken();
+      }
+      if (msg != NULL) {
+        *msg = " dimension not matched";
+      }
+    return false;
+  }
   for (int i = 0; i < GetNIndices(); i++) {
     CAstExpression *exp = GetIndex(i);
     if (!exp->TypeCheck(t, msg)) {
@@ -1667,19 +1559,13 @@ bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const {
 
 const CType *CAstArrayDesignator::GetType() const {
   const CType *t = GetSymbol()->GetDataType();
-
   while (t->IsPointer())
     t = dynamic_cast<const CPointerType *>(t)->GetBaseType();
-  if (t->IsArray())
+  if (t->IsArray()){
     return dynamic_cast<const CArrayType *>(t)->GetBaseType();
-  else if (t->IsPointer()) {
-    t = dynamic_cast<const CPointerType *>(t)->GetBaseType();
-    if (t->IsArray())
-      return dynamic_cast<const CArrayType *>(t)->GetBaseType();
-    else
-      return t;
-  } else
-    return t;
+  }else{
+    return NULL;
+  }
 }
 
 ostream &CAstArrayDesignator::print(ostream &out, int indent) const {
