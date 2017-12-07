@@ -1003,9 +1003,9 @@ CTacAddr *CAstBinaryOp::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
       break;
     }
     default: {
-      CTacAddr *lhs = _left->ToTac(cb);
-      CTacAddr *rhs = _right->ToTac(cb);
-      cb->AddInstr(new CTacInstr(operation, ltrue, lhs, rhs));
+      CTacAddr *operand1 = _left->ToTac(cb);
+      CTacAddr *operand2 = _right->ToTac(cb);
+      cb->AddInstr(new CTacInstr(operation, ltrue, operand1, operand2));
       cb->AddInstr(new CTacInstr(opGoto, lfalse));
       break;
     }
@@ -1131,9 +1131,9 @@ CTacAddr *CAstUnaryOp::ToTac(CCodeBlock *cb) {
       return result;
     }
     case opNot: {
-      CTacLabel* ltrue = cb -> CreateLabel();
-      CTacLabel* lfalse = cb -> CreateLabel();
-      CTacLabel* next = cb -> CreateLabel();
+      CTacLabel *ltrue = cb -> CreateLabel();
+      CTacLabel *lfalse = cb -> CreateLabel();
+      CTacLabel *next = cb -> CreateLabel();
       ToTac(cb, ltrue, lfalse);
 
       CTacTemp *result = cb -> CreateTemp(CTypeManager::Get() -> GetBool());
@@ -1150,6 +1150,7 @@ CTacAddr *CAstUnaryOp::ToTac(CCodeBlock *cb) {
 
 CTacAddr *CAstUnaryOp::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                              CTacLabel *lfalse) {
+  // for opNot
   _operand->ToTac(cb, lfalse, ltrue);
 	return NULL;
 }
@@ -1475,9 +1476,10 @@ CTacAddr *CAstDesignator::ToTac(CCodeBlock *cb) {
 
 CTacAddr *CAstDesignator::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                                 CTacLabel *lfalse) {
-  cb->AddInstr(new CTacInstr(opEqual, ltrue, ToTac(cb), new CTacConst(1)));
+  CTacAddr *target = ToTac(cb);
+  cb->AddInstr(new CTacInstr(opEqual, ltrue, target, new CTacConst(1)));
   cb->AddInstr(new CTacInstr(opGoto, lfalse));
-  return NULL;
+  return target;
 }
 
 //------------------------------------------------------------------------------
@@ -1601,57 +1603,64 @@ void CAstArrayDesignator::toDot(ostream &out, int indent) const {
 }
 
 CTacAddr *CAstArrayDesignator::ToTac(CCodeBlock *cb) {
-  const CType *t = GetSymbol()->GetDataType();
-  CAstExpression *arrayPointer = NULL;
-  CToken token;
+  const CPointerType *pointerType;
+	const CArrayType *arrayType;
+	CAstExpression *arrayPointer;
+  CToken token = GetToken();
+  CTypeManager *tm = CTypeManager::Get();
 
-  arrayPointer = new CAstArrayDesignator(token, GetSymbol());
-  while (t->IsPointer())
-    t = dynamic_cast<const CPointerType *>(t)->GetBaseType();
+  // wrap array, no need to get baseType of array, use astDesignator
+	if (GetSymbol()->GetDataType()->IsPointer()) {
+		pointerType = dynamic_cast<const CPointerType *>(GetSymbol()->GetDataType());
+    arrayType = dynamic_cast<const CArrayType *>(pointerType->GetBaseType());
+    arrayPointer = new CAstDesignator(token, GetSymbol());
+	} 
+  else {
+    arrayType = dynamic_cast<const CArrayType *>(GetSymbol()->GetDataType());
+    arrayPointer = new CAstSpecialOp(token, opAddress, new CAstDesignator(token, GetSymbol()));
+  }
+	int baseTypeSize = arrayType->GetBaseType()->GetSize();
 
-  const CArrayType *array = dynamic_cast<const CArrayType *>(t);
-
-  int size = array->GetBaseType()->GetSize();
-
-  CAstExpression *offset;
-  const CSymProc *dim = dynamic_cast<const CSymProc *>(
-      cb->GetOwner()->GetSymbolTable()->FindSymbol("DIM"));
-
-  for (int i = 0; i < _idx.size(); i++) {
-    if (i == 0)
-      offset = _idx[i];
-    else
-      offset = new CAstBinaryOp(token, opAdd, offset, _idx[i]);
-
-    if (i == _idx.size() - 1)
-      offset = new CAstBinaryOp(
-          token, opMul, offset,
-          new CAstConstant(token, CTypeManager::Get()->GetInt(), size));
+  // function DIM(array: pointer to array; dim: integer): integer;
+  // returns the size of the 'dim'-th array dimension of 'array'.
+	CAstExpression *offset;
+	const CSymProc *dim = dynamic_cast<const CSymProc *>(cb->GetOwner()->GetSymbolTable()->FindSymbol("DIM"));
+	for (int i = 0; i < GetNIndices(); i++) {
+		if (i == 0) {
+			offset = GetIndex(i);
+		}
     else {
-      CAstFunctionCall *dimCall = new CAstFunctionCall(token, dim);
-      dimCall->AddArg(arrayPointer);
-      dimCall->AddArg(
-          new CAstConstant(token, CTypeManager::Get()->GetInt(), i));
-      offset = new CAstBinaryOp(token, opMul, offset, dimCall);
-    }
+			offset = new CAstBinaryOp(token, opAdd, offset, GetIndex(i));
+		}
+		if (i == GetNIndices() - 1) {
+			offset = new CAstBinaryOp(token, opMul, offset, new CAstConstant(token, tm->GetInt(), baseTypeSize));
+		}
+    else {
+			CAstFunctionCall *dimCall = new CAstFunctionCall(token, dim);
+			dimCall->AddArg(arrayPointer);
+			dimCall->AddArg(new CAstConstant(token, tm->GetInt(), i + 2));
+			offset = new CAstBinaryOp(token, opMul, offset, dimCall);
+		}
   }
 
-  const CSymProc *dofs = dynamic_cast<const CSymProc *>(
-      cb->GetOwner()->GetSymbolTable()->FindSymbol("DOFS"));
-  CAstFunctionCall *dofsCall = new CAstFunctionCall(token, dofs);
+  // Function DOFS(array: pointer to array): integer;
+  // returns the number of bytes from the starting address of the array to the first data element.
+	const CSymProc *dofs = dynamic_cast<const CSymProc *>(cb->GetOwner()->GetSymbolTable()->FindSymbol("DOFS"));
+	CAstFunctionCall *dofsCall = new CAstFunctionCall(token, dofs);
   dofsCall->AddArg(arrayPointer);
-  CAstExpression *address = new CAstBinaryOp(token, opAdd, offset, dofsCall);
-  address = new CAstBinaryOp(token, opAdd, arrayPointer, address);
-
-  return dynamic_cast<CTacReference *>(address->ToTac(cb));
+	CAstBinaryOp *address = new CAstBinaryOp(token, opAdd, offset, dofsCall);
+	address = new CAstBinaryOp(token, opAdd, arrayPointer, address);
+  
+  CTacName *result = dynamic_cast<CTacName *>(address->ToTac(cb));
+	return new CTacReference(result->GetSymbol(), GetSymbol());
 }
 
 CTacAddr *CAstArrayDesignator::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                                      CTacLabel *lfalse) {
-  CTacAddr *temp = ToTac(cb);
-  cb->AddInstr(new CTacInstr(opEqual, ltrue, temp, new CTacConst(1)));
-  cb->AddInstr(new CTacInstr(opGoto, lfalse));
-  return temp;
+	CTacAddr *target = ToTac(cb);
+	cb->AddInstr(new CTacInstr(opEqual, ltrue, target, new CTacConst(1)));
+	cb->AddInstr(new CTacInstr(opGoto, lfalse));
+	return target;
 }
 
 //------------------------------------------------------------------------------
@@ -1757,8 +1766,7 @@ string CAstConstant::dotAttr(void) const {
 }
 
 CTacAddr *CAstConstant::ToTac(CCodeBlock *cb) {
-  _addr = new CTacConst(GetValue());
-  return _addr;
+  return  new CTacConst(GetValue());
 }
 
 CTacAddr *CAstConstant::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
@@ -1766,7 +1774,7 @@ CTacAddr *CAstConstant::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
   CTacAddr *value = new CTacConst(GetValue());
   cb->AddInstr(new CTacInstr(opEqual, ltrue, value, new CTacConst(1)));
   cb->AddInstr(new CTacInstr(opGoto, lfalse));
-  return NULL;
+  return value;
 }
 
 //------------------------------------------------------------------------------
