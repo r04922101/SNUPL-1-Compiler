@@ -641,7 +641,6 @@ void CAstStatIf::toDot(ostream &out, int indent) const {
 CTacAddr *CAstStatIf::ToTac(CCodeBlock *cb, CTacLabel *next) {
   CTacLabel *ltrue = cb->CreateLabel("if_true");
   CTacLabel *lfalse = cb->CreateLabel("if_false");
-  CTacLabel *end = cb->CreateLabel();
   // boolean expression condition
   _cond->ToTac(cb, ltrue, lfalse);
 
@@ -654,7 +653,7 @@ CTacAddr *CAstStatIf::ToTac(CCodeBlock *cb, CTacLabel *next) {
     cb->AddInstr(nextInIf);
     ifStatSequence = ifStatSequence->GetNext();
   }
-  cb->AddInstr(new CTacInstr(opGoto, end));
+  cb->AddInstr(new CTacInstr(opGoto, next));
 
   cb->AddInstr(lfalse);
   // statSequence
@@ -665,7 +664,6 @@ CTacAddr *CAstStatIf::ToTac(CCodeBlock *cb, CTacLabel *next) {
     cb->AddInstr(nextInElse);
     elseStatSequence = elseStatSequence->GetNext();
   }
-  cb->AddInstr(end);
   cb->AddInstr(new CTacInstr(opGoto, next));
 
   return NULL;
@@ -755,10 +753,9 @@ void CAstStatWhile::toDot(ostream &out, int indent) const {
     }
   }
 }
-
 CTacAddr *CAstStatWhile::ToTac(CCodeBlock *cb, CTacLabel *next) {
-  CTacLabel *whileLabel = cb -> CreateLabel();
-  CTacLabel *ltrue = cb -> CreateLabel("while_true");
+  CTacLabel *whileLabel = cb -> CreateLabel("while_cond");
+  CTacLabel *ltrue = cb -> CreateLabel("while_body");
   CTacLabel *lfalse = cb -> CreateLabel("while_false");
   cb -> AddInstr(whileLabel);
 
@@ -967,10 +964,21 @@ void CAstBinaryOp::toDot(ostream &out, int indent) const {
 }
 
 CTacAddr *CAstBinaryOp::ToTac(CCodeBlock *cb) {
-  if (CTypeManager::Get()->GetBool()->Match(GetType())) {
-    CTacLabel *ltrue = cb->CreateLabel("if_true");
-    CTacLabel *lfalse = cb->CreateLabel("if_false");
-    return ToTac(cb, ltrue, lfalse);
+  CTypeManager *tm = CTypeManager::Get();
+  if (tm->GetBool()->Match(GetType())) {
+    CTacLabel *ltrue = cb->CreateLabel();
+    CTacLabel *lfalse = cb->CreateLabel();
+    CTacLabel *next = cb->CreateLabel();
+    ToTac(cb, ltrue, lfalse);
+    
+    CTacTemp *target = cb -> CreateTemp(GetType());
+		cb->AddInstr(ltrue);
+		cb->AddInstr(new CTacInstr(opAssign, target, new CTacConst(1)));
+    cb->AddInstr(new CTacInstr(opGoto, next));
+		cb->AddInstr(lfalse);
+    cb->AddInstr(new CTacInstr(opAssign, target, new CTacConst(0)));
+		cb->AddInstr(next);
+		return target;
   } else {
     CTacAddr *operand1 = _left -> ToTac(cb);
     CTacAddr *operand2 = _right -> ToTac(cb);
@@ -982,41 +990,29 @@ CTacAddr *CAstBinaryOp::ToTac(CCodeBlock *cb) {
 
 CTacAddr *CAstBinaryOp::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                               CTacLabel *lfalse) {
-  CTacAddr *result = cb -> CreateTemp(CTypeManager::Get() -> GetBool());
-  CTacLabel *next = cb -> CreateLabel();
-  
   EOperation operation = GetOperation();
   switch (operation) {
-  case opAnd:
-  case opOr: {
-    CTacLabel *shortCircuit = cb->CreateLabel();
-    if (operation == opAnd)
-      _left->ToTac(cb, shortCircuit, lfalse);
-    else
-      _left->ToTac(cb, ltrue, shortCircuit);
+    case opAnd:
+    case opOr: {
+      CTacLabel *shortCircuit = cb->CreateLabel();
+      if (operation == opAnd)
+        _left->ToTac(cb, shortCircuit, lfalse);
+      else
+        _left->ToTac(cb, ltrue, shortCircuit);
 
-    cb->AddInstr(shortCircuit);
-    _right->ToTac(cb, ltrue, lfalse);
-    break;
+      cb->AddInstr(shortCircuit);
+      _right->ToTac(cb, ltrue, lfalse);
+      break;
+    }
+    default: {
+      CTacAddr *lhs = _left->ToTac(cb);
+      CTacAddr *rhs = _right->ToTac(cb);
+      cb->AddInstr(new CTacInstr(operation, ltrue, lhs, rhs));
+      cb->AddInstr(new CTacInstr(opGoto, lfalse));
+      break;
+    }
   }
-  default: {
-    CTacAddr *lhs = _left->ToTac(cb);
-    CTacAddr *rhs = _right->ToTac(cb);
-    cb->AddInstr(new CTacInstr(operation, ltrue, lhs, rhs));
-    cb->AddInstr(new CTacInstr(opGoto, lfalse));
-    break;
-  }
-  }
-
-  cb -> AddInstr(ltrue);
-  cb -> AddInstr(new CTacInstr(opAssign, result, new CTacConst(1)));
-  cb -> AddInstr(new CTacInstr(opGoto, next));
-
-  cb -> AddInstr(lfalse);
-  cb -> AddInstr(new CTacInstr(opAssign, result, new CTacConst(0)));
-  cb -> AddInstr(new CTacInstr(opGoto, next));
-  cb -> AddInstr(next);
-  return result;
+  return NULL;
 }
 
 //------------------------------------------------------------------------------
@@ -1131,32 +1127,33 @@ CTacAddr *CAstUnaryOp::ToTac(CCodeBlock *cb) {
       return operand;
     }
     case opNeg: {
-      CTacTemp *target = cb -> CreateTemp(GetType());
+      CTacTemp *result = cb -> CreateTemp(GetType());
       CTacAddr *operand = _operand -> ToTac(cb);
-      cb -> AddInstr(new CTacInstr(GetOperation(), target, operand));
-      return target;
+      cb -> AddInstr(new CTacInstr(GetOperation(), result, operand));
+      return result;
     }
     case opNot: {
-      CTacLabel *ltrue = cb->CreateLabel();
-      CTacLabel *lfalse = cb->CreateLabel();
-      return ToTac(cb, ltrue, lfalse);
+      CTacLabel* ltrue = cb -> CreateLabel();
+      CTacLabel* lfalse = cb -> CreateLabel();
+      CTacLabel* next = cb -> CreateLabel();
+      ToTac(cb, ltrue, lfalse);
+
+      CTacTemp *result = cb -> CreateTemp(CTypeManager::Get() -> GetBool());
+      cb -> AddInstr(ltrue);
+      cb -> AddInstr(new CTacInstr(opAssign, result, new CTacConst(1)));
+      cb -> AddInstr(new CTacInstr(opGoto, next));
+      cb -> AddInstr(lfalse);
+      cb -> AddInstr(new CTacInstr(opAssign, result, new CTacConst(0)));
+      cb -> AddInstr(next);
+      return result;
     }
   }
 }
 
 CTacAddr *CAstUnaryOp::ToTac(CCodeBlock *cb, CTacLabel *ltrue,
                              CTacLabel *lfalse) {
-  CTacLabel *next = cb -> CreateLabel();
-  CTacAddr *result = cb -> CreateTemp(CTypeManager::Get() -> GetBool());
-  CTacAddr *operand = _operand -> ToTac(cb);
-  cb->AddInstr(ltrue);
-  cb->AddInstr(new CTacInstr(opAssign, result, new CTacConst(1)));
-  cb->AddInstr(new CTacInstr(opGoto, next));
-  cb->AddInstr(lfalse);
-  cb->AddInstr(new CTacInstr(opAssign, result, new CTacConst(0)));
-  cb->AddInstr(new CTacInstr(opGoto, next));
-  cb->AddInstr(next);
-  return result;
+  _operand->ToTac(cb, lfalse, ltrue);
+	return NULL;
 }
 
 //------------------------------------------------------------------------------
