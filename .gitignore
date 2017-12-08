@@ -50,6 +50,7 @@ doc/
 *.mod*
 *.cmd
 .tmp_versions/
+test/*
 modules.order
 Module.symvers
 Mkfile.old
