@@ -307,6 +307,12 @@ void CParser::varDecl(CAstScope *s, bool param) {
 
     CAstType *variable_type = type(param);
     int index = 0;
+    vector<CSymbol *> symbols = s->GetSymbolTable()->GetSymbols();
+    for(int i = 0; i < symbols.size(); i++){
+        if(symbols[i]->GetSymbolType() == stParam){
+            index++;
+        }
+    }
     while (variables.size() != 0) {
         // check duplicate variable declaration
         if (s->GetSymbolTable()->FindSymbol(variables.front().GetValue(), sLocal) !=
@@ -380,9 +386,22 @@ CAstStatReturn *CParser::returnStatement(CAstScope *s) {
     CToken t;
 
     Consume(tReturn, &t);
-
-    CAstExpression *rhs = expression(s);
-
+    CAstExpression *rhs = NULL;
+    // "return" [ expression ].
+    // expression is optional
+    // + | - | qualident | number | boolean | char | string | "(" expression ")" | subroutineCall | "!" factor.
+    EToken peek = _scanner->Peek().GetType();
+    switch(peek){
+        case tPlusMinus:
+        case tIdent:
+        case tNumber:
+        case tBoolConst:
+        case tCharConst:
+        case tString:
+        case tLParens:
+        case tNot:
+            rhs = expression(s);
+    }
     return new CAstStatReturn(t, s, rhs);
 }
 
@@ -813,11 +832,19 @@ CAstProcedure *CParser::procedureDecl(CAstScope *s) {
         Consume(tRParens);
     }
     Consume(tSemicolon);
-    vector<CSymbol *> symbols = procedure->GetSymbolTable()->GetSymbols();
-    for (int i = 0; i < symbols.size(); i++) {
-        if (symbols[i]->GetSymbolType() == stParam) {
-            symproc->AddParam(dynamic_cast<CSymParam *>(symbols[i]));
+    vector<CSymbol *> symbolsVector = procedure->GetSymbolTable()->GetSymbols();
+    CSymParam *symbols[symbolsVector.size()];
+    int count = 0;
+    for (int i = 0; i < symbolsVector.size(); i++) {
+        CSymParam *symParam = NULL;
+        if(symbolsVector[i]->GetSymbolType() == stParam){
+            symParam = dynamic_cast<CSymParam *>(symbolsVector[i]);
+            symbols[symParam->GetIndex()] = symParam;
+            count++;
         }
+    }
+    for(int i = 0; i < count; i++){
+        symproc->AddParam(symbols[i]);
     }
     s->GetSymbolTable()->AddSymbol(symproc);
     return procedure;
@@ -842,16 +869,25 @@ CAstProcedure *CParser::functionDecl(CAstScope *s) {
     }
     Consume(tColon);
     CAstType *returnType = type(false);
-    if (returnType->GetType()->IsArray() || returnType->GetType()->IsChar()) {
-        SetError(ident, "function return type shall be integer or boolean");
+    if (returnType->GetType()->IsArray()) {
+        SetError(ident, "function return type can't be array type");
     }
     symproc->SetDataType(returnType->GetType());
     Consume(tSemicolon);
-    vector<CSymbol *> symbols = function->GetSymbolTable()->GetSymbols();
-    for (int i = 0; i < symbols.size(); i++) {
-        if (symbols[i]->GetSymbolType() == stParam) {
-            symproc->AddParam(dynamic_cast<CSymParam *>(symbols[i]));
+    
+    vector<CSymbol *> symbolsVector = function->GetSymbolTable()->GetSymbols();
+    CSymParam *symbols[symbolsVector.size()];
+    int count = 0;
+    for (int i = 0; i < symbolsVector.size(); i++) {
+        CSymParam *symParam = NULL;
+        if(symbolsVector[i]->GetSymbolType() == stParam){
+            symParam = dynamic_cast<CSymParam *>(symbolsVector[i]);
+            symbols[symParam->GetIndex()] = symParam;
+            count++;
         }
+    }
+    for(int i = 0; i < count; i++){
+        symproc->AddParam(symbols[i]);
     }
     s->GetSymbolTable()->AddSymbol(symproc);
     return function;
