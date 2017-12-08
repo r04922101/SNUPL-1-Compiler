@@ -1372,6 +1372,9 @@ CAstExpression *CAstFunctionCall::GetArg(int index) const {
 
 bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const {
     const CSymProc *symbol = GetSymbol();
+    bool dim = false, dofs = false;
+    if(symbol->GetName() == "DIM") dim = true;
+    else if(symbol->GetName() == "DOFS") dofs = true;
     ostringstream out;
     if (symbol->GetNParams() != GetNArgs()) {
         if (t != NULL) {
@@ -1392,12 +1395,9 @@ bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const {
         const CType *paramType = symbol->GetParam(i)->GetDataType();
         const CType *argType = arg->GetType();
         if (paramType->IsPointer() && argType->IsPointer()) {
-            const CArrayType *paramArray = dynamic_cast<const CArrayType *>(
-                                               dynamic_cast<const CPointerType *>(paramType)->GetBaseType());
-            const CArrayType *argArray = dynamic_cast<const CArrayType *>(
-                                             dynamic_cast<const CPointerType *>(argType)->GetBaseType());
-            if (paramArray == NULL || argArray == NULL ||
-                    !paramArray->Match(argArray)) {
+            paramType = dynamic_cast<const CPointerType *>(paramType)->GetBaseType();
+            argType = dynamic_cast<const CPointerType *>(argType)->GetBaseType();
+            if (paramType == NULL || argType == NULL) {
                 if (t != NULL) {
                     *t = arg->GetToken();
                 }
@@ -1407,12 +1407,25 @@ bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const {
                 return false;
             }
         }
-        if (!paramType->Match(argType) || argType == NULL) {
+        if(i == 0 && (dim || dofs)){
+            // array: ptr -> null
+            if(argType->IsArray()) return true;
+            else{
+                if (t != NULL) {
+                    *t = GetToken();
+                }
+                if (msg != NULL) {
+                    *msg = "argument " + to_string(i) + " type does not match parameter type";
+                }
+                return false;
+            }
+        }
+        if (!paramType->Match(argType)) {
             if (t != NULL) {
                 *t = GetToken();
             }
             if (msg != NULL) {
-                *msg = "argument type does not match parameter type";
+                *msg = "argument " + to_string(i) + " type does not match parameter type";
             }
             return false;
         }
