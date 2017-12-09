@@ -38,8 +38,8 @@
 #include <iostream>
 #include <vector>
 
-#include "symtab.h"
 #include "ir.h"
+#include "symtab.h"
 
 using namespace std;
 
@@ -50,7 +50,7 @@ using namespace std;
 ///
 
 class CBackend {
-  public:
+public:
     /// @name constructors/destructors
     /// @{
 
@@ -66,7 +66,7 @@ class CBackend {
 
     /// @}
 
-  protected:
+protected:
     /// @name detailed output methods
     /// @{
 
@@ -77,11 +77,9 @@ class CBackend {
 
     /// @}
 
-
-    CModule *_m;                    ///< module
-    ostream &_out;                  ///< output stream
+    CModule *_m;   ///< module
+    ostream &_out; ///< output stream
 };
-
 
 //------------------------------------------------------------------------------
 /// @brief x86 backend
@@ -89,7 +87,7 @@ class CBackend {
 /// backend for Intel IA32
 ///
 class CBackendx86 : public CBackend {
-  public:
+public:
     /// @name constructors/destructors
     /// @{
 
@@ -98,7 +96,7 @@ class CBackendx86 : public CBackend {
 
     /// @}
 
-  protected:
+protected:
     /// @name detailed output methods
     /// @{
 
@@ -116,7 +114,7 @@ class CBackendx86 : public CBackend {
     void SetScope(CScope *scope);
 
     /// @brief get the current scope
-    CScope* GetScope(void) const;
+    CScope *GetScope(void) const;
 
     /// @brief emit a scope
     virtual void EmitScope(CScope *scope);
@@ -127,7 +125,7 @@ class CBackendx86 : public CBackend {
     /// @brief emit local data
     ///
     /// EmitLocalData() initializes local data (i.e., arrays)
-    virtual void EmitLocalData(CScope *s);
+    virtual void EmitLocalData(CScope *s, size_t size);
 
     /// @brief emit code for code block @cb
     virtual void EmitCodeBlock(CCodeBlock *cb);
@@ -137,14 +135,14 @@ class CBackendx86 : public CBackend {
 
     /// @brief emit an instruction
 
-    virtual void EmitInstruction(string mnemonic, string args="",
-                                 string comment="");
+    virtual void EmitInstruction(string mnemonic, string args = "",
+                                 string comment = "");
 
     /// @brief emit a load instruction
-    void Load(CTacAddr *src, string dst, string comment="");
+    void Load(CTacAddr *src, string dst, string comment = "");
 
     /// @brief emit a store instruction
-    void Store(CTac *dst, char src_base, string comment="");
+    void Store(CTac *dst, char src_base, string comment = "");
 
     /// @brief return an operand string for @a op
     /// @param op the operand
@@ -176,11 +174,8 @@ class CBackendx86 : public CBackend {
 
     /// @}
 
-    string _ind;                    ///< indentation
-    CScope *_curr_scope;            ///< current scope
+    string _ind;         ///< indentation
+    CScope *_curr_scope; ///< current scope
 };
-
-
-
 
 #endif // __SnuPL_BACKEND_H__

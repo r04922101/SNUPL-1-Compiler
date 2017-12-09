@@ -175,10 +175,11 @@ void CBackendx86::EmitScope(CScope *scope) {
     CSymtab *symbolTable = scope->GetSymbolTable();
     assert(symbolTable != NULL);
 
+    _out << _ind << "# stack offsets" << endl;
     auto size = ComputeStackOffsets(symbolTable, 8, -12);
     // Prologue
     _out << endl << _ind << "# prologue" << endl;
-    EmitLocalData(scope);
+    EmitLocalData(scope, size);
 
     // Fuction Body
     _out << endl << _ind << "# function body" << endl;
@@ -272,11 +273,11 @@ void CBackendx86::EmitGlobalData(CScope *scope) {
     }
 }
 
-void CBackendx86::EmitLocalData(CScope *scope) {
+void CBackendx86::EmitLocalData(CScope *scope, size_t size) {
     assert(scope != NULL);
 
     SetScope(scope);
-    auto size = ComputeStackOffsets(_curr_scope->GetSymbolTable(), 8, -12);
+    /* auto size = ComputeStackOffsets(_curr_scope->GetSymbolTable(), 8, -12); */
     // callee saves and stack pointer setting
     EmitInstruction("pushl", "%ebp");
     EmitInstruction("movl", "%esp, %ebp");
